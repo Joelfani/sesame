@@ -6,7 +6,8 @@
 </template>
 
 <style>
-body {
+html,body {
   font-family: 'Vollkorn', serif;
+  height: 100%;
 }
 </style>

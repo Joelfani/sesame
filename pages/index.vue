@@ -1,44 +1,64 @@
 <template>
-    <div class="container">
-        <div class="login">
-            <img class="logo_login" src="/public/logo.png" alt="">
-            <h1>Se connecter</h1>
-            <FormComponent
-                :inputs="input"
-                class_btn="btn btn-primary"
-                label_button="Connexion"
-                :hr_style="false"
-                :modal_form="false"
-                @submit="send_connexion"
-            /> 
+    <div class="login-font">
+        <div class="container">
+            
+                <div class="login">
+                    <img class="logo_login" src="/public/logo.png" alt="">
+                    <h1>Veuillez-vous connecter</h1>
+                    <FormLogin
+                        :inputs="input"
+                        label_button="Se connecter"
+                        :hr_style="false"
+                        :modal_form="false"
+                        @submit="send_connexion"
+                    /> 
+                </div>
         </div>
     </div>
 </template>
 
 <script>
-import FormComponent from '~/components/formComponent.vue';
+
 
 export default{
     name:'loginPage',
-    components:{
-        FormComponent,
+    data(){
+        return{
+            categories: [
+
+                { id: 1, name_ctg: 'Colaborateur' },
+                { id: 2, name_ctg: 'Resposanble achat' },
+                { id: 3, name_ctg: 'Resposable finance' },
+                { id: 4, name_ctg: 'Controlleur de gestion' },
+
+
+            ]
+        }
     },
     computed:{
         input(){
             return [
                 {
+                    id: 'ctg',
+                    type: 'select',
+                    options: 
+                    this.categories.map(category => ({
+                        value: category.id,
+                        text: category.name_ctg
+                    })),
+                    required: true,
+                    etat_option_login: true,
+                },
+                {
                     id: 'email',
                     type: 'email',
-                    label: 'Email',
-                    placeholder: 'Entrer votre email',
-                    
+                    placeholder: 'Email',
                     required: true,
                 },
                 {
                     id: 'password',
                     type: 'password',
-                    label: 'Mot de passe',
-                    placeholder: 'Entrer votre mot de passe',
+                    placeholder: 'Mot de passe',
                     required: true,
                 }
             ];
@@ -48,12 +68,19 @@ export default{
 </script>
 
 <style scoped>
+    .login-font {
+        background: url('/public/font_2.png') no-repeat center center fixed;
+        background-size: cover; 
+        height: 100vh;
+        padding-top: 20vh;
+    }
+    
     .login {
         padding: 20px;
-        margin: 20vh auto;
+        margin: 0 auto;
         width: 50%;
         text-align: center;
-        background-color: #eeeeee31;
+        background-color: #eeeeeeb0;
         border-radius: 8px;
         box-shadow: 0 10px 8px rgba(0, 0, 0, 0.1);
     }
@@ -62,7 +89,5 @@ export default{
         height: 100px;
         margin-bottom: 20px;
     }
-    .login h1 {
-        font-weight: bold;
-    }
+
 </style>
