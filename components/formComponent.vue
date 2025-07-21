@@ -66,7 +66,7 @@ export default {
         },
         class_btn: {
             type: String,
-            default: 'btn btn-primary'
+            default: 'btn btn-success'
         },
         label_button: {
             type: String,

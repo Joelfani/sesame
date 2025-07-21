@@ -1,0 +1,18 @@
+body {
+    font-family: 'Vollkorn, serif';
+    margin: 0;
+    padding: 0;
+    font-size: 1rem;
+    background: #eeeeeeb0;
+}
+h1{
+    font-family: 'Vollkorn, serif';
+    font-size: 2em;
+}
+
+/* Navbar styles */
+.logo_main_page{
+    width: 100px;
+    height: auto;
+}
+

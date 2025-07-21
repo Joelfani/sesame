@@ -30,8 +30,6 @@ export default{
                 { id: 2, name_ctg: 'Resposanble achat' },
                 { id: 3, name_ctg: 'Resposable finance' },
                 { id: 4, name_ctg: 'Controlleur de gestion' },
-
-
             ]
         }
     },
@@ -72,7 +70,7 @@ export default{
         background: url('/public/font_2.png') no-repeat center center fixed;
         background-size: cover; 
         height: 100vh;
-        padding-top: 20vh;
+        padding-top: 10vh;
     }
     
     .login {

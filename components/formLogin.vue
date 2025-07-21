@@ -80,11 +80,11 @@ export default {
 
 <style scoped>
 input,select{
-    height: 70px;
+    height: 4.375rem;
     background: #ffffffb7;
 }
 .btn{
-    margin: 20px;
+    margin: 1.25rem;
     color: white;
     background-color: #43b02ab4;
 }
@@ -92,11 +92,7 @@ input,select{
     background-color: #43b02a;
 }
 input, select, textarea {
-    margin-bottom: 10px;
-}
-label {
-    font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 0.8rem;
 }
 
 </style>
