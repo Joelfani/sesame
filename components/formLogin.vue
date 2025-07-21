@@ -80,7 +80,7 @@ export default {
 
 <style scoped>
 input,select{
-    height: 4.375rem;
+    height: 4rem;
     background: #ffffffb7;
 }
 .btn{

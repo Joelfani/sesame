@@ -1,0 +1,25 @@
+h1 {
+    font-size: 1.7rem;
+}
+.login-font {
+    background: url('/public/font_2.png') no-repeat center center fixed;
+    background-size: cover; 
+    height: 100vh;
+    padding-top: 10vh;
+}
+
+.login {
+    padding: 20px;
+    margin: 0 auto;
+    width: 50%;
+    max-width: 550px;
+    text-align: center;
+    background-color: #eeeeeeb0;
+    border-radius: 8px;
+    box-shadow: 0 10px 8px rgba(0, 0, 0, 0.1);
+}
+.logo_login {
+    width: 90px;
+    height: 80px;
+    margin-bottom: 10px;
+}
