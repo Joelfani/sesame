@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
+  
   css:[
     'bootstrap/dist/css/bootstrap.min.css',
     '@/assets/css/main.css'
@@ -14,7 +15,9 @@ export default defineNuxtConfig({
           href: 'https://fonts.googleapis.com/css2?family=Vollkorn&display=swap'
         }
       ]
-    }
-  }
+    },
+    pageTransition: { name: 'page', mode: 'out-in' },
+  },
+  
 
 })

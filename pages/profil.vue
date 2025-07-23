@@ -1,5 +1,6 @@
 <template>
-    <div class="tete d-flex align-items-center gap-3">
+    <div class="">
+        <div class="tete d-flex align-items-center gap-3">
         <div class="avatar">
             <img src="/public/avatar/h5.png" alt="Avatar" class="avatar-image">
         </div>
@@ -11,7 +12,7 @@
                 <div v-for="n in 5" :key="n" class="d-flex flex-column align-items-center gap-2">
                     <img :src="'/avatar/'+ type_avatar + n + '.png'" alt="Avatar" class="avatar-image-change" />
                 <input class="form-check-input" type="radio" name="avatar" :value="n" v-model="selectedAvatar" />
-</div>      
+    </div>      
             </div>
         </div>
         <div class="action flex-grow-1 d-flex justify-content-end">
@@ -83,6 +84,8 @@
             </div>
         </div>
     </div>
+    </div>
+    
     
     
 </template>

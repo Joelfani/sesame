@@ -2,7 +2,7 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-sm navbar-light fixed-top justify-content-center">
         <div class="container">
-            <NuxtLink to="/homepage" class="navbar-brand centre">
+            <NuxtLink to="" class="navbar-brand centre">
                 <img class="logo_main_page" src="/public/logo.png">
             </NuxtLink>
 
