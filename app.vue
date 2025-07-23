@@ -18,5 +18,6 @@ html,body {
 /* Fade transition for entering and leaving elements */
 .page-enter-from, .page-leave-to {
   opacity: 0;
+  
 }
 </style>
