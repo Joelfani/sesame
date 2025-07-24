@@ -5,7 +5,7 @@
                     <th  v-for="col in columns" :key="col.key" :style="col.style? col.style : ''">
                     {{ col.label }}
                     </th>
-                    <th v-if="showActions" style="min-width : 250px; text-align: center;">Actions</th>
+                    <th v-if="showActions">Actions</th>
                 </tr>
             </thead>
             <tbody v-if="rows.length > 0">
@@ -14,7 +14,7 @@
                     {{ item[col.key] }}
                     </td>
                     <td v-if="showActions">
-                    <slot name="actions" :item="item"></slot>
+                        <NuxtLink v-if="type_but_action == 'link'" :to="'demande/' + item.id" class="btn btn-light">{{ name_but_action }}</NuxtLink>
                     </td>
                 </tr>
             </tbody>
@@ -38,6 +38,14 @@ defineProps({
     showActions: {
         type: Boolean,
         default: true
+    },
+    type_but_action: {
+        type: String,
+        default: ''
+    },
+    name_but_action: {
+        type: String,
+        default: ''
     }
 })
 </script>

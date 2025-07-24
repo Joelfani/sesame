@@ -7,7 +7,7 @@
             <div class="name_email">
                 <h4>TSARAFANIRY Tahina Joel</h4>
                 <p>joel.tsarafaniry@iecd.org</p>
-                <p>Administrateur</p>
+                <p>Responsable informatique</p>
                 <div v-if="btn_modifier == 'Enregistrer'" class="change_avatar d-flex align-items-center gap-2">
                     <div v-for="n in 5" :key="n" class="d-flex flex-column align-items-center gap-2">
                         <img :src="'/avatar/'+ type_avatar + n + '.png'" alt="Avatar" class="avatar-image-change" />

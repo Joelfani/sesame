@@ -8,14 +8,6 @@ export default defineNuxtConfig({
     '@/assets/css/main.css'
   ],
   app: {
-    head: {
-      link: [
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Vollkorn&display=swap'
-        }
-      ]
-    },
     pageTransition: { name: 'page', mode: 'out-in' },
   },
   
