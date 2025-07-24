@@ -1,3 +1,5 @@
+/* Sesame CSS Stylesheet */
+/* Main styles */
 body {
     font-family: 'Vollkorn, serif';
     margin: 0;
@@ -14,6 +16,24 @@ input, textarea, select {
     font-size: 1em;
     margin-bottom: 20px;
 }
+.main_page {
+    margin: 7.5rem 10px 0 10px;
+    padding: 20px;
+    height: 100%;
+    min-height: 86vh;
+    border-radius: 2px;
+    background-color: #fff;
+    overflow: auto;
+    max-height: calc(100vh - 7rem);
+}
+.table_block {
+    border: solid 1px #0000001c;
+    border-radius: 5px;
+    padding: 10px;
+    height: 70vh;
+}
+
+/* Demandes */
 
 /* Profil */
 .title {

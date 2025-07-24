@@ -3,7 +3,7 @@
     <nav class="navbar navbar-expand-sm navbar-light fixed-top justify-content-center">
         <div class="container">
             <NuxtLink to="" class="navbar-brand centre">
-                <img class="logo_main_page" src="/public/logo.png">
+                <img class="logo_main_page" src="/logo.png">
             </NuxtLink>
 
             <ul class="navbar-nav">
