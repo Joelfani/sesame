@@ -11,7 +11,7 @@
                 <input type="search" placeholder="Rechercher une demande" class="form-control mb-3">
             </div>
         </div>
-        <div class="table_block">
+        <div class="table_block_list">
             <Table :columns="columns" :rows="liste_demande" type_but_action="link" name_but_action="Voir"/>
         </div>
         
