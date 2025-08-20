@@ -84,10 +84,8 @@
                 </div>
             </div>
         </div>
+        <button class="btn btn-danger">Deconnexion</button>
     </div>
-    
-    
-    
 </template>
 <script setup>
 //DATA

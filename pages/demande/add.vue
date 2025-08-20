@@ -25,20 +25,19 @@
     
     //DATA //
     const columns = [
-        { key: "id", label: "N°", type:'number',min:'1',disabled: true, style: "width: 100px;" },
-        { key: "designation", label: "Désignation" },
-        { key: "qte", type:'number',min:'1', label: "Quantité" },
-        {   key: "spec", 
-            label: "Spécificités techniques", 
+        { key: "id", label: "N°", type:'number',min:'1',disabled: true, style: "width: 100px;height: 62px" },
+        { key: "designation", label: "Désignation", type:'textarea'},
+        { key: "qte", type:'number',min:'1', label: "Quantité", style: "width: 120px;" },
+        {   key: "spec", label: "Spécificités techniques", type:'textarea',style: "width: 200px;"
         },
-        { key: "ref", label: "Références", type:'select',
-            options: [
+        { key: "ref", label: "Références", type:'text',
+            /*options: [
                 { value: 'SADMINDIVERS', label: 'SADMINDIVERS' },
                 { value: 'SADMIN', label: 'SADMIN' },
                 { value: 'SBOEAP', label: 'SBOEAP' },
                 { value: 'SBOEOSP', label: 'SBOEOSP' },
                 { value: 'SBOESUP', label: 'SBOESUP' },
-            ]
+            ]*/
         },
         { key: "fournisseur", label: "Fournisseur",type:'select',
             options: [
@@ -46,11 +45,14 @@
                 { value: 'Fournisseur B', label: 'Fournisseur B' },
                 { value: 'Fournisseur C', label: 'Fournisseur C' }
             ],
-            autre: true
+            autre: true,
+            style: "width: 200px;"
         },
-        { key: "prix", type:'number',min:'1', label: "Prix unitaire" },
-        { key: "delai", label: "Délai de livraison" },
+        { key: "prix", type:'number',min:'1', label: "Prix unitaire", style: "width: 140px;",placeholder: "P.U" },
+        { key: "delai", type:'date', label: "Date de livraison" },
+        { key: "commentaire", label: "Commentaire", type:'textarea', style: "width: 200px;" },
         { key: "total", type:'number',min:'1',disabled: true, label: "Montant total" },
+        
     ];
 
     

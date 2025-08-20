@@ -29,14 +29,15 @@
                             <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
                             <option v-if="col.autre" value="autre">Autre ...</option>
                         </select>
+                        <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rowsInput[rowIndex][col.key]"></textarea>
                         <input v-else
-                            v-model="rowsInput[rowIndex][col.key]"
                             :value="col.key === 'total' ? (rowsInput[rowIndex].qte * rowsInput[rowIndex].prix) : rowsInput[rowIndex][col.key]"
                             :type="col.type ? col.type : 'text'"
                             :min="col.min? col.min : ''"
                             class="form-control"
-                            :placeholder="col.label"
+                            :placeholder="col.placeholder ? col.placeholder : col.label"
                             :disabled="col.disabled ? col.disabled : false"
+                            v-model="rowsInput[rowIndex][col.key]"
                         />
                     </td>
                     <td v-if="showActions">
