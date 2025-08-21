@@ -20,20 +20,20 @@
 <script setup>
 
 import '~/assets/css/loginPage.css'
-import { ref } from 'vue'
-    
+//import { ref } from 'vue'
+//import api from '~/utils/api.js'
 //DATA //
-const categories = ref([
+/*const categories = ref([
 
     { id: 1, name_ctg: 'Colaborateur' },
     { id: 2, name_ctg: 'Resposanble achat' },
     { id: 3, name_ctg: 'Resposable finance' },
     { id: 4, name_ctg: 'Controlleur de gestion' },
-])
+])*/
 
 // COMPUTED //
 const input = computed(() => [
-    {
+    /*{
         id: 'ctg',
         type: 'select',
         options: categories.value.map(category => ({
@@ -42,7 +42,7 @@ const input = computed(() => [
         })),
         required: true,
         etat_option_login: true
-    },
+    },*/
     {
         id: 'email',
         type: 'email',
@@ -60,5 +60,22 @@ const input = computed(() => [
 // METHODS //
 definePageMeta({
     layout: false // No layout for this page
-})
+});
+const send_connexion = async (data) => {
+    try {
+        const response = await api.post('/login_check', {
+            email: data.email,
+            password: data.password
+        });
+        if (response.data.token) {
+            localStorage.setItem('token', response.data.token);
+            //window.location.href = '/dashboard'; // Redirection vers le dashboard
+        } else {
+            console.error('Token not found in response');
+        }
+    } catch (error) {
+        console.error('Login failed:', error);
+    }
+}
+
 </script>
