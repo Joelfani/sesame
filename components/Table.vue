@@ -15,7 +15,11 @@
                     {{ item[col.key] }}
                     </td>
                     <td v-if="showActions">
-                        <NuxtLink v-if="type_but_action == 'link'" :to="'demande/' + item.id" class="btn btn-light">{{ name_but_action }}</NuxtLink>
+                        <NuxtLink v-if="type_but_link" :to="'demande/' + item.id" class="btn btn-light">{{ name_but_action }}</NuxtLink>
+                        <div v-else-if="type_but_modal">
+                            <button  v-for="action in actions" :key="action.label" :class="'btn btn-'+action.color">{{ action.label }}</button>
+                        </div>
+                        
                     </td>
                 </tr>
                 <tr v-if="rows.length <= 0">
@@ -69,13 +73,21 @@ const props = defineProps({
         type: Boolean,
         default: true
     },
-    type_but_action: {
-        type: String,
-        default: ''
+    type_but_link: {
+        type: Boolean,
+        default: false
+    },
+    type_but_modal: {
+        type: Boolean,
+        default: false
     },
     name_but_action: {
         type: String,
         default: ''
+    },
+    actions: {
+        type: Array,
+        default: []
     },
     tableinput: {
         type: Boolean,

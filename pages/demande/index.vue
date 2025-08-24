@@ -12,7 +12,7 @@
             </div>
         </div>
         <div class="table_block_list">
-            <Table :columns="columns" :rows="liste_demande" type_but_action="link" name_but_action="Voir"/>
+            <Table :columns="columns" :rows="liste_demande" :type_but_link="true" name_but_action="Voir"/>
         </div>
         
     </div>
@@ -28,7 +28,7 @@ const columns = [
     { key: 'id', label: 'N°' },
     { key: 'status', label: 'Statut' },
     { key: 'date', label: 'Date de la demande' },
-    { key: 'object', label: 'Objet de la demande',}
+    { key: 'object', label: 'Objet de la demande'}
 ]
 const liste_demande = [
     { id: 1, status: 'En attente de validation chez le responsable d\'achat', date: '2023-10-01', object: 'Achat de matériel informatique' },

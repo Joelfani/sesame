@@ -1,4 +1,7 @@
-import axios from "axios";
+const test = 1 ;
+
+
+/*import axios from "axios";
 
 const api = axios.create({
     baseURL: "http://localhost:8000/api", // ton backend Symfony
@@ -16,4 +19,4 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export default api;
+export default api;*/

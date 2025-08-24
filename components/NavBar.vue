@@ -11,6 +11,12 @@
                     <NuxtLink class="nav-link btn btn-light" to="/demande">Mes demandes</NuxtLink>
                 </li>
                 <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/validation">Mes validations</NuxtLink>
+                </li>
+                <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Mes fournisseur</NuxtLink>
+                </li>
+                <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/profil">Mon profil</NuxtLink>
                 </li>
                 <div class="notification" @click="afficher_notif">
