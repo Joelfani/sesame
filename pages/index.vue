@@ -1,18 +1,15 @@
 <template>
     <div class="login-font">
-        <div class="container">
-            
-                <div class="login">
-                    <img class="logo_login" src="/public/logo.png" alt="">
-                    <h1>Veuillez-vous connecter</h1>
-                    <FormLogin
-                        :inputs="input"
-                        label_button="Se connecter"
-                        :hr_style="false"
-                        :modal_form="false"
-                        @submit="send_connexion"
-                    /> 
-                </div>
+        <div class="login">
+            <img class="logo_login" src="/public/logo.png" alt="">
+            <h1>Veuillez-vous connecter</h1>
+            <FormLogin
+                :inputs="input"
+                label_button="Se connecter"
+                :hr_style="false"
+                :modal_form="false"
+                @submit="send_connexion"
+            /> 
         </div>
     </div>
 </template>

@@ -2,20 +2,21 @@ h1 {
     font-size: 1.7rem;
 }
 .login-font {
-    background: url('/public/font_2.png') no-repeat center center fixed;
+    background: url('/public/font4.jpg') no-repeat center center fixed;
     background-size: cover; 
-    height: 100vh;
-    padding-top: 10vh;
+    display: flex;
+    justify-content: center; /* centre horizontalement */
+    align-items: center;     /* centre verticalement */
+    height: 100vh;           /* prend toute la hauteur de l’écran */
 }
-
 .login {
     padding: 20px;
-    margin: 0 auto;
+    
     width: 50%;
     max-width: 550px;
     text-align: center;
-    background-color: #eeeeeeb0;
-    border-radius: 8px;
+    background-color: #eeeeeecf;
+    border-radius: 5px;
     box-shadow: 0 10px 8px rgba(0, 0, 0, 0.1);
 }
 .logo_login {

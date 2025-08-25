@@ -19,12 +19,7 @@
         <Table 
             :columns="columns" 
             :rows="liste_demandes_a_valider" 
-            :type_but_modal="true"
-            :actions="[
-                { label: 'Voir',  color: 'light' },
-                { label: 'Valider',  color: 'success' },
-                { label: 'Refuser', color: 'secondary' }
-            ]"
+            :type_but_link="true" but_link_path="validation/" name_but_action="Voir"
         />
         </div>
     </div>

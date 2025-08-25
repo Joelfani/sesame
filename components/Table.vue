@@ -1,5 +1,4 @@
 <template>
-    
         <table class="table table-borderless table-striped ">
             <thead class="table-header">
                 <tr>
@@ -9,13 +8,35 @@
                     <th v-if="showActions">Actions</th>
                 </tr>
             </thead>
-            <tbody v-if ="tableinput == false">
-                <tr v-for="item in rows" :key="item.id">
-                    <td  v-for="col in columns" :key="col.key" :class="col.etat? 'td-fixed':''"> 
-                    {{ item[col.key] }}
+            <!-- Si tableaux pas vide  -->
+            <tbody v-if ="tableinputadd == false">
+                <tr v-for="(item , rowIndex) in rows" :key="item.id">
+                    <td  v-for="col in columns" :key="col.key" :class="col.etat? 'td-fixed':''">
+                        <!-- Si la colonne est éditable -->
+                        <template v-if="col.editable">
+                            <select v-if="col.type == 'select'" class="form-control" v-model="rows[rowIndex][col.key]">
+                            <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
+                            <option v-if="col.autre" value="autre">Autre ...</option>
+                            </select>
+                            <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rows[rowIndex][col.key]"></textarea>
+                            <input v-else
+                                :value="col.key === 'total' ? (rows[rowIndex].qte * rows[rowIndex].prix) : rows[rowIndex][col.key]"
+                                :type="col.type ? col.type : 'text'"
+                                :min="col.min? col.min : ''"
+                                class="form-control"
+                                :placeholder="col.placeholder ? col.placeholder : col.label"
+                                :disabled="col.disabled ? col.disabled : false"
+                                v-model="rows[rowIndex][col.key]"
+                            />
+                        </template>
+                        <!-- Si la colonne est normal -->
+                        <template v-else >
+                            {{ item[col.key] }}
+                        </template>
+                        
                     </td>
                     <td v-if="showActions">
-                        <NuxtLink v-if="type_but_link" :to="'demande/' + item.id" class="btn btn-light">{{ name_but_action }}</NuxtLink>
+                        <NuxtLink v-if="type_but_link" :to="but_link_path + item.id" class="btn btn-light">{{ name_but_action }}</NuxtLink>
                         <div v-else-if="type_but_modal">
                             <button  v-for="action in actions" :key="action.label" :class="'btn btn-'+action.color">{{ action.label }}</button>
                         </div>
@@ -26,7 +47,8 @@
                     <td colspan="100%" class="text-center">Aucune donnée disponible</td>
                 </tr>
             </tbody>
-            <tbody v-if ="tableinput">
+            <!-- Si tableau input vide -->
+            <tbody v-if ="tableinputadd">
                 <tr v-for="(item, rowIndex) in rowsInput" :key="item.id">
                     <td v-for="col in columns" :key="col.key">
                         <select v-if="col.type == 'select'" class="form-control" v-model="rowsInput[rowIndex][col.key]">
@@ -54,6 +76,7 @@
                     </td>
                 </tr>
             </tbody>
+
         </table>
 </template>
 <script setup>
@@ -77,6 +100,10 @@ const props = defineProps({
         type: Boolean,
         default: false
     },
+    but_link_path: {
+        type: String,
+        default: ''
+    },
     type_but_modal: {
         type: Boolean,
         default: false
@@ -89,7 +116,7 @@ const props = defineProps({
         type: Array,
         default: []
     },
-    tableinput: {
+    tableinputadd: {
         type: Boolean,
         default: false
     },

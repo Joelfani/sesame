@@ -119,11 +119,16 @@ margin-bottom: 20px;
     border: solid 1px #0000001c;
     border-radius: 5px;
     padding: 10px;
-    height: 70vh;
-    overflow: auto;
-    max-height: 60vh;
     text-align: center;
+    height: 70vh;
+    max-height: 60vh;
+    overflow-x: auto;
+    overflow-y: auto;
 }
+table {
+    min-width: 100%;   /* empêche le tableau de se réduire */
+}   
+
 /* Buttons */
 .btn {
     font-family: 'Lato', sans-serif;
