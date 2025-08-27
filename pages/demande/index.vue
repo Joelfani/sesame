@@ -25,7 +25,7 @@ import Table from '~/components/Table.vue';
 
 //DATA //
 const columns = [
-    { key: 'id', label: 'N°' },
+    { key: 'id', label: 'N° d\'enregistrement' },
     { key: 'date', label: 'Date de la demande' },
     { key: 'object', label: 'Objet de la demande'},
     { key: 'status', label: 'Statut' },

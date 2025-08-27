@@ -20,7 +20,7 @@
             :columns="columns" 
             :rows="liste_demandes_a_valider" 
             :type_but_link="true" but_link_path="validation/" name_but_action="Voir"
-        />
+        /> 
         </div>
     </div>
     </template>
@@ -31,9 +31,9 @@
     // Définition des colonnes du tableau
     const columns = [
     { key: 'id', label: 'N°' },
-    { key: 'status', label: 'Statut' },
     { key: 'date', label: 'Date de la demande' },
     { key: 'object', label: 'Objet de la demande' },
+    { key: 'nbrnv', label: 'Nombre d\'article non validé'},
     ];
 
     // Données d'exemple pour les demandes à valider
@@ -64,4 +64,3 @@
     },
     ];
     </script>
-    ```

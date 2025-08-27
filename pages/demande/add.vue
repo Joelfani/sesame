@@ -25,10 +25,10 @@
     
     //DATA //
     const columns = [
-        { key: "id", label: "N°", type:'number',min:'1',disabled: true, style: "min-width: 100px;height: 62px" },
-        { key: "designation", label: "Désignation", type:'textarea',style: "min-width: 200px;height: 62px"},
-        { key: "qte", type:'number',min:'1', label: "Nombre", style: "min-width: 120px;" },
-        {   key: "spec", label: "Spécificités techniques, les références, photos (à bien préciser)", type:'textarea',style: "min-width: 300px;",placeholder: " " },
+        { key: "id", label: "N°", type:'number',min:'1',disabled: true, style: {height: '62px'}},
+        { key: "designation", label: "Désignation", type:'textarea',style: {height: '62px'}},
+        { key: "qte", type:'number',min:'1', label: "Nombre" },
+        {   key: "spec", label: "Spécificités techniques, les références, photos (à bien préciser)", type:'textarea',placeholder: " " },
         { key: "fournisseur", label: "Fournisseur possible",type:'select',
             options: [
                 { value: 'Fournisseur A', label: 'Fournisseur A' },
@@ -36,12 +36,12 @@
                 { value: 'Fournisseur C', label: 'Fournisseur C' }
             ],
             autre: true,
-            style: "min-width: 200px;"
+            
         },
-        { key: "prix", type:'number',min:'1', label: "Prix unitaire", style: "min-width: 145px;",placeholder: "P.U" },
-        { key: "delai", type:'date', label: "Date de livraison",style: "min-width: 140px;" },
-        { key: "total", type:'number',min:'1',disabled: true, label: "Montant total (en Ar)",style: "min-width: 145px;", placeholder: "Montant" },
-        { key: "commentaire", label: "Commentaire", type:'textarea', style: "min-width: 300px;" },
+        { key: "prix", type:'number',min:'1', label: "Prix unitaire", placeholder: "P.U" },
+        { key: "delai", type:'date', label: "Date de livraison"},
+        { key: "total", type:'number',min:'1',disabled: true, label: "Montant total (en Ar)", placeholder: "Montant" },
+        { key: "commentaire", label: "Commentaire", type:'textarea'},
     ];
     // METHODES //
-    </script>
+    </script> 

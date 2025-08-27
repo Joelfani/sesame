@@ -53,11 +53,25 @@
                         </div>
                         <div class="col">
                             <label class="label">Type de compte</label>
-                            <select name="genre" class="form-select" disabled>
+                            <select name="type" class="form-select" disabled>
                                 <option value="1" selected>Super Administrateur</option>
                                 <option value="2">Administrateur</option>
                                 <option value="2">Collaborateur</option>
                             </select>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="label">Supérieur</label>
+                            <select name="sup" class="form-select"  v-model="superieur" :disabled="disabled">
+                                <option value="idReponsable1" selected>Rakoto</option>
+                                <option value="idReponsable2">Rabe</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <br>
+                            <button class="btn btn-danger">Deconnexion</button>
                         </div>
 
                     </div>
@@ -84,7 +98,7 @@
                 </div>
             </div>
         </div>
-        <button class="btn btn-danger">Deconnexion</button>
+        
     </div>
 </template>
 <script setup>
@@ -95,6 +109,8 @@ const btn_modifier = ref("Modifier");
 const disabled = ref(true);
 const genre = ref("Homme");
 const type_avatar = ref('h');
+const superieur = ref("idReponsable1");
+
 // METHODS
 const modifier = () => {
     if(btn_modifier.value == "Enregistrer"){

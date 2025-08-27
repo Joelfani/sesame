@@ -44,6 +44,11 @@ import Table from '~/components/Table.vue';
     { key: 'delai', label: 'Date de livraison' },
     { key: 'commentaire', label: 'Commentaire' },
     { key: 'total', label: 'Montant total' },
+    { key: 'code', label: 'Imputation analytique',editable: true, type: 'select', options: [
+        { value: 'code1', label: 'Code 1' },
+        { value: 'code2', label: 'Code 2' },
+        { value: 'code3', label: 'Code 3' },
+    ], style: {width: '200px'} }, 
     ];
 
     // Données d'exemple pour le tableau

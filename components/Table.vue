@@ -2,7 +2,7 @@
         <table class="table table-borderless table-striped ">
             <thead class="table-header">
                 <tr>
-                    <th  v-for="col in columns" :key="col.key" :style="col.style? col.style : ''">
+                    <th  v-for="col in columns" :key="col.key" :style="getStyle(col)">
                     {{ col.label }}
                     </th>
                     <th v-if="showActions">Actions</th>
@@ -15,8 +15,8 @@
                         <!-- Si la colonne est éditable -->
                         <template v-if="col.editable">
                             <select v-if="col.type == 'select'" class="form-control" v-model="rows[rowIndex][col.key]">
-                            <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
-                            <option v-if="col.autre" value="autre">Autre ...</option>
+                                <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
+                                <option v-if="col.autre" value="autre">Autre ...</option>
                             </select>
                             <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rows[rowIndex][col.key]"></textarea>
                             <input v-else
@@ -36,13 +36,13 @@
                         
                     </td>
                     <td v-if="showActions">
-                        <NuxtLink v-if="type_but_link" :to="but_link_path + item.id" class="btn btn-light">{{ name_but_action }}</NuxtLink>
+                        <NuxtLink v-if="type_but_link" :to="'/'+but_link_path + item.id" class="btn btn-light">{{ name_but_action }}</NuxtLink>
                         <div v-else-if="type_but_modal">
                             <button  v-for="action in actions" :key="action.label" :class="'btn btn-'+action.color">{{ action.label }}</button>
                         </div>
                         
                     </td>
-                </tr>
+                </tr> 
                 <tr v-if="rows.length <= 0">
                     <td colspan="100%" class="text-center">Aucune donnée disponible</td>
                 </tr>
@@ -155,5 +155,22 @@ const rowsInput = ref([]); // reactive pour Vue
         for (let i = 0; i < rowsInput.value.length; i++) {
             rowsInput.value[i].id = i + 1; // Réinitialiser les IDs
         }
+    };
+
+    // Condition sur le style
+    const getStyle = (col) => {
+        
+            const defaultStyle = {
+                minWidth:   col.type === 'select' ? '200px' 
+                            : col.type === 'textarea'? '300px'
+                            : col.type === 'number' ? '145px'
+                            : col.type === 'date' ? '140px': '200px',
+            }
+
+            return {
+                ...defaultStyle,
+                ...(col.style || {} )
+            }
+            
     };
 </script>
