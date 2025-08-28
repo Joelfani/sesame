@@ -32,6 +32,7 @@
     const columns = [
     { key: 'id', label: 'N°' },
     { key: 'date', label: 'Date de la demande' },
+    { key: 'nom', label: 'Nom du demandeur' },
     { key: 'object', label: 'Objet de la demande' },
     { key: 'nbrnv', label: 'Nombre d\'article non validé'},
     ];
@@ -41,24 +42,28 @@
     {
         id: 1,
         status: 'En attente de validation',
+        nom: 'John Doe',
         date: '2023-10-01',
         object: 'Achat de matériel informatique',
     },
     {
         id: 2,
         status: 'En attente de validation',
+        nom: 'Jane Smith',
         date: '2023-10-03',
         object: 'Demande de congé',
     },
     {
         id: 3,
         status: 'En attente de validation',
+        nom: 'Alice Johnson',
         date: '2023-10-04',
         object: 'Achat de fournitures de bureau',
     },
     {
         id: 4,
         status: 'En attente de validation',
+        nom: 'Bob Brown',
         date: '2023-10-06',
         object: 'Réparation d’équipement',
     },

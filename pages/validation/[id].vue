@@ -3,6 +3,7 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>DÉTAILS DE LA DEMANDE</h1>
+        <button class="btn btn-success">Exporter vers Excel</button>
         <div class="link_demande">
             <NuxtLink to="/validation" class="btn btn-outline-secondary">Retour à la liste</NuxtLink>
         </div>
@@ -18,37 +19,40 @@
         </div>
 
         <!-- Tableau des détails -->
-        <div class="table_block_list mt-4">
+        <div class="table_block_list">
         <Table 
             :columns="columns" 
             :rows="demande_details" 
             :type_but_modal="true"
+            :but_Validation="true"
             :actions ="[{ label: 'Valider', color: 'success' }, { label: 'Rejeter', color: 'secondary' }]"
-            />
+        />
         </div>
     </div>
     </template>
 
     <script setup>
 import Table from '~/components/Table.vue';
+import {tableTete} from '~/assets/js/CommonVariable.js';
     const route = useRoute();
     // Définition des colonnes du tableau
     const columns = [
-    { key: 'id', label: 'N°' },
-    { key: 'designation', label: 'Désignation' },
-    { key: 'qte', label: 'Quantité' },
-    { key: 'spec', label: 'Spécificités techniques' },
-    { key: 'ref', label: 'Références' },
-    { key: 'fournisseur', label: 'Fournisseur' },
-    { key: 'prix', label: 'Prix unitaire' },
-    { key: 'delai', label: 'Date de livraison' },
-    { key: 'commentaire', label: 'Commentaire' },
-    { key: 'total', label: 'Montant total' },
+    ...tableTete,
     { key: 'code', label: 'Imputation analytique',editable: true, type: 'select', options: [
         { value: 'code1', label: 'Code 1' },
         { value: 'code2', label: 'Code 2' },
         { value: 'code3', label: 'Code 3' },
-    ], style: {width: '200px'} }, 
+    ]},
+    { key: "fournisseur2", label: "Fournisseur Réel",type:'select',
+            options: [
+                { value: 'Fournisseur A', label: 'Fournisseur A' },
+                { value: 'Fournisseur B', label: 'Fournisseur B' },
+                { value: 'Fournisseur C', label: 'Fournisseur C' }
+            ],
+            editable: true,
+        },
+    { key: 'prix2', label: 'Prix Réel',editable: true, type: 'number' },
+    { key: 'total2', label: 'Montant Réel',editable: true, type: 'number' },
     ];
 
     // Données d'exemple pour le tableau
@@ -64,6 +68,7 @@ import Table from '~/components/Table.vue';
         delai: '2023-10-15',
         commentaire: 'Urgent pour le département IT',
         total: 3000,
+        etat: 0
     },
     {
         id: 2,
@@ -76,6 +81,7 @@ import Table from '~/components/Table.vue';
         delai: '2023-10-20',
         commentaire: 'Compatible avec les ordinateurs existants',
         total: 600,
+        etat: 1
     },
     {
         id: 3,
@@ -88,6 +94,20 @@ import Table from '~/components/Table.vue';
         delai: '2023-10-10',
         commentaire: 'Pour améliorer le confort au travail',
         total: 250,
+        etat: 2
     },
+    {
+        id: 4,
+        designation: 'Souris optique',
+        qte: 5,
+        spec: 'Sans fil, Bluetooth',
+        ref: 'REF101',
+        fournisseur: 'Fournisseur D',
+        prix: 30,
+        delai: '2023-10-12',
+        commentaire: 'Pour améliorer la précision',
+        total: 150,
+        etat: 4
+    }
     ];
     </script>

@@ -27,19 +27,12 @@
 
     <script setup>
 import Table from '~/components/Table.vue';
+import {tableTete} from '~/assets/js/CommonVariable.js';
     const route = useRoute();
     // Définition des colonnes du tableau
     const columns = [
-    { key: 'id', label: 'N°'},
-    { key: 'designation', label: 'Désignation' }, 
-    { key: 'qte', label: 'Nombre' },
-    { key: 'spec', label: 'Spécificités techniques, les références, photos (à bien préciser)' },
-    { key: 'fournisseur', label: 'Fournisseur possible' },
-    { key: 'prix', label: 'Prix unitaire' },
-    { key: 'delai', label: 'Date de livraison' },
-    { key: 'total', label: 'Montant total' },
-    { key: 'commentaire', label: 'Commentaire' },
-    { key: 'etat', label: 'Etat' },
+        ...tableTete,
+        { key: 'etat', label: 'Etat' },
     ];
 
     // Données d'exemple pour le tableau

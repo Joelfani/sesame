@@ -20,7 +20,7 @@
                             </select>
                             <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rows[rowIndex][col.key]"></textarea>
                             <input v-else
-                                :value="col.key === 'total' ? (rows[rowIndex].qte * rows[rowIndex].prix) : rows[rowIndex][col.key]"
+                                :value="col.key === 'total' ? (rows[rowIndex].qte * rows[rowIndex].prix) :col.key === 'total2' ? (rows[rowIndex].qte * rows[rowIndex].prix2): rows[rowIndex][col.key]"
                                 :type="col.type ? col.type : 'text'"
                                 :min="col.min? col.min : ''"
                                 class="form-control"
@@ -30,15 +30,26 @@
                             />
                         </template>
                         <!-- Si la colonne est normal -->
-                        <template v-else >
-                            {{ item[col.key] }}
+                        <template v-else>
+                            <span :style="item.etat == 4 ? 'color:#d19017': item.etat == 1 ? 'color:#29a825': item.etat == 2 ? 'color:red': '' ">{{  item[col.key] }}</span>
                         </template>
                         
                     </td>
                     <td v-if="showActions">
                         <NuxtLink v-if="type_but_link" :to="'/'+but_link_path + item.id" class="btn btn-light">{{ name_but_action }}</NuxtLink>
                         <div v-else-if="type_but_modal">
-                            <button  v-for="action in actions" :key="action.label" :class="'btn btn-'+action.color">{{ action.label }}</button>
+                            <!-- Si on besoin d'une validation -->
+                            <div v-if="but_Validation">
+                                <span v-if="item.etat == 4" style="color: #d19017;">Validation à venir </span>
+                                <span v-if="item.etat == 1" style="color: #29a825;">Validé</span>
+                                <span v-if="item.etat == 2" style="color: red;">Rejeter</span>
+                                <div v-if="item.etat == 0">
+                                    <button  v-for="action in actions" :key="action.label" :class="'btn btn-'+action.color">{{ action.label }}</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <slot name="actions" :item="item"></slot>
                         </div>
                         
                     </td>
@@ -125,6 +136,10 @@ const props = defineProps({
         default: false
     },
     autre: {
+        type: Boolean,
+        default: false
+    },
+    but_Validation: {
         type: Boolean,
         default: false
     }
