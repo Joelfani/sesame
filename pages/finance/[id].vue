@@ -3,9 +3,14 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>DÉTAILS DE LA DEMANDE</h1>
-        <button class="btn btn-success">Exporter vers Excel</button>
+        <div class="">
+            <button class="btn btn-outline-success">Exporter vers Excel</button>
+            <button class="btn btn-outline-primary">A.F.E</button>
+            <button class="btn btn-outline-secondary">Bon de commande</button>
+        </div>
+        
         <div class="link_demande">
-            <NuxtLink to="/validation" class="btn btn-outline-secondary">Retour à la liste</NuxtLink>
+            
         </div>
         </div>
 
@@ -27,8 +32,8 @@
             :but_Validation="true"
             :actions ="[
                 { label: 'Valider', color: 'success' }, 
-                { label: 'Rejeter', color: 'secondary' },
-                { label: 'Ajouter Document', color: 'dark' },
+                { label: 'Rejeter', color: 'danger' },
+                
                 ]"
         />
         </div>
@@ -42,21 +47,11 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
     // Définition des colonnes du tableau
     const columns = [
     ...tableTete,
-    { key: 'code', label: 'Imputation analytique',editable: true, type: 'select', options: [
-        { value: 'code1', label: 'Code 1' },
-        { value: 'code2', label: 'Code 2' },
-        { value: 'code3', label: 'Code 3' },
-    ]},
-    { key: "fournisseur2", label: "Fournisseur Réel",type:'select',
-            options: [
-                { value: 'Fournisseur A', label: 'Fournisseur A' },
-                { value: 'Fournisseur B', label: 'Fournisseur B' },
-                { value: 'Fournisseur C', label: 'Fournisseur C' }
-            ],
-            editable: true,
+    { key: 'code', label: 'Imputation analytique'},
+    { key: "fournisseur2", label: "Fournisseur Réel"
         },
-    { key: 'prix2', label: 'Prix Réel',editable: true, type: 'number' },
-    { key: 'total2', label: 'Montant Réel',editable: true, type: 'number' },
+    { key: 'prix2', label: 'Prix Réel'},
+    { key: 'total2', label: 'Montant Réel'},
     ];
 
     // Données d'exemple pour le tableau
@@ -66,12 +61,15 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         designation: 'Ordinateur portable',
         qte: 2,
         spec: 'Intel i7, 16GB RAP, 512GB SSD',
-        ref: 'REF123',
         fournisseur: 'Fournisseur A',
         prix: 1500,
         delai: '2023-10-15',
         commentaire: 'Urgent pour le département IT',
         total: 3000,
+        code: 'CODE123',
+        fournisseur2: 'Fournisseur A',
+        prix2: 1500,
+        total2: 3000,
         etat: 0
     },
     {
@@ -85,6 +83,10 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         delai: '2023-10-20',
         commentaire: 'Compatible avec les ordinateurs existants',
         total: 600,
+        code: 'CODE456',
+        fournisseur2: 'Fournisseur B',
+        prix2: 200,
+        total2: 600,
         etat: 1
     },
     {
@@ -98,6 +100,10 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         delai: '2023-10-10',
         commentaire: 'Pour améliorer le confort au travail',
         total: 250,
+        code: 'CODE789',
+        fournisseur2: 'Fournisseur C',
+        prix2: 50,
+        total2: 250,
         etat: 2
     },
     {
@@ -111,6 +117,10 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         delai: '2023-10-12',
         commentaire: 'Pour améliorer la précision',
         total: 150,
+        code: 'CODE101',
+        fournisseur2: 'Fournisseur D',
+        prix2: 30,
+        total2: 150,
         etat: 4
     }
     ];

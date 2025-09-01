@@ -3,9 +3,9 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>DÉTAILS DE LA DEMANDE</h1>
-        <button class="btn btn-success">Exporter vers Excel</button>
+        <button class="btn btn-outline-success">Exporter vers Excel</button>
         <div class="link_demande">
-            <NuxtLink to="/validation" class="btn btn-outline-secondary">Retour à la liste</NuxtLink>
+            
         </div>
         </div>
 

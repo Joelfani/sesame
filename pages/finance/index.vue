@@ -3,23 +3,36 @@
     <div class="demandes_validation_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>LISTE DES DEMANDES À VALIDER</h1>
+        <h1>VALIDATION AU NIVEAU DE LA FINANCE</h1>
         <div class="link_demande">
-            <NuxtLink to="/validation/historique" class="btn btn-success">Historique des validations</NuxtLink>
+            <NuxtLink to="/validation/historique" class="btn btn-outline-success">Historique des validations</NuxtLink>
         </div>
         </div>
 
         <!-- Champ de recherche -->
-        <div class="d-flex">
-        <input type="search" placeholder="Rechercher une demande" class="form-control mb-3">
+        <div class="d-flex align-items-center">
+            <select name="choix" class="form-select mb-3" style="width: 250px; margin-right: 10px;" v-model="choix_filtre">
+                <option value="num">N° d'enregistrement</option>
+                <option value="date">Date</option>
+                <option value="nom">Nom</option>
+            </select>
+            <template v-if="choix_filtre === 'date'">
+                <label style="font-weight: bold; margin-right: 10px;">de: </label>
+                <input type="date" class="form-control mb-3" style="width: 200px;margin-right: 10px;">
+                <label style="font-weight: bold; margin-right: 10px;">à: </label>
+                <input type="date" class="form-control mb-3" style="width: 200px;">
+            </template>
+            
+            <input v-else  type="search" placeholder="Rechercher une demande" class="form-control mb-3" style="width: 250px; margin-right: 10px;">
         </div>
+
 
         <!-- Tableau des demandes à valider -->
         <div class="table_block_list">
         <Table 
             :columns="columns" 
             :rows="liste_demandes_a_valider" 
-            :type_but_link="true" but_link_path="validation/" name_but_action="Voir"
+            :type_but_link="true" but_link_path="finance/" name_but_action="Voir"
         /> 
         </div>
     </div>
@@ -68,4 +81,7 @@
         object: 'Réparation d’équipement',
     },
     ];
+
+    /* DATA */
+    const choix_filtre = ref('num');
     </script>

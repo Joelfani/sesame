@@ -3,12 +3,15 @@
     <div class="demandes_validation_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>HISTORIQUE DES VALIDATIONS</h1>
+            <h1>HISTORIQUE DES VALIDATIONS DES ACHATS</h1>
         </div>
 
         <!-- Champ de recherche -->
-        <div class="d-flex">
-            <input type="search" placeholder="Rechercher une demande" class="form-control mb-3">
+        <div class="d-flex align-items-center">
+            <label style="font-weight: bold; margin-right: 10px;">Filtrer par date de: </label>
+            <input type="date" class="form-control mb-3" style="width: 200px;margin-right: 10px;">
+            <label style="font-weight: bold; margin-right: 10px;">à: </label>
+            <input type="date" class="form-control mb-3" style="width: 200px;">
         </div>
 
         <!-- Tableau des demandes à valider -->
@@ -27,9 +30,10 @@
 
     // Définition des colonnes du tableau
     const columns = [
-    { key: 'id', label: 'N°' },
+    { key: 'date', label: 'Date de modification' },
+    { key: 'id', label: 'N° d\'enregistrement de la demande' },
+    { key: 'id_item', label: 'N° de l\'article' },
     { key: 'status', label: 'Statut' },
-    { key: 'date', label: 'Date de la demande' },
     { key: 'object', label: 'Objet de la demande' },
     ];
 
@@ -37,24 +41,28 @@
     const liste_demandes_a_valider = [
     {
         id: 1,
+        id_item: '2',
         status: 'Validée',
         date: '2023-10-01',
         object: 'Achat de matériel informatique',
     },
     {
         id: 2,
-        status: 'Validée',
+        id_item: '5',
+        status: 'Rejetée',
         date: '2023-10-03',
         object: 'Demande de congé',
     },
     {
         id: 3,
-        status: 'Refusée',
+        id_item: '1',
+        status: 'Rejetée',
         date: '2023-10-04',
         object: 'Achat de fournitures de bureau',
     },
     {
         id: 4,
+        id_item: '3',
         status: 'Validée',
         date: '2023-10-06',
         object: 'Réparation d’équipement',
