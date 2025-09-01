@@ -5,7 +5,7 @@
                     <th  v-for="col in columns" :key="col.key" :style="getStyle(col)">
                     {{ col.label }}
                     </th>
-                    <th v-if="showActions">Actions</th>
+                    <th v-if="showActions" style="min-width:200px ;">Actions</th>
                 </tr>
             </thead>
             <!-- Si tableaux pas vide  -->
@@ -16,11 +16,11 @@
                         <template v-if="col.editable">
                             <select v-if="col.type == 'select'" class="form-control" v-model="rows[rowIndex][col.key]">
                                 <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
-                                <option v-if="col.autre" value="autre">Autre ...</option>
+                                <option v-if="col.autre" value="autre">Autre...</option>
                             </select>
                             <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rows[rowIndex][col.key]"></textarea>
                             <input v-else
-                                :value="col.key === 'total' ? (rows[rowIndex].qte * rows[rowIndex].prix) :col.key === 'total2' ? (rows[rowIndex].qte * rows[rowIndex].prix2): rows[rowIndex][col.key]"
+                                :value="col.key === 'totalR' ? (rows[rowIndex].qte * col.prixR) : 0"
                                 :type="col.type ? col.type : 'text'"
                                 :min="col.min? col.min : ''"
                                 class="form-control"
@@ -44,7 +44,7 @@
                                 <span v-if="item.etat == 1" style="color: #29a825;">Validé</span>
                                 <span v-if="item.etat == 2" style="color: red;">Rejeter</span>
                                 <div v-if="item.etat == 0">
-                                    <button  v-for="action in actions" :key="action.label" :class="'btn btn-'+action.color">{{ action.label }}</button>
+                                    <button  v-for="action in actions" :key="action.label" :class="'btn btn-'+action.color" style="margin-bottom: 10px;">{{ action.label }}</button>
                                 </div>
                             </div>
                         </div>

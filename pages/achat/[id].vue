@@ -27,7 +27,8 @@
             :but_Validation="true"
             :actions ="[
                 { label: 'Valider', color: 'success' }, 
-                { label: 'Rejeter', color: 'secondary' }
+                { label: 'Rejeter', color: 'secondary' },
+                { label: 'Ajouter Document', color: 'dark' },
                 ]"
         />
         </div>
@@ -41,11 +42,19 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
     // Définition des colonnes du tableau
     const columns = [
     ...tableTete,
-    { key: 'code', label: 'Imputation analytique',editable: true, type: 'select', options: [
-        { value: 'code1', label: 'Code 1' },
-        { value: 'code2', label: 'Code 2' },
-        { value: 'code3', label: 'Code 3' },
-    ]}];
+    { key: 'code', label: 'Imputation analytique'},
+    { key: "fournisseur2", label: "Fournisseur Réel",type:'select',
+            options: [
+                { value: 'Fournisseur A', label: 'Fournisseur A' },
+                { value: 'Fournisseur B', label: 'Fournisseur B' },
+                { value: 'Fournisseur C', label: 'Fournisseur C' }
+            ],
+            autre: true,
+            editable: true,
+        },
+    { key: 'prixR', label: 'Prix Réel',editable: true,min:1, type: 'number' },
+    { key: 'totalR', label: 'Montant Réel',editable: true,min:1, type: 'number' },
+    ];
 
     // Données d'exemple pour le tableau
     const demande_details = [
@@ -60,6 +69,7 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         delai: '2023-10-15',
         commentaire: 'Urgent pour le département IT',
         total: 3000,
+        code: 'code1',
         etat: 0
     },
     {
@@ -73,6 +83,7 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         delai: '2023-10-20',
         commentaire: 'Compatible avec les ordinateurs existants',
         total: 600,
+        code: 'code2',
         etat: 1
     },
     {
@@ -86,6 +97,7 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         delai: '2023-10-10',
         commentaire: 'Pour améliorer le confort au travail',
         total: 250,
+        code: 'code3',
         etat: 2
     },
     {
@@ -99,6 +111,7 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         delai: '2023-10-12',
         commentaire: 'Pour améliorer la précision',
         total: 150,
+        code: 'code4',
         etat: 4
     }
     ];

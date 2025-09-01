@@ -27,7 +27,8 @@
             :but_Validation="true"
             :actions ="[
                 { label: 'Valider', color: 'success' }, 
-                { label: 'Rejeter', color: 'secondary' }
+                { label: 'Rejeter', color: 'secondary' },
+                { label: 'Ajouter Document', color: 'dark' },
                 ]"
         />
         </div>
@@ -45,7 +46,18 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         { value: 'code1', label: 'Code 1' },
         { value: 'code2', label: 'Code 2' },
         { value: 'code3', label: 'Code 3' },
-    ]}];
+    ]},
+    { key: "fournisseur2", label: "Fournisseur Réel",type:'select',
+            options: [
+                { value: 'Fournisseur A', label: 'Fournisseur A' },
+                { value: 'Fournisseur B', label: 'Fournisseur B' },
+                { value: 'Fournisseur C', label: 'Fournisseur C' }
+            ],
+            editable: true,
+        },
+    { key: 'prix2', label: 'Prix Réel',editable: true, type: 'number' },
+    { key: 'total2', label: 'Montant Réel',editable: true, type: 'number' },
+    ];
 
     // Données d'exemple pour le tableau
     const demande_details = [

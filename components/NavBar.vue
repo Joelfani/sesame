@@ -14,6 +14,12 @@
                     <NuxtLink class="nav-link btn btn-light" to="/validation">Mes validations</NuxtLink>
                 </li>
                 <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/achat">Mes achats</NuxtLink>
+                </li>
+                <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/finance">B.C / A.F.E</NuxtLink>
+                </li>
+                <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Mes fournisseur</NuxtLink>
                 </li>
                 <li class="nav-item">
