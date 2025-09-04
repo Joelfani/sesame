@@ -17,11 +17,13 @@
                     v-if="input.type === 'select'"
                     class="form-control"
                     :name="input.id"
+                    :value="input.value"
                     v-model="formData[input.id]"
                     :required="input.required ?? false"
                     :disabled="input.disabled ?? false "
+                    :placeholder="input.placeholder"
                 >
-                    <option v-if="input.etat_option_login" :value="''" :disabled="true" :selected="true" :hidden="true">Sélectionner une catégorie</option>
+                    <option v-if="input.etat_option_login" :disabled="true" :selected="true" :hidden="true">Sélectionner {{ input.option_label }}</option>
                     <option v-for="option in input.options" :key="option.value" :value="option.value">
                         {{ option.text }}
                     </option>
@@ -29,7 +31,14 @@
             </div>
 
             <hr  v-if="hr_style"/>
-            <button class="btn" type="submit">{{ label_button }}</button>            
+            <div v-if="connexion">
+                <button class="btn con" type="submit">{{ label_button }}</button> 
+                <NuxtLink to="/register" class="btn ins">S'inscrire</NuxtLink>
+            </div>
+            <div v-else>
+                <button class="btn btn-primary con2" type="submit">{{ label_button }}</button> 
+                <NuxtLink to="/" class="btn ins">Se connecter</NuxtLink>
+            </div>
         </div>
     </form>
 </template>
@@ -51,6 +60,10 @@ export default {
             default: true
         },
         etat_option_login: {
+            type: Boolean,
+            default: false
+        },
+        connexion: {
             type: Boolean,
             default: false
         }
@@ -83,13 +96,32 @@ input,select{
     height: 3.5rem;
     background: #ffffffb7;
 }
-.btn{
-    margin: 1.25rem;
+.con{
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
     color: white;
+    width: 90%;
     background-color: #43b02ab4;
+    
 }
-.btn:hover{
+.con:hover{
     background-color: #43b02a;
+}
+.con2{
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
+    width: 90%;
+}
+.ins{
+    color: #000;
+    
+    margin-left: 1.25rem;
+    text-decoration: none;
+    border: 1px solid #000;
+    border-radius: 2px;
+}
+.ins:hover{
+    color: #eee;
 }
 input, select, textarea {
     margin-bottom: 0.8rem;

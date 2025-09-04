@@ -2,13 +2,12 @@
     <div class="login-font">
         <div class="login">
             <img class="logo_login" src="/public/logo.png" alt="">
-            <h1>Veuillez-vous connecter</h1>
+            <h1>Inscriverez-vous</h1>
             <FormLogin
                 :inputs="input"
-                label_button="Se connecter"
+                label_button="S'inscrire"
                 :hr_style="false"
                 :modal_form="false"
-                :connexion="true"
                 @submit="send_connexion"
             /> 
         </div>
@@ -18,7 +17,7 @@
 <script setup>
 
 import '~/assets/css/loginPage.css'
-//import { ref } from 'vue'
+import { ref } from 'vue'
 //import api from '~/utils/api.js'
 //DATA //
 /*const categories = ref([
@@ -28,7 +27,10 @@ import '~/assets/css/loginPage.css'
     { id: 3, name_ctg: 'Resposable finance' },
     { id: 4, name_ctg: 'Controlleur de gestion' },
 ])*/
-
+const genres = ref([
+    { id: 'M', name_genre: 'Homme' },
+    { id: 'F', name_genre: 'Femme' },
+])
 // COMPUTED //
 const input = computed(() => [
     /*{
@@ -42,10 +44,33 @@ const input = computed(() => [
         etat_option_login: true
     },*/
     {
+        id: 'full_name',
+        type: 'text',
+        placeholder: 'Nom complet',
+        required: true
+    },
+    {
+        id: 'username',
+        type: 'text',
+        placeholder: 'Nom d\'utilisateur ( ex: Paul )',
+        required: true
+    },
+    {
         id: 'email',
         type: 'email',
         placeholder: 'Email',
         required: true
+    },
+    {
+        id: 'genre',
+        type: 'select',
+        options: genres.value.map(genre => ({
+        value: genre.id,
+        text: genre.name_genre
+        })),
+        required: true,
+        etat_option_login: true,
+        option_label: 'le genre'
     },
     {
         id: 'password',
