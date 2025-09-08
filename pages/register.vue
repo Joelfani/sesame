@@ -8,10 +8,12 @@
                 label_button="S'inscrire"
                 :hr_style="false"
                 :modal_form="false"
-                @submit="send_connexion"
+                @submit="send_register"
             /> 
         </div>
+        <Alert/>
     </div>
+    
 </template>
 
 <script setup>
@@ -50,7 +52,7 @@ const input = computed(() => [
         required: true
     },
     {
-        id: 'username',
+        id: 'name_user',
         type: 'text',
         placeholder: 'Nom d\'utilisateur ( ex: Paul )',
         required: true
@@ -60,7 +62,7 @@ const input = computed(() => [
         type: 'email',
         placeholder: 'Email',
         required: true
-    },
+    }, 
     {
         id: 'genre',
         type: 'select',
@@ -85,5 +87,8 @@ definePageMeta({
     layout: false // No layout for this page
 });
 
-
+const send_register = async (formData) =>{
+    const verifie_user = await supabase.from('users').select('email').eq('email', formData.email).single()
+    
+}
 </script>

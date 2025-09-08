@@ -1,4 +1,6 @@
-// plugins/supabaseService.ts
+// ceci est comme un fichier pour centraliser les appels à une table spécifique de supabase
+
+
 import { useNuxtApp } from '#app'
 
 export const useSupabaseTable = (tableName: string) => {

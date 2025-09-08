@@ -14,7 +14,7 @@
         <div class="table_block_list">
             <Table :columns="columns" :rows="liste_demande" :type_but_link="true" but_link_path="demande/" name_but_action="Voir"/>
         </div>
-        
+        <Alert/>
     </div>
     
     

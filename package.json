@@ -10,7 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.56.1",
+    "@supabase/supabase-js": "^2.57.0",
     "axios": "^1.11.0",
     "bootstrap": "^5.3.7",
     "nuxt": "^3.17.7",
