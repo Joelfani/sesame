@@ -1,7 +1,30 @@
 <template>
-    <div class="alert alert-success alert-dismissible fade show">
+    <div class="alert alert-dismissible fade show" :class="`alert-${type}`" role="alert" >
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        <strong>Success!</strong> 
-        <p>This alert box could indicate a successful or positive action.</p>
+        <strong>{{ title }}</strong> 
+        <p>{{ message }}</p>
     </div>
 </template>
+<script setup>
+// Props
+const props = defineProps({
+    type: {
+        type: String,
+        default: ''
+    },
+    show: {
+        type: Boolean,
+        default: false
+    }
+    ,
+    message: {
+        type: String,
+        default: ''
+    },
+    title: {
+        type: String,
+        default: ''
+    }
+})
+
+</script>

@@ -11,15 +11,15 @@
                 @submit="send_register"
             /> 
         </div>
-        <Alert/>
+        <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
-    
 </template>
 
 <script setup>
 
 import '~/assets/css/loginPage.css'
 import { ref } from 'vue'
+const { $supabase } = useNuxtApp()
 //import api from '~/utils/api.js'
 //DATA //
 /*const categories = ref([
@@ -33,6 +33,12 @@ const genres = ref([
     { id: 'M', name_genre: 'Homme' },
     { id: 'F', name_genre: 'Femme' },
 ])
+const alert = ref({
+    show: false,
+    message: '',
+    title: '',
+    type: '' // success, error, warning, info
+});
 // COMPUTED //
 const input = computed(() => [
     /*{
@@ -88,7 +94,74 @@ definePageMeta({
 });
 
 const send_register = async (formData) =>{
-    const verifie_user = await supabase.from('users').select('email').eq('email', formData.email).single()
+    const verifie_user = await $supabase.from('users').select('email').eq('email', formData.email).single()
+    if(verifie_user.data){
+        alert.value = {
+            show: true,
+            message: 'Cet e-mail est déjà utilisé par un autre utilisateur !',
+            type: 'danger',
+            title: 'Oups!'
+        };
+    }
+    else{
+        try {
+            // Enregistrer l'utilisateur dans auth.users
+            const { data, error: authError } = await $supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    emailRedirectTo: 'http://localhost:3000/'
+                }
+            })
+        if(authError) throw authError
+        const user = data.user // récupérer l'id de l'utilisateur
+
+        // Modifier l'utilisateur dans public.users
+        const { error: updateError } = await $supabase
+            .from('users')
+            .update({
+                name_user: formData.name_user,
+                full_name: formData.full_name,
+                genre: formData.genre,
+                sesame: true
+            })
+            .eq('id', user.id)
+        if(updateError) throw updateError
+        alert.value = {
+            show: true,
+            message: 'Inscription effectuée avec succès ! Veuillez vérifier votre e-mail pour confirmer votre inscription.',
+            type: 'success',
+            title: 'Bravo !'
+        }
+        } catch (error) {
+            if (error.code === 'weak_password') {
+                alert.value = {
+                    show: true,
+                    message: 'Le mot de passe doit contenir au moins 6 caractères.',
+                    type: 'danger',
+                    title: 'Oups!'
+                };
+            }
+            else if (error.code === 'email_address_invalid') {
+                alert.value = {
+                    show: true,
+                    message: 'L\'adresse e-mail est invalide.',
+                    type: 'danger',
+                    title: 'Oups!'
+                };
+            }
+            else {
+                alert.value = {
+                    show: true,
+                    message: 'Erreur lors de l\'ajout de l\'utilisateur.',
+                    type: 'danger',
+                    title: 'Oups!'
+                };
+            }
+            console.error('Error adding user:', error)
+        }
+    }
+    
     
 }
 </script>

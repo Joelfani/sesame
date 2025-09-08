@@ -166,8 +166,9 @@ table {
 
 /*ALERT*/
 .alert{
-    position: absolute;
-    margin: 0;
-    z-index: 20;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050; 
 }
 
