@@ -1,4 +1,4 @@
-//importation de la fonction createClient depuis le SDK supabase pour connecter l'application à la base de données
+/*//importation de la fonction createClient depuis le SDK supabase pour connecter l'application à la base de données
 import { createClient } from '@supabase/supabase-js';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
@@ -23,4 +23,4 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
         supabase
         }
     }
-    })
+    })*/

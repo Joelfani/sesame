@@ -16,41 +16,26 @@
 </template>
 
 <script setup>
-
 import '~/assets/css/loginPage.css'
-import { ref } from 'vue'
-const { $supabase } = useNuxtApp()
-//import api from '~/utils/api.js'
-//DATA //
-/*const categories = ref([
 
-    { id: 1, name_ctg: 'Colaborateur' },
-    { id: 2, name_ctg: 'Resposanble achat' },
-    { id: 3, name_ctg: 'Resposable finance' },
-    { id: 4, name_ctg: 'Controlleur de gestion' },
-])*/
+// Utilisation du module @nuxtjs/supabase
+const supabase = useSupabaseClient()
+
+//DATA //
 const genres = ref([
-    { id: 'M', name_genre: 'Homme' },
-    { id: 'F', name_genre: 'Femme' },
+    { id: 'h', name_genre: 'Homme' },
+    { id: 'f', name_genre: 'Femme' },
 ])
+
 const alert = ref({
     show: false,
     message: '',
     title: '',
     type: '' // success, error, warning, info
-});
+})
+
 // COMPUTED //
 const input = computed(() => [
-    /*{
-        id: 'ctg',
-        type: 'select',
-        options: categories.value.map(category => ({
-        value: category.id,
-        text: category.name_ctg
-        })),
-        required: true,
-        etat_option_login: true
-    },*/
     {
         id: 'full_name',
         type: 'text',
@@ -73,8 +58,8 @@ const input = computed(() => [
         id: 'genre',
         type: 'select',
         options: genres.value.map(genre => ({
-        value: genre.id,
-        text: genre.name_genre
+            value: genre.id,
+            text: genre.name_genre
         })),
         required: true,
         etat_option_login: true,
@@ -91,33 +76,47 @@ const input = computed(() => [
 // METHODS //
 definePageMeta({
     layout: false // No layout for this page
-});
+})
+const alertPop = (message,type,title) =>{
+    alert.value = {
+        show: true,
+        message: message,
+        title: title,
+        type: type
+    };
+    setTimeout(() => {
+        alert.value.show = false;
+    }, 5000);
+}
+const send_register = async (formData) => {
+    try {
+        // Vérifier si l'utilisateur existe déjà
+        const { data: existingUser } = await supabase
+            .from('users')
+            .select('email')
+            .eq('email', formData.email)
+            .single()
+        
+        if (existingUser) {
+            alertPop('Un utilisateur avec cette adresse e-mail existe déjà.','danger','Oups!')
+            return
+        }
 
-const send_register = async (formData) =>{
-    const verifie_user = await $supabase.from('users').select('email').eq('email', formData.email).single()
-    if(verifie_user.data){
-        alert.value = {
-            show: true,
-            message: 'Cet e-mail est déjà utilisé par un autre utilisateur !',
-            type: 'danger',
-            title: 'Oups!'
-        };
-    }
-    else{
-        try {
-            // Enregistrer l'utilisateur dans auth.users
-            const { data, error: authError } = await $supabase.auth.signUp({
-                email: formData.email,
-                password: formData.password,
-                options: {
-                    emailRedirectTo: 'http://localhost:3000/'
-                }
-            })
-        if(authError) throw authError
+        // Enregistrer l'utilisateur dans auth.users
+        const { data, error: authError } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+            options: {
+                emailRedirectTo: 'http://localhost:3000/'
+            }
+        })
+
+        if (authError) throw authError
+        
         const user = data.user // récupérer l'id de l'utilisateur
 
-        // Modifier l'utilisateur dans public.users
-        const { error: updateError } = await $supabase
+        // Mettre à jour l'utilisateur dans public.users
+        const { error: updateError } = await supabase
             .from('users')
             .update({
                 name_user: formData.name_user,
@@ -126,42 +125,29 @@ const send_register = async (formData) =>{
                 sesame: true
             })
             .eq('id', user.id)
-        if(updateError) throw updateError
-        alert.value = {
-            show: true,
-            message: 'Inscription effectuée avec succès ! Veuillez vérifier votre e-mail pour confirmer votre inscription.',
-            type: 'success',
-            title: 'Bravo !'
-        }
-        } catch (error) {
-            if (error.code === 'weak_password') {
-                alert.value = {
-                    show: true,
-                    message: 'Le mot de passe doit contenir au moins 6 caractères.',
-                    type: 'danger',
-                    title: 'Oups!'
-                };
-            }
-            else if (error.code === 'email_address_invalid') {
-                alert.value = {
-                    show: true,
-                    message: 'L\'adresse e-mail est invalide.',
-                    type: 'danger',
-                    title: 'Oups!'
-                };
-            }
-            else {
-                alert.value = {
-                    show: true,
-                    message: 'Erreur lors de l\'ajout de l\'utilisateur.',
-                    type: 'danger',
-                    title: 'Oups!'
-                };
-            }
-            console.error('Error adding user:', error)
+
+        if (updateError) throw updateError
+
+        alertPop('Inscription réussie! Veuillez vérifier votre e-mail pour confirmer votre compte.','success','Succès!')
+
+    } catch (error) {
+        console.error('Error during registration:', error)
+        
+        // Gestion des erreurs spécifiques
+        if (error.code === 'weak_password') {
+
+            alertPop('Le mot de passe doit avoir au moins 6 caractères.','danger','Oups!')
+
+        } else if (error.code === 'email_address_invalid') {
+
+            alertPop('L\'adresse e-mail est invalide.','danger','Oups!')
+
+        } else if (error.message?.includes('User already registered')) {
+            alertPop('Un utilisateur avec cette adresse e-mail existe déjà.','danger','Oups!')
+            
+        } else {
+            alertPop('Une erreur est survenue lors de l\'inscription. Veuillez réessayer plus tard.','danger','Oups!')
         }
     }
-    
-    
 }
 </script>

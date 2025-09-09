@@ -1,6 +1,5 @@
 <template>
-    <div class="alert alert-dismissible fade show" :class="`alert-${type}`" role="alert" >
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="alert fade show" :class="`alert-${type}`" role="alert" >
         <strong>{{ title }}</strong> 
         <p>{{ message }}</p>
     </div>

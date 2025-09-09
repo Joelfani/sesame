@@ -32,11 +32,11 @@
 
             <hr  v-if="hr_style"/>
             <div v-if="connexion">
-                <button class="btn con" type="submit">{{ label_button }}</button> 
+                <button class="btn con" type="submit" :disabled="loading">{{ label_button }}</button> 
                 <NuxtLink to="/register" class="btn ins">S'inscrire</NuxtLink>
             </div>
             <div v-else>
-                <button class="btn btn-primary con2" type="submit">{{ label_button }}</button> 
+                <button class="btn btn-primary con2" type="submit" :disabled="loading">{{ label_button }}</button> 
                 <NuxtLink to="/" class="btn ins">Se connecter</NuxtLink>
             </div>
         </div>
@@ -64,6 +64,10 @@ export default {
             default: false
         },
         connexion: {
+            type: Boolean,
+            default: false
+        },
+        loading: {
             type: Boolean,
             default: false
         }

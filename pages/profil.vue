@@ -5,9 +5,9 @@
                 <img src="/public/avatar/h5.png" alt="Avatar" class="avatar-image">
             </div>
             <div class="name_email">
-                <h4>TSARAFANIRY Tahina Joel</h4>
-                <p>joel.tsarafaniry@iecd.org</p>
-                <p>Responsable informatique</p>
+                <h4>Bienvenue {{ userStore.name_user }}</h4>
+                <p>{{ userStore.email }}</p>
+                <p>{{ userStore.resp }}</p>
                 <div v-if="btn_modifier == 'Enregistrer'" class="change_avatar d-flex align-items-center gap-2">
                     <div v-for="n in 5" :key="n" class="d-flex flex-column align-items-center gap-2">
                         <img :src="'/avatar/'+ type_avatar + n + '.png'" alt="Avatar" class="avatar-image-change" />
@@ -38,7 +38,7 @@
                             <input type="text" class="form-control" value="034 12 345 67" :disabled="disabled">
                         </div>
                         <div class="col">
-                            <label class="label">Fonction</label>
+                            <label class="label">Fonction {{ userStore.genre }}</label>
                             <input type="text" class="form-control" value="Responsable informatique" :disabled="disabled">    
                         </div>
 
@@ -47,7 +47,7 @@
                         <div class="col">
                             <label class="label">Genre</label>
                             <select name="genre" class="form-select" :disabled="disabled" v-model="genre">
-                                <option value="Homme" selected>Homme</option>
+                                <option value="Homme" >Homme</option>
                                 <option value="Femme">Femme</option>
                             </select>
                         </div>
@@ -102,13 +102,16 @@
     </div>
 </template>
 <script setup>
+//COMPUTED
+const userStore = useUserStore();
+
 //DATA
 const selectedAvatar = ref(5);
 const checkbox = ref(true);
 const btn_modifier = ref("Modifier");
 const disabled = ref(true);
-const genre = ref("Homme");
-const type_avatar = ref('h');
+const genre = ref();
+const type_avatar = ref();
 const superieur = ref("idReponsable1");
 
 // METHODS
