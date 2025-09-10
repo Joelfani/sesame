@@ -24,7 +24,7 @@ import { useUserStore } from "~/stores/user"
                         .from('users')
                         .select('*')
                         .eq('id', user.value.id)
-                        .single()
+                        .maybeSingle()
                     
                     if (userData) {
                         userStore.setUser(userData)

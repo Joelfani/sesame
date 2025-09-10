@@ -1,8 +1,8 @@
 <template>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-sm navbar-light fixed-top justify-content-center">
-        <div class="container">
-            <NuxtLink to="/demande" class="navbar-brand centre">
+    <nav class="navbar navbar-expand-sm navbar-light fixed-top">
+        <div class="container-fluid">
+            <NuxtLink to="/demande" class="navbar-brand centre" style="margin-left: 5%;">
                 <img class="logo_main_page" src="/logo.png">
             </NuxtLink>
 
@@ -21,9 +21,6 @@
                 </li>
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Mes fournisseur</NuxtLink>
-                </li>
-                <li class="nav-item">
-                    <NuxtLink class="nav-link btn btn-light" to="/profil">Mon profil</NuxtLink>
                 </li>
                 <div class="notification" @click="afficher_notif">
                     <div class="point_notif"></div>
@@ -58,6 +55,12 @@
                     </div>
                     
                 </div>
+                <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/profil">
+                        <img :src="`/avatar/${userStore.genre}${userStore.avatar}.png`" alt="Avatar" class="avatar-image-change">
+                    </NuxtLink>
+                </li>
+                
             </ul>
             
         </div>
@@ -68,7 +71,16 @@
 import '~/assets/css/navbar.css'
 
 import { ref } from 'vue';
+//IMPORT
+
+// Store
+const userStore = useUserStore()
+
+
+//DATA
 const notif = ref(false);
+
+//METHODS
 const afficher_notif = () => {
     notif.value = !notif.value;
 };

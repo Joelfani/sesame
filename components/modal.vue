@@ -33,7 +33,6 @@ export default {
         },
         mini_title: {
             type: String,
-            default: ''
         }
     }
 }

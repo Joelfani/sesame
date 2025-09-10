@@ -46,13 +46,43 @@
                                 <div v-if="item.etat == 0">
                                     <button  v-for="action in actions" :key="action.label" :class="'btn btn-'+action.color" style="margin-bottom: 10px;">{{ action.label }}</button>
                                 </div>
+                                
+                            </div>
+                            <!-- Si pas de validation mais modal -->
+                            <div v-else>
+                                <button  
+                                    v-for="action in actions" 
+                                    :key="action.label" 
+                                    :class="'btn btn-'+action.color" 
+                                    data-bs-toggle="modal" 
+                                    :data-bs-target="action.type_modal == 1 ? '#mod' + item.id : '#sup' + item.id" 
+                                    style="margin-bottom: 10px;">
+                                    {{ action.label }}
+                            
+                                </button>
                             </div>
                         </div>
+                        <!-- Si la colonne est normal sans validation mais modal -->
                         <div v-else>
                             <slot name="actions" :item="item"></slot>
                         </div>
                         
                     </td>
+                    <!-- Modal de modification type 1 -->
+                    <Modal :id = "'mod'+item.id" :title="'Modifier '+title_modal_edit">
+                        <slot name="modal1" :item="item"></slot>
+                    </Modal>
+                    <!-- Modal de suppression type 2 -->
+                    <Modal :id = "'sup'+item.id" title="ÊTES-VOUS SÛR DE VOULOIR SUPPRIMER ?">
+                        <div class="text-center">
+                            <h5 style="color: red">Cette action est irréversible !</h5>
+                            <hr />
+                            <button class="btn btn-danger" data-bs-dismiss="modal" @click="handleDelete">
+                                Supprimer
+                            </button>
+                            <button class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                        </div>
+                    </Modal>
                 </tr> 
                 <tr v-if="rows.length <= 0">
                     <td colspan="100%" class="text-center">Aucune donnée disponible</td>
@@ -77,6 +107,7 @@
                             v-model="rowsInput[rowIndex][col.key]"
                         />
                     </td>
+                    <!-- Bouton supprimer pour add new item in the purchase table -->
                     <td v-if="showActions">
                         <button class="btn btn-danger" @click="removeRow(rowIndex)">Supprimer</button>
                     </td>
@@ -142,6 +173,13 @@ const props = defineProps({
     but_Validation: {
         type: Boolean,
         default: false
+    },
+    modal_but: {
+        type: Boolean,
+        default: false
+    },
+    title_modal_edit: {
+        type: String,
     }
 })
 //WATCH//
