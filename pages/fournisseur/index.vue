@@ -33,10 +33,22 @@
                     { label: 'Supprimer', color: 'danger', type_modal: 2 },
                 ]"
                 title_modal_edit="ce fournisseur"
-                @edit="handleEdit"
+                tableDelete="fournisseurs"
+                @recovery_data="recovery_data"
                 @delete="handleDelete"
+
             >
-                <template #modal1="{ item }">{{ item.nom }}</template>
+                <!-- Modal de modification -->
+                <template #modal1="{ item }">
+                    <FormComponent
+                        :inputs="inputModifier"
+                        label_button="Modifier"
+                        class_btn="btn btn-primary"
+                        :modal_form="true"
+                        :loading="isLoading"
+                        @submit="ModItem"
+                    />
+                </template>
             </Table>
         </div>
 
@@ -47,24 +59,22 @@
                 label_button="Ajouter"
                 class_btn="btn btn-success"
                 :modal_form="true"
+                :loading="isLoading"
                 @submit="addFournisseur"
             />
         </Modal>
 
         <!-- Alert pour les notifications -->
-        <div v-if="alert.show" class="alert-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-            <div :class="`alert alert-${alert.type} alert-dismissible fade show`" role="alert">
-                <strong>{{ alert.title }}</strong> {{ alert.message }}
-                <button type="button" class="btn-close" @click="hideAlert"></button>
-            </div>
-        </div>
+        <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
 </template>
 
 <script setup>
+
+//imports
+//import { Modal } from 'bootstrap'
 // Services
 const supabase = useSupabaseClient()
-const fournisseurTable = useSupabaseTable('fournisseurs')
 
 // Store
 const userStore = useUserStore()
@@ -85,7 +95,6 @@ const alert = ref({
 
 // Définition des colonnes du tableau
 const columns = [
-    { key: 'id', label: 'N°' },
     { key: 'nom', label: 'Nom du fournisseur' },
     { key: 'contact', label: 'Contact' },
     { key: 'email', label: 'Email' },
@@ -93,7 +102,7 @@ const columns = [
     { key: 'adresse', label: 'Adresse' },
     { key: 'type', label: 'Type de produits' },
 ]
-
+//COMPUTED
 // Configuration du formulaire d'ajout
 const fournisseurInputs = computed(() => [
     {
@@ -148,22 +157,65 @@ const fournisseurInputs = computed(() => [
         placeholder: 'Ex: Électronique, Alimentaire, etc.',
     }
 ])
-
+// Configuration du formulaire de modification
+const initialValuesMod = ref([])
+const inputModifier = computed(() => [
+    {
+        id: 'nom',
+        type: 'text',
+        label: 'Nom du fournisseur',
+        placeholder: 'Ex: Société ABC',
+        required: true,
+        initialValue: initialValuesMod.value.nom || ''
+    },
+    {
+        id: 'contact',
+        type: 'text',
+        label: 'Contact',
+        placeholder: 'Ex: 034 12 345 67',
+        required: true,
+        initialValue: initialValuesMod.value.contact || ''
+    },
+    {
+        id: 'email',
+        type: 'email',
+        label: 'Email',
+        placeholder: 'contact@fournisseur.com',
+        required: true,
+        initialValue: initialValuesMod.value.email || ''   
+    },
+    {
+        id: 'contrat',
+        type: 'select',
+        label: 'Contrat',
+        required: true,
+        options: [
+            { value: 'Oui', text: 'Oui' },
+            { value: 'Non', text: 'Non' }
+        ],
+        initialValue: initialValuesMod.value.contrat || ''
+    },
+    {
+        id: 'adresse',
+        type: 'text',
+        label: 'Adresse',
+        placeholder: 'Adresse complète du fournisseur',
+        required: true,
+        initialValue:  initialValuesMod.value.adresse || ''
+    },
+    {   
+        id: 'type',
+        type: 'text',
+        label: 'Type de produits',
+        required: true,
+        placeholder: 'Ex: Électronique, Alimentaire, etc.',
+        initialValue: initialValuesMod.value.type || '' 
+    }
+])
 // METHODS
 
 // Charger la liste des fournisseurs
 const loadFournisseurs = async () => {
-    try{
-            const { data, error } = await supabase
-                .from('fournisseurs')
-                .select('*')
-                .order('id', { ascending: false });
-            if (error) throw error;
-            
-            fournisseurs.value = data;
-        }catch(err){
-            console.log(err);
-        }
     try {
         isLoading.value = true
         
@@ -179,7 +231,7 @@ const loadFournisseurs = async () => {
         
     } catch (error) {
         console.error('Erreur lors du chargement des fournisseurs:', error)
-        showAlert('Erreur lors du chargement des fournisseurs', 'Erreur', 'danger')
+        showAlert('Erreur lors du chargement des fournisseurs', 'Oups!', 'danger')
     } finally {
         isLoading.value = false
     }
@@ -190,20 +242,19 @@ const addFournisseur = async (formData) => {
     try {
         isLoading.value = true
         
-        // Validation des données
-        if (!formData.nom || !formData.contact || !formData.email) {
-            throw new Error('Tous les champs obligatoires doivent être remplis')
-        }
-        
         // Vérifier si le fournisseur existe déjà
-        const { data: existingFournisseur } = await fournisseurTable.getWhere({ 
-            email: formData.email 
-        })
-        
-        if (existingFournisseur && existingFournisseur.length > 0) {
+        const { data: existingFournisseur } = await supabase
+            .from('fournisseurs')
+            .select('*')
+            .eq('email', formData.email.trim().toLowerCase())
+            .limit(1)
+            .maybeSingle()
+            console.log('nombre',formData.email);
+            
+        if (existingFournisseur) {
+            showAlert('Un fournisseur avec cet email existe déjà', 'Oups!', 'danger')
             throw new Error('Un fournisseur avec cet email existe déjà')
         }
-        
         // Préparer les données à insérer
         const fournisseurData = {
             nom: formData.nom.trim(),
@@ -212,32 +263,25 @@ const addFournisseur = async (formData) => {
             contrat: formData.contrat,
             adresse: formData.adresse?.trim() || '',
             type: formData.type,
-            created_by: userStore.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            
         }
         
         // Insérer en base de données
-        const { data, error } = await fournisseurTable.insert(fournisseurData)
+        const { error } = await supabase
+            .from('fournisseurs')
+            .insert([fournisseurData])
         
         if (error) throw error
         
         // Actualiser la liste
         await loadFournisseurs()
         
-        // Fermer le modal
-        const modal = document.getElementById('addFournisseur')
-        const bsModal = bootstrap.Modal.getInstance(modal)
-        if (bsModal) {
-            bsModal.hide()
-        }
-        
         // Notification de succès
         showAlert('Fournisseur ajouté avec succès!', 'Succès', 'success')
         
     } catch (error) {
         console.error('Erreur lors de l\'ajout du fournisseur:', error)
-        showAlert(error.message || 'Erreur lors de l\'ajout du fournisseur', 'Erreur', 'danger')
+        showAlert(error.message || 'Erreur lors de l\'ajout du fournisseur', 'Oups!', 'danger')
     } finally {
         isLoading.value = false
     }
@@ -252,17 +296,56 @@ const filterFournisseurs = () => {
     
     const term = searchTerm.value.toLowerCase()
     filteredFournisseurs.value = fournisseurs.value.filter(fournisseur => 
-        fournisseur.nom?.toLowerCase().includes(term) ||
-        fournisseur.email?.toLowerCase().includes(term) ||
-        fournisseur.contact?.toLowerCase().includes(term) ||
-        fournisseur.type?.toLowerCase().includes(term)
+        fournisseur.nom?.toLowerCase().includes(term)
     )
+    console.log('filtered',filteredFournisseurs.value);
+    
 }
 
 // Gérer la modification
-const handleEdit = (fournisseur) => {
-    console.log('Modifier fournisseur:', fournisseur)
-    // Logique de modification à implémenter
+    //retrouver les données du fournisseur à modifier
+const recovery_data = (item) => {
+    initialValuesMod.value = item
+}
+    //modifier le fournisseur
+const ModItem = async (formData) => {
+    try {
+        isLoading.value = true
+        
+        // Vérifier si le fournisseur existe déjà
+        const { data: existingFournisseur } = await supabase
+            .from('fournisseurs')
+            .select('*')
+            .eq('email', formData.email.trim().toLowerCase())
+            .neq('id', initialValuesMod.value.id)
+            .limit(1)
+            .maybeSingle()            
+        if (existingFournisseur) {
+            showAlert('Un fournisseur avec cet email existe déjà', 'Oups!', 'danger')
+            throw new Error('Un fournisseur avec cet email existe déjà')
+        }
+
+        // Insérer en base de données
+        const { error } = await supabase
+            .from('fournisseurs')
+            .update([formData])
+            .eq('id', initialValuesMod.value.id)
+        
+        if (error) throw error
+        
+        // Actualiser la liste
+        await loadFournisseurs()
+        
+        // Notification de succès
+        showAlert('Fournisseur modifié avec succès!', 'Succès', 'success')
+        
+    } catch (error) {
+        console.error('Erreur lors de la modification du fournisseur:', error)
+        showAlert(error.message || 'Erreur lors de la modification du fournisseur', 'Oups!', 'danger')
+    } finally {
+        isLoading.value = false
+    }
+    
 }
 
 // Gérer la suppression
@@ -283,7 +366,7 @@ const handleDelete = async (fournisseur) => {
         
     } catch (error) {
         console.error('Erreur lors de la suppression:', error)
-        showAlert('Erreur lors de la suppression du fournisseur', 'Erreur', 'danger')
+        showAlert('Erreur lors de la suppression du fournisseur', 'Oups!', 'danger')
     }
 }
 
@@ -300,10 +383,6 @@ const showAlert = (message, title, type) => {
     setTimeout(() => {
         alert.value.show = false
     }, 5000)
-}
-
-const hideAlert = () => {
-    alert.value.show = false
 }
 
 // LIFECYCLE

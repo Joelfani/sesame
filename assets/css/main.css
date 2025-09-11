@@ -51,6 +51,7 @@ margin-bottom: 20px;
 .navbar-nav{
     position:relative;
 }
+
 .notification{
     position: relative;
     display: inline-block;
@@ -155,8 +156,8 @@ table {
     height: 100%;
 }
 .avatar-image-change {
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
 }
 .label {
@@ -169,7 +170,7 @@ table {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1050; 
+    z-index: 2000; 
 }
 
 /*MODAL*/
@@ -268,7 +269,7 @@ table {
 }
 
 
-input[type="file" i], input[type="text" i], input[type="number" i],input[type="date" i],input[type="time" i],input[type="password" i],input[type="email" i] {
+input[type="file" i], input[type="text" i], input[type="number" i],input[type="date" i],input[type="time" i],input[type="password" i],input[type="email" i],option,select {
     font-size: 11px;
 }
 
@@ -310,6 +311,22 @@ input[type="file" i], input[type="text" i], input[type="number" i],input[type="d
 {
     width: 600px;
     min-width: 400px;
+}
+
+/*loading*/
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 

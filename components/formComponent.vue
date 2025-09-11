@@ -51,8 +51,8 @@
             </div>
 
             <hr  v-if="hr_style"/>
-            <button :class="class_btn" type="submit">{{ label_button }}</button>            
-            <button v-if="modal_form" class="btn btn-light" data-dismiss="modal">Fermer</button>
+            <button :class="class_btn" type="submit" :disabled="loading">{{ label_button }}</button>            
+            <button v-if="modal_form" type="button" class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
         </div>
     </form>
 </template>
@@ -78,6 +78,10 @@ export default {
         hr_style: {
             type: Boolean,
             default: true
+        },
+        loading: {
+            type: Boolean,
+            default: false
         }
     },
     data() {

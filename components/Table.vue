@@ -55,7 +55,8 @@
                                     :key="action.label" 
                                     :class="'btn btn-'+action.color" 
                                     data-bs-toggle="modal" 
-                                    :data-bs-target="action.type_modal == 1 ? '#mod' + item.id : '#sup' + item.id" 
+                                    :data-bs-target="action.type_modal == 1 ? '#mod' + item.id : '#sup' + item.id"
+                                    @click="action.label == 'Modifier' ? $emit('recovery_data', item) : ''" 
                                     style="margin-bottom: 10px;">
                                     {{ action.label }}
                             
@@ -68,25 +69,8 @@
                         </div>
                         
                     </td>
-                    <!-- Modal de modification type 1 -->
-                    <Modal :id = "'mod'+item.id" :title="'Modifier '+title_modal_edit">
-                        <slot name="modal1" :item="item"></slot>
-                    </Modal>
-                    <!-- Modal de suppression type 2 -->
-                    <Modal :id = "'sup'+item.id" title="ÊTES-VOUS SÛR DE VOULOIR SUPPRIMER ?">
-                        <div class="text-center">
-                            <h5 style="color: red">Cette action est irréversible !</h5>
-                            <hr />
-                            <button class="btn btn-danger" data-bs-dismiss="modal" @click="handleDelete">
-                                Supprimer
-                            </button>
-                            <button class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
-                        </div>
-                    </Modal>
                 </tr> 
-                <tr v-if="rows.length <= 0">
-                    <td colspan="100%" class="text-center">Aucune donnée disponible</td>
-                </tr>
+                
             </tbody>
             <!-- Si tableau input vide -->
             <tbody v-if ="tableinputadd">
@@ -120,10 +104,38 @@
             </tbody>
 
         </table>
+
+        <!-- Si tableau vide faire une loading -->
+        <div v-if="rows.length <= 0 && !tableinputadd">
+            <Loading dataload="des données"></Loading>
+        </div>
+
+
+        <!-- Modal de modification type 1 -->
+        <Modal v-for="item in rows" :id = "'mod'+item.id" :title="'Modifier '+title_modal_edit">
+            <slot name="modal1" :item="item"></slot>
+        </Modal>
+        <!-- Modal de suppression type 2 -->
+        <Modal v-for="item in rows" :id = "'sup'+item.id" title="ÊTES-VOUS SÛR DE VOULOIR SUPPRIMER ?">
+            <div class="text-center">
+                <h5 style="color: red">Cette action est irréversible !</h5>
+                <hr />
+                <button class="btn btn-danger" data-bs-dismiss="modal" @click="deleteItem(item.id)">
+                    Supprimer
+                </button>
+                <button class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+            </div>
+        </Modal>
+
+        <!-- Alert pour les notifications -->
+        <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
+
+
 </template>
 <script setup>
 import { ref } from "vue";
-
+// Services
+const supabase = useSupabaseClient()
 // Props
 const props = defineProps({
     rows: {
@@ -180,10 +192,26 @@ const props = defineProps({
     },
     title_modal_edit: {
         type: String,
+    },
+    tableDelete: {
+        type: String,
+        default: ''
     }
 })
+// Déclaration des événements
+const emit = defineEmits(['recovery_data', 'delete'])
+
+// DATA
+
+// Alert system
+const alert = ref({
+    show: false,
+    message: '',
+    title: '',
+    type: '' // success, error, warning, info
+})
+
 //WATCH//
-import { watch } from 'vue';
 // Reactive variables
 const rowsInput = ref([]); // reactive pour Vue
 
@@ -209,7 +237,37 @@ const rowsInput = ref([]); // reactive pour Vue
             rowsInput.value[i].id = i + 1; // Réinitialiser les IDs
         }
     };
+    // Supprimer un élément
+    const deleteItem = async (id) => {
+        try {
+            const { error } = await supabase
+            .from(props.tableDelete)
+            .delete()
+            .eq('id', id);
 
+            if (error) throw error
+            showAlert('Élément supprimé avec succès', 'Succès', 'success')
+        }
+        catch (error) {
+            showAlert("Erreur lors de la suppression de l'élément', 'Oups!', 'danger'")
+            console.error('Error deleting item:', error)
+            throw error
+        }
+    };
+    // Afficher une alerte
+    const showAlert = (message, title, type) => {
+    alert.value = {
+        show: true,
+        message,
+        title,
+        type
+    }
+    
+    // Auto-hide après 5 secondes
+    setTimeout(() => {
+        alert.value.show = false
+    }, 5000)
+}
     // Condition sur le style
     const getStyle = (col) => {
         

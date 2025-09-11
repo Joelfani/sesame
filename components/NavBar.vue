@@ -6,7 +6,7 @@
                 <img class="logo_main_page" src="/logo.png">
             </NuxtLink>
 
-            <ul class="navbar-nav">
+            <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/demande">Mes demandes</NuxtLink>
                 </li>
@@ -22,10 +22,12 @@
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Mes fournisseur</NuxtLink>
                 </li>
-                <div class="notification" @click="afficher_notif">
-                    <div class="point_notif"></div>
-                    <img src="/public/icon/bell.png" alt="notification" class="notification_icon">
-                </div>
+                
+                <li class="nav-item">
+                    <div class="notification" @click="afficher_notif">
+                        <div class="point_notif"></div>
+                        <img src="/public/icon/bell.png" alt="notification" class="notification_icon">
+                    </div>
                 <div v-if="notif" class="list_notification">
                     <div class="fermer_notif"><img src="/public/icon/croix.png" alt="fermer_notif" style="height: 10px; width: 10px;" @click="afficher_notif"></div>
                     <div class="one_notif">
@@ -54,15 +56,15 @@
                         <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">23 Aout 2025</div>
                     </div>
                     
-                </div>
+                </div>                
+                </li>
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/profil">
                         <img :src="`/avatar/${userStore.genre}${userStore.avatar}.png`" alt="Avatar" class="avatar-image-change">
+                        <p style="font-weight: bold;">{{ userStore.name_user }}</p>
                     </NuxtLink>
                 </li>
-                
             </ul>
-            
         </div>
     </nav>
 </template>
