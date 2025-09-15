@@ -4,12 +4,11 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>LISTE DE TOUS LES FOURNISSEURS</h1>
             <div class="link_fournisseur">
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFournisseur">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFournisseur" @click="getInitialForm()">
                     Ajouter un fournisseur
                 </button>
             </div>
         </div>
-
         <!-- Champ de recherche -->
         <div class="d-flex align-items-center">
             <input 
@@ -21,21 +20,22 @@
                 @input="filterFournisseurs"
             >
         </div>
-
         <!-- Tableau des fournisseurs -->
         <div class="table_block_list">
             <Table
                 :columns="columns"
-                :rows="filteredFournisseurs"
+                :rows="searchTerm ? filteredFournisseurs : fournisseurs"
                 :type_but_modal="true"
                 :actions="[
                     { label: 'Modifier',  color: 'primary', type_modal: 1 },
                     { label: 'Supprimer', color: 'danger', type_modal: 2 },
                 ]"
                 title_modal_edit="ce fournisseur"
-                tableDelete="fournisseurs"
+                tableDelete="ses_fournisseurs"
+                :del_def="false"
                 @recovery_data="recovery_data"
                 @delete="handleDelete"
+                @load_data="loadFournisseurs"
 
             >
                 <!-- Modal de modification -->
@@ -78,7 +78,7 @@ const supabase = useSupabaseClient()
 
 // Store
 const userStore = useUserStore()
-
+const realtimeStore = useSubscribeStore()
 // DATA
 const fournisseurs = ref([])
 const filteredFournisseurs = ref([])
@@ -111,7 +111,7 @@ const fournisseurInputs = computed(() => [
         label: 'Nom du fournisseur',
         placeholder: 'Ex: Société ABC',
         required: true,
-        initialValue: ''
+        initialValue: addInitilialValues.value.nom
     },
     {
         id: 'contact',
@@ -119,7 +119,7 @@ const fournisseurInputs = computed(() => [
         label: 'Contact',
         placeholder: 'Ex: 034 12 345 67',
         required: true,
-        initialValue: ''
+        initialValue: addInitilialValues.value.contact    
     },
     {
         id: 'email',
@@ -157,6 +157,17 @@ const fournisseurInputs = computed(() => [
         placeholder: 'Ex: Électronique, Alimentaire, etc.',
     }
 ])
+const addInitilialValues = ref([])
+const getInitialForm = () => {
+    addInitilialValues.value = {
+        nom: '',
+        contact: '',
+        email: '',
+        contrat: '',
+        adresse: '',
+        type: ''
+    }
+}
 // Configuration du formulaire de modification
 const initialValuesMod = ref([])
 const inputModifier = computed(() => [
@@ -212,6 +223,8 @@ const inputModifier = computed(() => [
         initialValue: initialValuesMod.value.type || '' 
     }
 ])
+
+
 // METHODS
 
 // Charger la liste des fournisseurs
@@ -220,14 +233,15 @@ const loadFournisseurs = async () => {
         isLoading.value = true
         
         const { data, error } = await await supabase
-                .from('fournisseurs')
+                .from('ses_fournisseurs')
                 .select('*')
+                .eq('etat_del', false)
                 .order('id', { ascending: false });
         
         if (error) throw error
         
         fournisseurs.value = data || []
-        filteredFournisseurs.value = [...fournisseurs.value]
+        //filteredFournisseurs.value = [...fournisseurs.value]
         
     } catch (error) {
         console.error('Erreur lors du chargement des fournisseurs:', error)
@@ -239,17 +253,16 @@ const loadFournisseurs = async () => {
 
 // Ajouter un fournisseur
 const addFournisseur = async (formData) => {
+    
     try {
         isLoading.value = true
-        
         // Vérifier si le fournisseur existe déjà
         const { data: existingFournisseur } = await supabase
-            .from('fournisseurs')
+            .from('ses_fournisseurs')
             .select('*')
             .eq('email', formData.email.trim().toLowerCase())
             .limit(1)
             .maybeSingle()
-            console.log('nombre',formData.email);
             
         if (existingFournisseur) {
             showAlert('Un fournisseur avec cet email existe déjà', 'Oups!', 'danger')
@@ -268,17 +281,14 @@ const addFournisseur = async (formData) => {
         
         // Insérer en base de données
         const { error } = await supabase
-            .from('fournisseurs')
+            .from('ses_fournisseurs')
             .insert([fournisseurData])
         
         if (error) throw error
         
-        // Actualiser la liste
-        await loadFournisseurs()
-        
         // Notification de succès
         showAlert('Fournisseur ajouté avec succès!', 'Succès', 'success')
-        
+        getInitialForm()
     } catch (error) {
         console.error('Erreur lors de l\'ajout du fournisseur:', error)
         showAlert(error.message || 'Erreur lors de l\'ajout du fournisseur', 'Oups!', 'danger')
@@ -298,7 +308,6 @@ const filterFournisseurs = () => {
     filteredFournisseurs.value = fournisseurs.value.filter(fournisseur => 
         fournisseur.nom?.toLowerCase().includes(term)
     )
-    console.log('filtered',filteredFournisseurs.value);
     
 }
 
@@ -314,12 +323,13 @@ const ModItem = async (formData) => {
         
         // Vérifier si le fournisseur existe déjà
         const { data: existingFournisseur } = await supabase
-            .from('fournisseurs')
+            .from('ses_fournisseurs')
             .select('*')
             .eq('email', formData.email.trim().toLowerCase())
             .neq('id', initialValuesMod.value.id)
             .limit(1)
-            .maybeSingle()            
+            .maybeSingle()   
+                
         if (existingFournisseur) {
             showAlert('Un fournisseur avec cet email existe déjà', 'Oups!', 'danger')
             throw new Error('Un fournisseur avec cet email existe déjà')
@@ -327,14 +337,11 @@ const ModItem = async (formData) => {
 
         // Insérer en base de données
         const { error } = await supabase
-            .from('fournisseurs')
+            .from('ses_fournisseurs')
             .update([formData])
             .eq('id', initialValuesMod.value.id)
         
         if (error) throw error
-        
-        // Actualiser la liste
-        await loadFournisseurs()
         
         // Notification de succès
         showAlert('Fournisseur modifié avec succès!', 'Succès', 'success')
@@ -358,9 +365,6 @@ const handleDelete = async (fournisseur) => {
         const { error } = await fournisseurTable.delete({ id: fournisseur.id })
         
         if (error) throw error
-        
-        // Actualiser la liste
-        await loadFournisseurs()
         
         showAlert('Fournisseur supprimé avec succès!', 'Succès', 'success')
         
@@ -387,8 +391,28 @@ const showAlert = (message, title, type) => {
 
 // LIFECYCLE
 onMounted(async () => {
-    await loadFournisseurs()
+    
+    try {
+        await loadFournisseurs()        
+        // S'abonner aux changements avec une vérification
+        await nextTick() // Attendre que le DOM soit mis à jour
+        if (realtimeStore && typeof realtimeStore.subscribeToTable === 'function') {
+            realtimeStore.subscribeToTable('ses_fournisseurs', 'fournisseurs', fournisseurs, 'id', 'desc')
+        } else {
+            console.error('❌ Store realtime non disponible')
+        }
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation:', error)
+        showAlert('Erreur lors de l\'initialisation de la page', 'Erreur', 'danger')
+    }
 })
+
+onBeforeUnmount(() => {    
+    if (realtimeStore && typeof realtimeStore.unsubscribeFromTable === 'function') {
+        realtimeStore.unsubscribeFromTable('ses_fournisseurs', 'fournisseurs')
+    }
+})
+
 </script>
 
 <style scoped>

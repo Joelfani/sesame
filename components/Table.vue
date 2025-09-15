@@ -76,11 +76,11 @@
             <tbody v-if ="tableinputadd">
                 <tr v-for="(item, rowIndex) in rowsInput" :key="item.id">
                     <td v-for="col in columns" :key="col.key">
-                        <select v-if="col.type == 'select'" class="form-control" v-model="rowsInput[rowIndex][col.key]">
+                        <select v-if="col.type == 'select'" class="form-control" v-model="rowsInput[rowIndex][col.key]" @change="updateData">
                             <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
                             <option v-if="col.autre" value="autre">Autre ...</option>
                         </select>
-                        <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rowsInput[rowIndex][col.key]"></textarea>
+                        <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rowsInput[rowIndex][col.key]" @input="updateData"></textarea>
                         <input v-else
                             :value="col.key === 'total' ? (rowsInput[rowIndex].qte * rowsInput[rowIndex].prix) : rowsInput[rowIndex][col.key]"
                             :type="col.type ? col.type : 'text'"
@@ -89,6 +89,7 @@
                             :placeholder="col.placeholder ? col.placeholder : col.label"
                             :disabled="col.disabled ? col.disabled : false"
                             v-model="rowsInput[rowIndex][col.key]"
+                            @input="updateData"
                         />
                     </td>
                     <!-- Bouton supprimer pour add new item in the purchase table -->
@@ -120,7 +121,7 @@
             <div class="text-center">
                 <h5 style="color: red">Cette action est irréversible !</h5>
                 <hr />
-                <button class="btn btn-danger" data-bs-dismiss="modal" @click="deleteItem(item.id)">
+                <button class="btn btn-danger" data-bs-dismiss="modal" @click="del_def ? deleteItem(item.id) : deleteItem2(item.id)">
                     Supprimer
                 </button>
                 <button class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
@@ -133,9 +134,11 @@
 
 </template>
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
+
 // Services
 const supabase = useSupabaseClient()
+
 // Props
 const props = defineProps({
     rows: {
@@ -196,13 +199,17 @@ const props = defineProps({
     tableDelete: {
         type: String,
         default: ''
+    },
+    del_def:{
+        type: Boolean,
+        default: true
     }
 })
+
 // Déclaration des événements
-const emit = defineEmits(['recovery_data', 'delete'])
+const emit = defineEmits(['recovery_data', 'delete', 'load_data', 'update_table_data'])
 
 // DATA
-
 // Alert system
 const alert = ref({
     show: false,
@@ -211,13 +218,35 @@ const alert = ref({
     type: '' // success, error, warning, info
 })
 
-//WATCH//
 // Reactive variables
 const rowsInput = ref([]); // reactive pour Vue
 
+// WATCH pour surveiller les changements dans rowsInput
+watch(rowsInput, (newValue) => {
+    // Calculer les totaux automatiquement
+    newValue.forEach(row => {
+        if (row.qte && row.prix) {
+            row.total = row.qte * row.prix;
+        }
+    });
+    // Émettre les données vers le parent
+    emit('update_table_data', [...newValue]);
+}, { deep: true });
+
 // METHODES //
-    // Ajouter une nouvelle ligne vide
-    const addRowFunction = () => {
+// Méthode pour émettre les données vers le parent
+const updateData = () => {
+    // Calculer les totaux avant d'émettre
+    rowsInput.value.forEach(row => {
+        if (row.qte && row.prix) {
+            row.total = row.qte * row.prix;
+        }
+    });
+    emit('update_table_data', [...rowsInput.value]);
+};
+
+// Ajouter une nouvelle ligne vide
+const addRowFunction = () => {
     const newRow = {};
     props.columns.forEach((col) => {
         if(col.key === 'id') {
@@ -228,34 +257,66 @@ const rowsInput = ref([]); // reactive pour Vue
         }
     })
     rowsInput.value.push(newRow);
-    };
+    updateData(); // Émettre les données mises à jour
+};
 
-    // Supprimer une ligne
-    const removeRow = (index) => {
-        rowsInput.value.splice(index, 1);
-        for (let i = 0; i < rowsInput.value.length; i++) {
-            rowsInput.value[i].id = i + 1; // Réinitialiser les IDs
-        }
-    };
-    // Supprimer un élément
-    const deleteItem = async (id) => {
-        try {
-            const { error } = await supabase
-            .from(props.tableDelete)
-            .delete()
-            .eq('id', id);
+// Supprimer une ligne
+const removeRow = (index) => {
+    rowsInput.value.splice(index, 1);
+    for (let i = 0; i < rowsInput.value.length; i++) {
+        rowsInput.value[i].id = i + 1; // Réinitialiser les IDs
+    }
+    updateData(); // Émettre les données mises à jour
+};
 
-            if (error) throw error
-            showAlert('Élément supprimé avec succès', 'Succès', 'success')
-        }
-        catch (error) {
-            showAlert("Erreur lors de la suppression de l'élément', 'Oups!', 'danger'")
-            console.error('Error deleting item:', error)
-            throw error
-        }
-    };
-    // Afficher une alerte
-    const showAlert = (message, title, type) => {
+// Méthode pour exposer les données (utilisable par le parent via ref)
+const getTableData = () => {
+    return [...rowsInput.value];
+};
+
+// Exposer la méthode au parent
+defineExpose({
+    getTableData
+});
+
+// Supprimer un élément
+const deleteItem = async (id) => {
+    try {
+        const { error } = await supabase
+        .from(props.tableDelete)
+        .delete()
+        .eq('id', id);
+
+        if (error) throw error
+        showAlert('Élément supprimé avec succès', 'Succès', 'success')
+    }
+    catch (error) {
+        showAlert("Erreur lors de la suppression de l'élément", 'Oups!', 'danger')
+        console.error('Error deleting item:', error)
+        throw error
+    }
+};
+
+const deleteItem2 = async (id) => {
+    try {
+        const { error } =  await supabase
+        .from(props.tableDelete)
+        .update({ etat_del: true })
+        .eq('id', id);
+
+        if (error) throw error
+        showAlert('Élément supprimé avec succès', 'Succès', 'success')
+        emit('load_data')
+    }
+    catch (error) {
+        showAlert("Erreur lors de la suppression de l'élément", 'Oups!', 'danger')
+        console.error('Error deleting item:', error)
+        throw error
+    }
+};
+
+// Afficher une alerte
+const showAlert = (message, title, type) => {
     alert.value = {
         show: true,
         message,
@@ -268,20 +329,19 @@ const rowsInput = ref([]); // reactive pour Vue
         alert.value.show = false
     }, 5000)
 }
-    // Condition sur le style
-    const getStyle = (col) => {
-        
-            const defaultStyle = {
-                minWidth:   col.type === 'select' ? '200px' 
-                            : col.type === 'textarea'? '300px'
-                            : col.type === 'number' ? '145px'
-                            : col.type === 'date' ? '140px': '200px',
-            }
 
-            return {
-                ...defaultStyle,
-                ...(col.style || {} )
-            }
-            
-    };
+// Condition sur le style
+const getStyle = (col) => {
+    const defaultStyle = {
+        minWidth:   col.type === 'select' ? '200px' 
+                    : col.type === 'textarea'? '300px'
+                    : col.type === 'number' ? '145px'
+                    : col.type === 'date' ? '140px': '200px',
+    }
+
+    return {
+        ...defaultStyle,
+        ...(col.style || {} )
+    }
+};
 </script>

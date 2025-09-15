@@ -51,7 +51,7 @@ const input = computed(() => [
 definePageMeta({
     layout: false // No layout for this page
 })
-const alertPop = (message,type,title) =>{
+const alertPop = (message,type,title,time = 5000) =>{
     alert.value = {
         show: true,
         message: message,
@@ -60,7 +60,7 @@ const alertPop = (message,type,title) =>{
     };
     setTimeout(() => {
         alert.value.show = false;
-    }, 5000);
+    }, time);
 }
 
 const send_connexion = async (formData) => {
@@ -74,7 +74,7 @@ const send_connexion = async (formData) => {
         if (error) throw error
 
         if (data.user) {
-            alertPop('Connexion réussie! Redirection en cours...','success','Succès!')
+            alertPop('Connexion réussie! Redirection en cours...','success','Succès!',2800)
             // Redirection après connexion réussie
             setTimeout(() => {
                 if (user.value) {
@@ -82,7 +82,7 @@ const send_connexion = async (formData) => {
                 } else {
                     navigateTo('/')
                 }
-            }, 2000)
+            }, 3000)
         }
 
     } catch (error) {
