@@ -26,13 +26,13 @@
                 :columns="columns"
                 :rows="searchTerm ? filteredFournisseurs : fournisseurs"
                 :type_but_modal="true"
-                :actions="[
+                :actions="
+                [
                     { label: 'Modifier',  color: 'primary', type_modal: 1 },
-                    { label: 'Supprimer', color: 'danger', type_modal: 2 },
+                    { archive_but: true, label1: 'Archiver', label2: 'Désarchiver', color1: 'dark', color2: 'secondary', type_modal: 3 },
                 ]"
                 title_modal_edit="ce fournisseur"
                 tableDelete="ses_fournisseurs"
-                :del_def="false"
                 @recovery_data="recovery_data"
                 @delete="handleDelete"
                 @load_data="loadFournisseurs"
@@ -235,7 +235,7 @@ const loadFournisseurs = async () => {
         const { data, error } = await await supabase
                 .from('ses_fournisseurs')
                 .select('*')
-                .eq('etat_del', false)
+                .neq('id', 5000)//Exclure le fournisseur Autre...
                 .order('id', { ascending: false });
         
         if (error) throw error

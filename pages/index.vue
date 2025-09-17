@@ -65,6 +65,16 @@ const alertPop = (message,type,title,time = 5000) =>{
 
 const send_connexion = async (formData) => {
     try {
+        const { data: existingUser, error: userError } = await supabase
+            .from('users')
+            .select('email')
+            .eq('email', formData.email)
+            .maybeSingle()
+        if (userError) throw userError
+        if (!existingUser) {
+            alertPop('Aucun compte trouvé avec cet email.','danger','Oups!')
+            return
+        }
         // Connexion avec Supabase
         const { data, error } = await supabase.auth.signInWithPassword({
             email: formData.email,

@@ -52,14 +52,13 @@
                             <div v-else>
                                 <button  
                                     v-for="action in actions" 
-                                    :key="action.label" 
-                                    :class="'btn btn-'+action.color" 
+                                    :key="!action.archive_but ? action.label : item.etat_del ? action.label2 : action.label1" 
+                                    :class="!action.archive_but ? 'btn btn-'+action.color : item.etat_del ? 'btn btn-'+action.color2 : 'btn btn-'+action.color1" 
                                     data-bs-toggle="modal" 
-                                    :data-bs-target="action.type_modal == 1 ? '#mod' + item.id : '#sup' + item.id"
+                                    :data-bs-target="'#mod'+ action.type_modal + item.id"
                                     @click="action.label == 'Modifier' ? $emit('recovery_data', item) : ''" 
                                     style="margin-bottom: 10px;">
-                                    {{ action.label }}
-                            
+                                    {{ action.archive_but ? item.etat_del ? action.label2 : action.label1 : action.label }}
                                 </button>
                             </div>
                         </div>
@@ -78,11 +77,10 @@
                     <td v-for="col in columns" :key="col.key">
                         <select v-if="col.type == 'select'" class="form-control" v-model="rowsInput[rowIndex][col.key]" @change="updateData">
                             <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
-                            <option v-if="col.autre" value="autre">Autre ...</option>
+                            <option v-if="col.autre" value="3">Autre ...</option>
                         </select>
                         <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rowsInput[rowIndex][col.key]" @input="updateData"></textarea>
                         <input v-else
-                            :value="col.key === 'total' ? (rowsInput[rowIndex].qte * rowsInput[rowIndex].prix) : rowsInput[rowIndex][col.key]"
                             :type="col.type ? col.type : 'text'"
                             :min="col.min? col.min : ''"
                             class="form-control"
@@ -113,21 +111,30 @@
 
 
         <!-- Modal de modification type 1 -->
-        <Modal v-for="item in rows" :id = "'mod'+item.id" :title="'Modifier '+title_modal_edit">
+        <Modal v-for="item in rows" :id = "'mod1'+item.id" :title="'Modifier '+title_modal_edit">
             <slot name="modal1" :item="item"></slot>
         </Modal>
         <!-- Modal de suppression type 2 -->
-        <Modal v-for="item in rows" :id = "'sup'+item.id" title="ÊTES-VOUS SÛR DE VOULOIR SUPPRIMER ?">
+        <Modal v-for="item in rows" :id = "'mod2'+item.id" title="ÊTES-VOUS SÛR DE VOULOIR SUPPRIMER ?">
             <div class="text-center">
                 <h5 style="color: red">Cette action est irréversible !</h5>
                 <hr />
-                <button class="btn btn-danger" data-bs-dismiss="modal" @click="del_def ? deleteItem(item.id) : deleteItem2(item.id)">
+                <button class="btn btn-danger" data-bs-dismiss="modal" @click="deleteItem(item.id)">
                     Supprimer
                 </button>
                 <button class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
             </div>
         </Modal>
 
+        <!-- Modal d'archivage type 3 -->
+        <Modal v-for="item in rows" :id = "'mod3'+item.id" :title="item.etat_del ? 'CONFIRMER LE DESARCHIVAGE ?' : 'ÊTES-VOUS SÛR DE VOULOIR ARCHIVER ?' ">
+            <div class="text-center">
+                <button class="btn btn-secondary" data-bs-dismiss="modal" @click="deleteItem2(item.id, item.etat_del)">
+                    {{ item.etat_del ? 'Désarchiver' : 'Archiver' }}
+                </button>
+                <button class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+            </div>
+        </Modal>
         <!-- Alert pour les notifications -->
         <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
 
@@ -200,10 +207,6 @@ const props = defineProps({
         type: String,
         default: ''
     },
-    del_def:{
-        type: Boolean,
-        default: true
-    }
 })
 
 // Déclaration des événements
@@ -230,7 +233,7 @@ watch(rowsInput, (newValue) => {
         }
     });
     // Émettre les données vers le parent
-    emit('update_table_data', [...newValue]);
+    //emit('update_table_data', [...newValue]);
 }, { deep: true });
 
 // METHODES //
@@ -238,8 +241,8 @@ watch(rowsInput, (newValue) => {
 const updateData = () => {
     // Calculer les totaux avant d'émettre
     rowsInput.value.forEach(row => {
-        if (row.qte && row.prix) {
-            row.total = row.qte * row.prix;
+        if (row.qte || row.prix) {
+            row.total = (row.qte? row.qte : 0 )  * (row.prix ? row.prix : 0);
         }
     });
     emit('update_table_data', [...rowsInput.value]);
@@ -249,24 +252,24 @@ const updateData = () => {
 const addRowFunction = () => {
     const newRow = {};
     props.columns.forEach((col) => {
-        if(col.key === 'id') {
-            newRow['id'] = rowsInput.value.length + 1; // Auto-increment ID
+        if(col.key === 'num') {
+            newRow['num'] = rowsInput.value.length + 1; // Auto-increment ID
         }
         else {
             newRow[col.key] = ''; // Initialiser les autres champs à vide
         }
     })
     rowsInput.value.push(newRow);
-    updateData(); // Émettre les données mises à jour
+    //updateData(); // Émettre les données mises à jour
 };
 
 // Supprimer une ligne
 const removeRow = (index) => {
     rowsInput.value.splice(index, 1);
     for (let i = 0; i < rowsInput.value.length; i++) {
-        rowsInput.value[i].id = i + 1; // Réinitialiser les IDs
+        rowsInput.value[i].num = i + 1; // Réinitialiser les IDs
     }
-    updateData(); // Émettre les données mises à jour
+    //updateData(); // Émettre les données mises à jour
 };
 
 // Méthode pour exposer les données (utilisable par le parent via ref)
@@ -274,10 +277,8 @@ const getTableData = () => {
     return [...rowsInput.value];
 };
 
-// Exposer la méthode au parent
-defineExpose({
-    getTableData
-});
+
+
 
 // Supprimer un élément
 const deleteItem = async (id) => {
@@ -297,15 +298,15 @@ const deleteItem = async (id) => {
     }
 };
 
-const deleteItem2 = async (id) => {
+const deleteItem2 = async (id, etat) => {
     try {
         const { error } =  await supabase
         .from(props.tableDelete)
-        .update({ etat_del: true })
+        .update({ etat_del: etat ? false : true })
         .eq('id', id);
 
         if (error) throw error
-        showAlert('Élément supprimé avec succès', 'Succès', 'success')
+        showAlert(etat ? 'Élément restauré avec succès' : 'Élément archivé avec succès', 'Succès', 'success')
         emit('load_data')
     }
     catch (error) {
@@ -344,4 +345,9 @@ const getStyle = (col) => {
         ...(col.style || {} )
     }
 };
+
+// Exposition des fonctions pour qu’elles soient accessible depuis le parent
+defineExpose({
+    getTableData
+});
 </script>
