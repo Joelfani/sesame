@@ -77,7 +77,7 @@
                     <td v-for="col in columns" :key="col.key">
                         <select v-if="col.type == 'select'" class="form-control" v-model="rowsInput[rowIndex][col.key]" @change="updateData">
                             <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
-                            <option v-if="col.autre" value="3">Autre ...</option>
+                            <option v-if="col.autre" value="autre">Autre ...</option>
                         </select>
                         <textarea v-else-if="col.type == 'textarea'" rows="2"  class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rowsInput[rowIndex][col.key]" @input="updateData"></textarea>
                         <input v-else
