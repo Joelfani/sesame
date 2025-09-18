@@ -9,8 +9,10 @@ state: () => ({
     genre: '',
     resp:'',
     tel:'',
-    type_compte:null,
+    type_compte:null, 
     avatar:null,
+    sup:'',
+    niv:null,
     add:'',
     edit:'',
     delet:'',
@@ -27,6 +29,7 @@ actions: {
     this.type_compte = user.type_compte
     this.avatar = user.avatar
     this.sup = user.sup
+    this.niv = user.niv
     this.add = user.add
     this.edit = user.edit
     this.delet = user.delet
@@ -41,6 +44,7 @@ actions: {
     this.type_compte = newData.type_compte || this.type_compte
     this.avatar = newData.avatar || this.avatar
     this.sup = newData.sup || this.sup
+    this.niv = newData.niv || this.niv
     this.add = newData.add || this.add
     this.edit = newData.edit || this.edit
     this.delet = newData.delet || this.delet

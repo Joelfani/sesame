@@ -38,7 +38,10 @@
     </template>
 
     <script setup>
-    import Table from '~/components/Table.vue';
+    // Services
+    const supabase = useSupabaseClient()
+    // Store
+    const userStore = useUserStore()
 
     // Définition des colonnes du tableau
     const columns = [
@@ -50,37 +53,51 @@
     ];
 
     // Données d'exemple pour les demandes à valider
-    const liste_demandes_a_valider = [
-    {
-        id: 1,
-        status: 'En attente de validation',
-        nom: 'John Doe',
-        date: '2023-10-01',
-        object: 'Achat de matériel informatique',
-    },
-    {
-        id: 2,
-        status: 'En attente de validation',
-        nom: 'Jane Smith',
-        date: '2023-10-03',
-        object: 'Demande de congé',
-    },
-    {
-        id: 3,
-        status: 'En attente de validation',
-        nom: 'Alice Johnson',
-        date: '2023-10-04',
-        object: 'Achat de fournitures de bureau',
-    },
-    {
-        id: 4,
-        status: 'En attente de validation',
-        nom: 'Bob Brown',
-        date: '2023-10-06',
-        object: 'Réparation d’équipement',
-    },
-    ];
+    const liste_demandes_a_valider = ref([])
 
     /* DATA */
     const choix_filtre = ref('num');
+
+    /* METHODS */
+    const getValidation = async () => {
+    try {
+        const { data: dataObj, error: errorObj } = await supabase
+        .from('ses_demandeObj')
+        .select('*')
+        .eq('id_sup', userStore.id)
+        .order('id', { ascending: false });
+        console.log('dataObj', dataObj);
+        
+        if (errorObj) throw errorObj;
+        
+        for (let i = 0; i < dataObj.length; i++) {
+            const { count, error: itemsError } = await supabase
+            .from('ses_demItems')
+            .select('id',{ count: 'exact', head: true })
+            .eq('id_obj', dataObj[i].id)
+            .eq('niv_val', 1)
+            
+            console.log('itemsObj', itemsObj);
+            
+            if (itemsError) throw itemsError;
+
+            dataObj[i].nbrnv = count;
+            
+        }
+        
+        
+        liste_demande.value = dataObj;
+        
+        console.log('liste', liste_demande.value); 
+        
+    } catch (error) {
+        console.error('Erreur lors de la récupération des demandes:', error);
+    }
+    }
+
+    //Lifecycle
+
+    onMounted(() => {
+    getValidation();
+    });
     </script>

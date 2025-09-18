@@ -142,7 +142,8 @@
             .insert({
                 nom: demObj.value,
                 id_user: userStore.id,
-                date: currentDate.toISOString().split('T')[0] // format YYYY-MM-DD
+                date: currentDate.toISOString().split('T')[0], // format YYYY-MM-DD
+                id_sup: userStore.sup
             })
             .select('id') // récupère l'id
             .single();    // on sait qu’on insère une seule ligne

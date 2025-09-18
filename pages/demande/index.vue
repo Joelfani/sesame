@@ -1,7 +1,7 @@
 <template>
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>LISTE DE TOUS MES DEMANDES</h1>
+            <h1>LISTE DE TOUTES MES DEMANDES</h1>
             <div class="link_demande">
                 <NuxtLink to="/demande/add" class="btn btn-outline-success">Faire une demande</NuxtLink>
                 <NuxtLink to="/demande/tdb" class="btn btn-outline-secondary">Tableau de bord</NuxtLink>
