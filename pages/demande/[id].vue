@@ -10,11 +10,10 @@
 
         <!-- Informations générales de la demande -->
         <div>
-            <h6>Status: En attente de validation chez le responsable d'achat</h6>
         <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
-        <h6>Date: <span>01-10-2023</span></h6>
+        <h6>Date: {{ dataObj.date }}</h6>
         <div class="d-flex align-items-center gap-3">
-            <h6>Objet: <span>Achat de matériel informatique</span></h6>
+            <h6>Objet: {{ dataObj.nom }}</h6>
         </div>
         </div>
 
@@ -26,50 +25,84 @@
     </template>
 
     <script setup>
-import Table from '~/components/Table.vue';
 import {tableTete} from '~/assets/js/CommonVariable.js';
+
+// Services
+    const supabase = useSupabaseClient()
+// Store
+    const userStore = useUserStore()
+
+// Route
     const route = useRoute();
+
     // Définition des colonnes du tableau
     const columns = [
-        ...tableTete,
+        { key: 'num', label: 'N°'},
+        ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
         { key: 'etat', label: 'Etat' },
     ];
 
-    // Données d'exemple pour le tableau
-    const demande_details = [
-    {
-        id: 1,
-        designation: 'Ordinateur portable',
-        qte: 2,
-        spec: 'Intel i7, 16GB RAP, 512GB SSD',
-        fournisseur: 'Fournisseur A',
-        prix: 1500,
-        delai: '2023-10-15',
-        commentaire: 'Urgent pour le département IT',
-        total: 3000,
-        etat: 'En attente de validation',
-    },
-    {
-        id: 2,
-        designation: 'Écran 24 pouces',
-        qte: 3,
-        spec: 'Full HD, IPS',
-        fournisseur: 'Fournisseur B',
-        prix: 200,
-        delai: '2023-10-20',
-        commentaire: 'Compatible avec les ordinateurs existants',
-        total: 600,
-    },
-    {
-        id: 3,
-        designation: 'Clavier ergonomique',
-        qte: 5,
-        spec: 'Sans fil, Bluetooth',
-        fournisseur: 'Fournisseur C',
-        prix: 50,
-        delai: '2023-10-10',
-        commentaire: 'Pour améliorer le confort au travail',
-        total: 250,
-    },
-    ];
+    //DATA //
+    const demande_details = ref([]);
+    const dataObj = ref([]);
+
+    //METHODES
+    const getDemandeDetails = async () => {
+        try {
+        const { data, error } = await supabase
+            .from('ses_demItems')
+            .select('*')
+            .eq('id_obj', route.params.id)
+            .order('num', { ascending: true });
+        if (error) throw error;
+
+        const allDataView = data.map(item => {
+        return {
+            ...item,
+            etat: item.niv_val === 1 ? 'En attente de validation chez votre superieur' :
+                    item.niv_val === 2 ? 'En attente de validation chez le responsable d\'achat' :
+                        item.niv_val === 3 ? 'En attente de validation chez le responsable financier' :
+                        item.niv_val === 4 ? 'En attente de validation chez le DPR' : 
+                        item.niv_val === 5 ? 'En attente de validation chez le responsable financier pour chèque' :
+                        item.niv_val === 6 ? 'En attente de validation chez le responsable d\'achat livraison' :
+                        item.niv_val === 7 ? 'Validée' :
+                        item.niv_val === 8 ? 'Refusée par le superieur' :
+                        item.niv_val === 9 ? 'Refusée par le responsable d\'achat' :
+                        item.niv_val === 10 ? 'Refusée par le responsable financier' : 'Refusée par le DPR',
+            delai: formatDate(item.delai),// Formatage de la date en jj/mm/aaaa
+            };
+        });
+
+        demande_details.value = allDataView;
+
+        // Recuperation des informations de l'objet  
+        const { data: demandeObj, error: demandeObjError } = await supabase
+            .from('ses_demandeObj')
+            .select('*')
+            .eq('id', route.params.id)
+            .single();
+        if (demandeObjError) throw demandeObjError;
+        
+        dataObj.value = {
+            ...demandeObj,
+            date: formatDate(demandeObj.date),
+        };
+        } catch (error) {
+        console.log(error);
+        }
+    };
+// Methode pour utilisation dans les methods
+const formatDate = (dateString) => {
+    const d = new Date(dateString);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0'); // les mois commencent à 0
+    const year = d.getFullYear();
+
+    const formattedDate = `${day}/${month}/${year}`;    
+    return formattedDate;
+};
+    // LIFECYCLE HOOKS //
+    onMounted(() => {
+        getDemandeDetails();
+    });
     </script>

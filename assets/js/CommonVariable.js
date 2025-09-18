@@ -7,5 +7,5 @@ export const tableTete = [
             { key: 'prix', label: 'Prix unitaire (en Ar)' },
             { key: 'delai', label: 'Date de livraison' },
             { key: 'total', label: 'Montant (en Ar)' },
-            { key: 'commentaire', label: 'Commentaire' },
+            { key: 'com', label: 'Commentaire' },
         ]
