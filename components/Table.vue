@@ -69,7 +69,7 @@
                                         style="margin-bottom: 10px; margin-right: 5px;"
                                         data-bs-toggle="modal" 
                                         :data-bs-target="'#mod' + action.type_modal + item.id"
-                                        @click="$emit('function_but_neutre')" 
+                                        @click="$emit('function_but_neutre',item)" 
                                     >
                                         {{ action.label }}
                                     </button>

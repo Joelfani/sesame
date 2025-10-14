@@ -36,17 +36,14 @@
                 @function_but_neutre = "doc_recovery"
 
             >
-                <template #modal4>
-                    {{  }}
-                    <p>Séléctionner un fichier ici (pdf,png,jpeg,jpg):</p>
+                <template #modal4="{ item }">
+                    <p>Séléctionner un fichier (pdf,png,jpeg,jpg):</p>
                     <input class="form-control" ref="fileInput" type="file" @change="fonctionFiles"></input>
                     <p v-if="uploading">Enregistrement du fichier en cours ...</p>
-                    <button class="btn btn-outline-success" @click="upload_file" :disabled="uploading">Enregistrer ce fichier</button>
+                    <button class="btn btn-outline-success" @click="upload_file(item.id)" :disabled="uploading">Enregistrer ce fichier</button>
                     <hr>
                     <h5 style="font-weight: bold;">Liste des documents associés</h5>
-                    <p style="font-weight: bold;">2 / 3</p>
-                    <p style="font-weight: bold;">proforma 1 <button class="btn btn-outline-danger">Supprimer</button></p>
-                    <p style="font-weight: bold;">proforma 2 <button class="btn btn-outline-danger">Supprimer</button></p>
+                    <p v-for="doc in doc_achat" :key="doc.id" style="font-weight: bold;">{{ doc.name_doc }}<button class="btn btn-outline-danger" @click="deleteFile(item.id,doc.id, doc.nameStorage)">Supprimer</button></p>
                 </template>
             </Table>
         </div>
@@ -94,12 +91,14 @@ const dataObj = ref([]);
 const demande_details = ref([]);
 const validationData = ref(null); // Pour stocker les données de validation pour debug
 const fournisseurs = ref([])
+const fournisseursAllData = ref([])
 //DATA FOR FILE
 const file = ref(null) // Save the doc 
 const fileInput = ref(null) //référence à l’élément HTML <input>
 const fileName = ref('') // référence au fichier sélectionné
 const uploading = ref(false)
 const fileUrl = ref(null)
+const doc_achat = ref([]) // contient les documents reliers a une article de l'achat
 // Alert system
 const alert = ref({
     show: false,
@@ -170,11 +169,12 @@ const listFournisseurs = async() => {
         try {
             const { data, error } = await supabase
                     .from('ses_fournisseurs')
-                    .select('nom,id')
+                    .select('*')
                     .eq('etat_del', false)
                     .order('id', { ascending: true });
 
             if (error) throw error
+            fournisseursAllData.value = data
             fournisseurs.value = data.map(fournisseur => ({
                 label: fournisseur.nom,
                 value: fournisseur.id
@@ -211,7 +211,20 @@ const handleValidationAction = async (validationPayload) => {
     };
     
     if (action === 'Valider') {
-        await handleValidation(item, editableData);
+        console.log('valeur de editableData.fields', editableData.fields);
+        const fournisseurSelectionneData = fournisseursAllData.value.find(f => f.id === editableData.fields.fournisseur2);
+        console.log('fournisseurSelectionneData', fournisseurSelectionneData);
+        
+        if (fournisseurSelectionneData) {
+            if (fournisseurSelectionneData.contrat === 'Oui') {
+                await handleValidation(item, editableData);
+            }
+            else {
+                    console.log("Le fournisseur n'a pas de contrat actif.");
+                }
+
+        }
+        
     } else if (action === 'Rejeter') {
         await handleRejection(item, editableData);
     }
@@ -222,7 +235,10 @@ const handleValidation = async (item, editableData) => {
     try {
         console.log('Validation de l\'item:', item.id);
         console.log('Avec les données éditables:', editableData.fields);
+        console.log('je valide maintenant');
         
+
+        /*
         // Préparer les données à mettre à jour
         const updateData = {
             niv_val: 3, // Passer au niveau suivant de validation (responsable financier)
@@ -242,7 +258,7 @@ const handleValidation = async (item, editableData) => {
         
         console.log('Validation réussie pour l\'item:', item.id);
         alert('Item validé avec succès !');
-        
+        */
     } catch (error) {
         console.error('Erreur lors de la validation:', error);
         alert('Erreur lors de la validation !');
@@ -306,10 +322,26 @@ const formatDate = (dateString) => {
 };
 // UPLOAD FILES
 // Réinitialiser l'input
-const doc_recovery = () =>{
+const doc_recovery = async (item) =>{
     fileInput.value.value = null // le premier value retourne le html 
     fileName.value = ''
+    file.value = null // vider le fichier selectionne
+    //Recuperation des documents
+    try{
+        const { data, error } = await supabase
+        .from('ses_doc_achat')
+        .select('*')
+        .eq('id_item', item.id)
+
+        if (error) throw error
+
+        doc_achat.value = data
+    }catch(error){
+        console.log('Erreur lors de la recuperation de la liste des documents', error)
+    }
+    
 }
+
 const fonctionFiles = (event) => {
     file.value = event.target.files[0] // récupère le premier fichier sélectionné
     if (file) {
@@ -323,10 +355,11 @@ const fonctionFiles = (event) => {
 }
 
 
-const upload_file = async () => {
+const upload_file = async (id_item) => {
     console.log(file.value);
-    
+
     if(!file.value) return showAlert("Veuillez sélectionner un fichier", 'Oups!', 'danger')
+
     uploading.value= true
         try {
         // Crée un chemin unique pour le fichier
@@ -357,14 +390,15 @@ const upload_file = async () => {
                 id_user: userStore.id,
                 name_doc: fileName.value,
                 url_doc: fileUrl.value,
-                nameStorage: filesNameStorage
+                nameStorage: filesNameStorage,
+                id_item: id_item
             }
         ])
 
         if (errorInsertInfo) throw errorInsertInfo
-         
-        showAlert('Fichier enregistré avec succès', 'Succès', 'success')
         
+        showAlert('Fichier enregistré avec succès', 'Succès', 'success')
+        doc_recovery({id:id_item})
     } catch (error) {
         console.error('Erreur upload :', error.message)
         showAlert("Erreur lors de l’upload", 'Oups!', 'danger')
@@ -373,6 +407,32 @@ const upload_file = async () => {
     }
 
 
+}
+
+const deleteFile = async (id_item,id_doc, nameStorage) => {
+    const path = `achats/${nameStorage}`
+    try {
+        // Supprimer le fichier du bucket
+        const { error } = await supabase.storage
+        .from('sesame_doc')
+        .remove([path])
+
+        if (error) throw error
+
+        // Supprimer l’enregistrement de la table
+        const { error: errorDeleteInfo } = await supabase
+        .from('ses_doc_achat')
+        .delete()
+        .eq('id', id_doc)
+
+        if (errorDeleteInfo) throw errorDeleteInfo
+
+        showAlert('Fichier supprimé avec succès du stockage', 'Succès', 'success')
+        doc_recovery({id:id_item})
+    } catch (error) {
+        console.error('Erreur lors de la suppression du fichier :', error.message)
+        showAlert('Erreur lors de la suppression du fichier', 'Oups!', 'danger')
+    }
 }
 // LIFECYCLE HOOKS
 onMounted(() => {
