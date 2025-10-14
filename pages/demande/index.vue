@@ -29,7 +29,6 @@
         <div class="table_block_list">
             <Table :columns="columns" :rows="filtered_demandes" :type_but_link="true" but_link_path="demande/" name_but_action="Voir"/>
         </div>
-        <Alert/>
     </div>
 </template>
 
@@ -50,7 +49,7 @@ const columns = [
     { key: 'id', label: 'N° d\'enregistrement' },
     { key: 'date', label: 'Date de la demande' }, 
     { key: 'nom', label: 'Objet de la demande'},
-    { key: 'niv_val', label: 'Niveau de la demande' },
+    { key: 'niv_val', label: 'Status de la demande' },
 ]
 
 const liste_demande = ref([]); // Liste originale

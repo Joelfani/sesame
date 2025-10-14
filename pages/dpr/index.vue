@@ -2,9 +2,9 @@
     <div class="demandes_validation_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>VALIDATION AU NIVEAU DE L' ACHETEUR</h1>
+            <h1>VALIDATION AU NIVEAU DU DPR</h1>
             <div class="link_demande">
-                <NuxtLink to="/achat/historique" class="btn btn-outline-success">Historique des validations</NuxtLink>
+                <NuxtLink to="/dpr/historique" class="btn btn-outline-success">Historique des validations</NuxtLink>
             </div>
         </div>
         
@@ -32,7 +32,7 @@
                 :columns="columns"
                 :rows="filtered_demandes"
                 :type_but_link="true" 
-                but_link_path="achat/" 
+                but_link_path="dpr/" 
                 name_but_action="Voir"
             />
         </div>
@@ -63,7 +63,7 @@ const date_debut = ref('');
 const date_fin = ref('');
 
 /* METHODS */
-const getValidationAchat = async () => {
+const getValidationDPR = async () => {
     try {
         const { data: dataObj, error: errorObj } = await supabase
             .from('ses_demandeObj')
@@ -74,19 +74,19 @@ const getValidationAchat = async () => {
        
         if (errorObj) throw errorObj;
         
-        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 2
-        const demandesAvecArticlesNiveau2 = [];
+        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 4
+        const demandesAvecArticlesNiveau4 = [];
        
         for (let i = 0; i < dataObj.length; i++) {
             const { count, error: itemsError } = await supabase
                 .from('ses_demItems')
                 .select('id', { count: 'exact', head: true })
                 .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', 2); 
+                .eq('niv_val', 4); 
            
             if (itemsError) throw itemsError;
             
-            // Si cette demande a des articles avec niv_val = 2
+            // Si cette demande a des articles avec niv_val = 4
             if (count > 0) {
                 dataObj[i].nbrnv = count;
                 
@@ -105,14 +105,14 @@ const getValidationAchat = async () => {
 
                 dataObj[i].id_user = nameDemandeur[0]?.full_name || 'Nom non trouvé';
                 
-                demandesAvecArticlesNiveau2.push(dataObj[i]);
+                demandesAvecArticlesNiveau4.push(dataObj[i]);
             }
         }
         
-        liste_demandes_a_valider.value = demandesAvecArticlesNiveau2;
-        filtered_demandes.value = [...demandesAvecArticlesNiveau2]; // Initialiser la liste filtrée
+        liste_demandes_a_valider.value = demandesAvecArticlesNiveau4;
+        filtered_demandes.value = [...demandesAvecArticlesNiveau4]; // Initialiser la liste filtrée
        
-        console.log('liste demandes niveau acheteur', liste_demandes_a_valider.value);
+        console.log('liste demandes niveau DPR', liste_demandes_a_valider.value);
        
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
@@ -183,6 +183,6 @@ const formatDate = (dateString) => {
 
 // Lifecycle
 onMounted(() => {
-    getValidationAchat();
+    getValidationDPR();
 });
 </script>

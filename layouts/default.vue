@@ -9,9 +9,6 @@
 </template>
 
 <script>
-import NavBar from '~/components/NavBar.vue';
-import MainPage from '~/components/MainPage.vue';
-
 export default {
     mounted() {
         setInterval(async () => {

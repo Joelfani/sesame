@@ -20,6 +20,15 @@
                     <NuxtLink class="nav-link btn btn-light" to="/finance">Finances</NuxtLink>
                 </li>
                 <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/dpr">DPR</NuxtLink>
+                </li>
+                <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/cheque">Chèques</NuxtLink>
+                </li>
+                <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/livraison">Livraisons</NuxtLink>
+                </li>
+                <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Mes fournisseur</NuxtLink>
                 </li>
                 

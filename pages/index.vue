@@ -86,12 +86,9 @@ const send_connexion = async (formData) => {
         if (data.user) {
             alertPop('Connexion réussie! Redirection en cours...','success','Succès!',2800)
             // Redirection après connexion réussie
+            
             setTimeout(() => {
-                if (user.value) {
-                    navigateTo('/demande')
-                } else {
-                    navigateTo('/')
-                }
+                navigateTo('/demande', { replace: true })// replace:true pour éviter que la page login reste affichée
             }, 3000)
         }
 

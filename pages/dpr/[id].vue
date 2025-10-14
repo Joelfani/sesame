@@ -2,7 +2,7 @@
     <div class="purchase_page">
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>DÉTAILS DE LA DEMANDE</h1>
+            <h1>DÉTAILS DE LA DEMANDE - VALIDATION DPR</h1>
             <button class="btn btn-outline-success">Exporter vers Excel</button>
             <div class="link_demande">
             </div>
@@ -12,6 +12,7 @@
         <div>
             <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
             <h6>Date: <span>{{ dataObj.date }}</span></h6>
+            <h6></h6>
             <div class="d-flex align-items-center gap-3">
                 <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
             </div>
@@ -27,28 +28,11 @@
                 :but_Validation="true"
                 :actions="[
                     { label: 'Valider', color: 'success' },
-                    { label: 'Rejeter', color: 'danger' },
-                    { label: 'Document', color: 'outline-dark' , active_modal:true, type_modal:4, }
+                    { label: 'Rejeter', color: 'secondary' }
                 ]"
-                title_modal_neutre="Ajouter un document"
                 @validation_action="handleValidationAction"
                 @editable_field_change="handleEditableFieldChange"
-                @function_but_neutre = "doc_recovery"
-
-            >
-                <template #modal4>
-                    {{  }}
-                    <p>Séléctionner un fichier ici (pdf,png,jpeg,jpg):</p>
-                    <input class="form-control" ref="fileInput" type="file" @change="fonctionFiles"></input>
-                    <p v-if="uploading">Enregistrement du fichier en cours ...</p>
-                    <button class="btn btn-outline-success" @click="upload_file" :disabled="uploading">Enregistrer ce fichier</button>
-                    <hr>
-                    <h5 style="font-weight: bold;">Liste des documents associés</h5>
-                    <p style="font-weight: bold;">2 / 3</p>
-                    <p style="font-weight: bold;">proforma 1 <button class="btn btn-outline-danger">Supprimer</button></p>
-                    <p style="font-weight: bold;">proforma 2 <button class="btn btn-outline-danger">Supprimer</button></p>
-                </template>
-            </Table>
+            />
         </div>
         
         <!-- Modal de confirmation (optionnel) -->
@@ -56,10 +40,7 @@
             <h5>Données de validation :</h5>
             <pre>{{ JSON.stringify(validationData, null, 2) }}</pre>
         </div>
-        <!-- Alert pour les notifications -->
-        <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
-    
 </template>
 
 <script setup>
@@ -75,63 +56,36 @@ const route = useRoute();
 const tableRef = ref(null);
 
 // Définition des colonnes du tableau
-const columns = computed(() => [
+const columns = [
     ...tableTete,
-    { key: 'imputation', label: 'Imputation analytique'},
     { 
-        key: "fournisseur2", 
-        label: "Fournisseur Réel",
-        type: 'select',
-        options: fournisseurs.value,
-        editable: true,
+        key: 'imputation', 
+        label: 'Imputation analytique', 
+        editable: false, // Le DPR ne modifie pas l'imputation
+        type: 'text'
     },
-    { key: 'prixR', label: 'Prix Réel', editable: true, min: 1, type: 'number' },
-    { key: 'totalR', label: 'Montant Réel', editable: true, min: 1, type: 'number'},
-])
+    { 
+        key: 'observation_dpr', 
+        label: 'Observation DPR', 
+        editable: true, 
+        type: 'textarea'
+    }
+];
 
 // DATA
 const dataObj = ref([]);
 const demande_details = ref([]);
 const validationData = ref(null); // Pour stocker les données de validation pour debug
-const fournisseurs = ref([])
-//DATA FOR FILE
-const file = ref(null) // Save the doc 
-const fileInput = ref(null) //référence à l’élément HTML <input>
-const fileName = ref('') // référence au fichier sélectionné
-const uploading = ref(false)
-const fileUrl = ref(null)
-// Alert system
-const alert = ref({
-    show: false,
-    message: '',
-    title: '',
-    type: '' // success, error, warning, info
-})
-
 
 // METHODES
-// Afficher une alerte
-const showAlert = (message, title, type) => {
-    alert.value = {
-        show: true,
-        message,
-        title,
-        type
-    }
-
-    // Auto-hide après 5 secondes
-    setTimeout(() => {
-        alert.value.show = false
-    }, 5000)
-}
-
-// Récupération des données
+//recuperation des données
 const getDemandeDetails = async () => {
     try {
         const { data, error } = await supabase
             .from('ses_demItems')
             .select('*, fournisseur(nom)')
             .eq('id_obj', route.params.id)
+            .eq('niv_val', 4) // Filtrer uniquement les articles au niveau 4
             .order('num', { ascending: true });
         
         if (error) throw error;
@@ -140,7 +94,7 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == 2 ? 0 : item.niv_val == 8 ? 2 : 1, // Adapter pour le niveau acheteur 
+                etat: item.niv_val == 4 ? 0 : item.niv_val == 8 ? 2 : 1,
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
             };
         });
@@ -165,39 +119,12 @@ const getDemandeDetails = async () => {
         console.log(error);
     }
 };
-//Recuperation fournisseurs
-const listFournisseurs = async() => {
-        try {
-            const { data, error } = await supabase
-                    .from('ses_fournisseurs')
-                    .select('nom,id')
-                    .eq('etat_del', false)
-                    .order('id', { ascending: true });
-
-            if (error) throw error
-            fournisseurs.value = data.map(fournisseur => ({
-                label: fournisseur.nom,
-                value: fournisseur.id
-            }));
-            
-            
-        } catch (error) { 
-            console.error('Erreur lors du chargement des fournisseurs:', error);
-            return [];
-        }
-    };
 
 // Gestionnaire principal pour les actions de validation
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
     
-    // Ignorer l'action "Ajouter un document" pour l'instant
-    if (action === 'Ajouter un document') {
-        console.log('Action "Ajouter un document" - non implémentée pour le moment');
-        return;
-    }
-    
-    console.log('Action de validation:', action);
+    console.log('Action de validation DPR:', action);
     console.log('Item original:', item);
     console.log('Données éditables:', editableData);
     
@@ -220,12 +147,13 @@ const handleValidationAction = async (validationPayload) => {
 // Gestion de la validation
 const handleValidation = async (item, editableData) => {
     try {
-        console.log('Validation de l\'item:', item.id);
+        console.log('Validation DPR de l\'item:', item.id);
         console.log('Avec les données éditables:', editableData.fields);
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 3, // Passer au niveau suivant de validation (responsable financier)
+            niv_val: 5, // Passer au niveau suivant de validation (niveau 5)
+            //date_val_dpr: new Date().toISOString(), // Date de validation DPR
             ...editableData.fields // Inclure toutes les données éditables modifiées
         };
         
@@ -240,24 +168,25 @@ const handleValidation = async (item, editableData) => {
         // Actualiser les données
         await getDemandeDetails();
         
-        console.log('Validation réussie pour l\'item:', item.id);
-        alert('Item validé avec succès !');
+        console.log('Validation DPR réussie pour l\'item:', item.id);
+        alert('Item validé avec succès par le DPR !');
         
     } catch (error) {
-        console.error('Erreur lors de la validation:', error);
+        console.error('Erreur lors de la validation DPR:', error);
         alert('Erreur lors de la validation !');
     }
 };
 
-// Gestion du rejet 
+// Gestion du rejet
 const handleRejection = async (item, editableData) => {
     try {
-        console.log('Rejet de l\'item:', item.id);
+        console.log('Rejet DPR de l\'item:', item.id);
         console.log('Avec les données éditables:', editableData.fields);
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 8, // Statut rejeté par l'acheteur
+            niv_val: 8, // Statut rejeté
+            //date_rej_dpr: new Date().toISOString(), // Date de rejet DPR
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
         
@@ -272,11 +201,11 @@ const handleRejection = async (item, editableData) => {
         // Actualiser les données
         await getDemandeDetails();
         
-        console.log('Rejet réussi pour l\'item:', item.id);
-        alert('Item rejeté !');
+        console.log('Rejet DPR réussi pour l\'item:', item.id);
+        alert('Item rejeté par le DPR !');
         
     } catch (error) {
-        console.error('Erreur lors du rejet:', error);
+        console.error('Erreur lors du rejet DPR:', error);
         alert('Erreur lors du rejet !');
     }
 };
@@ -304,80 +233,9 @@ const formatDate = (dateString) => {
     const formattedDate = `${day}/${month}/${year}`;
     return formattedDate;
 };
-// UPLOAD FILES
-// Réinitialiser l'input
-const doc_recovery = () =>{
-    fileInput.value.value = null // le premier value retourne le html 
-    fileName.value = ''
-}
-const fonctionFiles = (event) => {
-    file.value = event.target.files[0] // récupère le premier fichier sélectionné
-    if (file) {
-        uploading.value = false
-        fileName.value = file.value.name // récupère le nom du fichier
-        console.log('Nom du fichier :', file.value)
-    } else {
-        uploading.value= true
-        fileName.value = ''
-    }
-}
 
-
-const upload_file = async () => {
-    console.log(file.value);
-    
-    if(!file.value) return showAlert("Veuillez sélectionner un fichier", 'Oups!', 'danger')
-    uploading.value= true
-        try {
-        // Crée un chemin unique pour le fichier
-        const filesNameStorage = Date.now()+'_'+file.value.name
-        const filePath = `achats/${filesNameStorage}`
-
-        //Upload dans le bucket "uploads"
-        const { data, error } = await supabase.storage
-        .from('sesame_doc')
-        .upload(filePath, file.value, {
-            upsert: false, // Pour ne pas écraser un fichier existant du même nom
-        })
-
-        if (error) throw error
-
-        //Récupère l’URL publique du fichier
-        const { data: publicUrlData } = supabase.storage
-        .from('sesame_doc')
-        .getPublicUrl(filePath)
-
-        fileUrl.value = publicUrlData.publicUrl
-
-        //Enregistrement les info du doc dans table 
-        const {error:errorInsertInfo} = await supabase
-        .from('ses_doc_achat')
-        .insert([
-            {
-                id_user: userStore.id,
-                name_doc: fileName.value,
-                url_doc: fileUrl.value,
-                nameStorage: filesNameStorage
-            }
-        ])
-
-        if (errorInsertInfo) throw errorInsertInfo
-         
-        showAlert('Fichier enregistré avec succès', 'Succès', 'success')
-        
-    } catch (error) {
-        console.error('Erreur upload :', error.message)
-        showAlert("Erreur lors de l’upload", 'Oups!', 'danger')
-    } finally {
-        uploading.value = false
-    }
-
-
-}
 // LIFECYCLE HOOKS
 onMounted(() => {
     getDemandeDetails();
-    listFournisseurs()
-    
 });
 </script>
