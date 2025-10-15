@@ -1,6 +1,7 @@
 <!-- Composant Table (enfant) -->
 <template>
     <table class="table table-borderless table-striped">
+        {{ rowsInput2 }}
         <thead class="table-header">
             <tr>
                 <th v-for="col in columns" :key="col.key" :style="getStyle(col)">
@@ -20,7 +21,7 @@
                             class="form-control" 
                             v-model="rows[rowIndex][col.key]" 
                             :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : false"
-                            @change="onEditableFieldChange(rowIndex, col.key, rows[rowIndex][col.key]), updateData2">
+                            @change="changement(rowIndex, col.key, rows[rowIndex][col.key])">
                             <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
                             <option v-if="col.autre" value="autre">Autre...</option>
                         </select>
@@ -31,19 +32,19 @@
                             :placeholder="col.placeholder ? col.placeholder : col.label" 
                             :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : false" 
                             v-model="rows[rowIndex][col.key]"
-                            @input="onEditableFieldChange(rowIndex, col.key, rows[rowIndex][col.key]),updateData2">
+                            @input="changement(rowIndex, col.key, rows[rowIndex][col.key])">
                         </textarea>
                         <input 
                             v-else
-                            :value="col.key === 'totalR' ? (rows[rowIndex].qte * rows[rowIndex].prixR) : rows[rowIndex][col.key]"
                             :type="col.type ? col.type : 'text'"
                             :min="col.min ? col.min : ''"
                             class="form-control"
                             :placeholder="col.placeholder ? col.placeholder : col.label"
-                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : false"
+                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : false"
                             v-model="rows[rowIndex][col.key]"
-                            @input="onEditableFieldChange(rowIndex, col.key, rows[rowIndex][col.key]),updateData2"
+                            @input="changement(rowIndex, col.key, rows[rowIndex][col.key])"
                         />
+                        
                     </template>
                     <!-- Si la colonne est normale -->
                     <template v-else>
@@ -275,6 +276,9 @@ const alert = ref({
 
 // Reactive variables
 const rowsInput = ref([]); // reactive pour Vue
+const rowsInput2 = ref([]);// pour les input editable
+//charger les donnees du rows
+rowsInput2.value = props.rows
 
 // Stocker les données éditables modifiées pour chaque ligne
 const editableData = ref({});
@@ -286,12 +290,29 @@ watch(rowsInput, (newValue) => {
         if (row.qte && row.prix) {
             row.total = row.qte * row.prix;
         }
-        if (row.qte && row.prixR) {
-            row.totalR = row.qte * row.prixR;
-        }
     });
 }, { deep: true });
 
+// WATCH pour surveiller les changements dans rowsInput2
+watch(
+    () => props.rows,
+    (newRows) => {
+        if (newRows && newRows.length > 0) {
+        rowsInput2.value = JSON.parse(JSON.stringify(newRows)); // copie propre, évite les effets de bord = modifie le parent sans le vouloir 
+        }
+    },
+    { immediate: true, deep: true } // immediate = exécution dès le montage
+);
+watch(rowsInput2, (newValue) => {
+    // Calculer les totaux automatiquement
+    newValue.forEach(row => {
+        if (row.qte && row.prixR) {
+            row.totalR = row.qte * row.prixR;
+        }
+        console.log('Changement Input2', row.totalR);
+        
+    });
+}, { deep: true });
 // METHODES //
 
 // Nouvelle méthode pour gérer les actions de validation
@@ -345,23 +366,32 @@ const onEditableFieldChange = (rowIndex, fieldKey, value) => {
 };
 
 // Méthode pour émettre les données vers le parent
-const updateData = () => {
+const updateData = () => {    
     // Calculer les totaux avant d'émettre
     rowsInput.value.forEach(row => {
         if (row.qte || row.prix) {
             row.total = (row.qte ? row.qte : 0) * (row.prix ? row.prix : 0);
+            console.log('row.total', row.total);
         }
     });
     emit('update_table_data', [...rowsInput.value]);
+    
+    
 };
-
+//activation fonction de changement champs editables
+const changement = (rowIndex, fieldKey, value) => {
+    onEditableFieldChange(rowIndex, fieldKey, value);
+    updateData2();
+}
 const updateData2 = () => {
+    console.log('input 2', rowsInput2.value);
     // Calculer les totaux avant d'émettre
-    rowsInput.value.forEach(row => {
+    rowsInput2.value.forEach(row => {
         if (row.qte || row.prixR) {
             row.totalR = (row.qte ? row.qte : 0) * (row.prixR ? row.prixR : 0);
         }
     });
+    emit('update_table_data', [...rowsInput2.value]);
 };
 // Ajouter une nouvelle ligne vide
 const addRowFunction = () => {
@@ -463,5 +493,10 @@ defineExpose({
     getTableData,
     getAllEditableData,
     getEditableDataForRow
+    
+});
+
+// LIFECYCLE HOOKS
+onMounted(() => {
 });
 </script>

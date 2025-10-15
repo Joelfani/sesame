@@ -34,12 +34,6 @@
                 @editable_field_change="handleEditableFieldChange"
             />
         </div>
-        
-        <!-- Modal de confirmation (optionnel) -->
-        <div v-if="validationData" class="mt-4 p-3 bg-light border rounded">
-            <h5>Données de validation :</h5>
-            <pre>{{ JSON.stringify(validationData, null, 2) }}</pre>
-        </div>
     </div>
 </template>
 

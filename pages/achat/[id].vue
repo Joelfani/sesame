@@ -47,12 +47,6 @@
                 </template>
             </Table>
         </div>
-        
-        <!-- Modal de confirmation (optionnel) -->
-        <div v-if="validationData" class="mt-4 p-3 bg-light border rounded">
-            <h5>Données de validation :</h5>
-            <pre>{{ JSON.stringify(validationData, null, 2) }}</pre>
-        </div>
         <!-- Alert pour les notifications -->
         <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
@@ -83,7 +77,7 @@ const columns = computed(() => [
         editable: true,
     },
     { key: 'prixR', label: 'Prix Réel', editable: true, min: 1, type: 'number' },
-    { key: 'totalR', label: 'Montant Réel', editable: true, min: 1, type: 'number'},
+    { key: 'totalR', label: 'Montant Réel', editable: true, min: 1, type: 'number',disabled: true },
 ])
 
 // DATA
@@ -171,6 +165,7 @@ const listFournisseurs = async() => {
                     .from('ses_fournisseurs')
                     .select('*')
                     .eq('etat_del', false)
+                    .neq('id', 5000)
                     .order('id', { ascending: true });
 
             if (error) throw error
@@ -196,11 +191,6 @@ const handleValidationAction = async (validationPayload) => {
         console.log('Action "Ajouter un document" - non implémentée pour le moment');
         return;
     }
-    
-    console.log('Action de validation:', action);
-    console.log('Item original:', item);
-    console.log('Données éditables:', editableData);
-    
     // Stocker pour affichage (debug)
     validationData.value = {
         action: action,
@@ -211,6 +201,14 @@ const handleValidationAction = async (validationPayload) => {
     };
     
     if (action === 'Valider') {
+        if(editableData.fields.fournisseur2 === null){
+            showAlert("Veuillez choisir un fournisseur", "Oups!", "danger")
+            return
+        }
+        if(editableData.fields.prixR === null){
+            showAlert("Veuillez saisir un prix réel", "Oups!", "danger")
+            return
+        }
         console.log('valeur de editableData.fields', editableData.fields);
         const fournisseurSelectionneData = fournisseursAllData.value.find(f => f.id === editableData.fields.fournisseur2);
         console.log('fournisseurSelectionneData', fournisseurSelectionneData);
@@ -220,9 +218,23 @@ const handleValidationAction = async (validationPayload) => {
                 await handleValidation(item, editableData);
             }
             else {
-                    console.log("Le fournisseur n'a pas de contrat actif.");
-                }
+                    console.log("Le fournisseur n'a pas de contrat actif.", editableData.fields);
+                    try{
+                        const { error: nbrDocError} = await supabase 
+                        .from('ses_doc_achat')
+                        .select('*', { count: 'exact', head: true})
 
+                        if (nbrDocError) throw nbrDocError
+
+                        const nbrDoc = count || 0
+                        console.log('nombre de doc', nbrDoc);
+                        
+                    }catch(error){
+                        showAlert("Erreur lors de la recherche du nombre de document", "Oups!", "danger")
+                        console.error('Erreur lors de la recherche du nombre de document:', error.message);
+                    }
+                    
+                }
         }
         
     } else if (action === 'Rejeter') {
