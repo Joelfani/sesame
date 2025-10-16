@@ -43,7 +43,12 @@
                     <button class="btn btn-outline-success" @click="upload_file(item.id)" :disabled="uploading">Enregistrer ce fichier</button>
                     <hr>
                     <h5 style="font-weight: bold;">Liste des documents associés</h5>
-                    <p v-for="doc in doc_achat" :key="doc.id" style="font-weight: bold;">{{ doc.name_doc }}<button class="btn btn-outline-danger" @click="deleteFile(item.id,doc.id, doc.nameStorage)">Supprimer</button></p>
+                    <p v-for="doc in doc_achat" :key="doc.id" style="font-weight: bold;">
+                        {{ doc.name_doc }}
+                        <button class="btn btn-outline-secondary" @click="downloadFile(doc.name_doc, doc.nameStorage)"><img src="/public/icon/download.png" style="width: 20px; height: 20px;"></button>
+                        <button class="btn btn-outline-light" @click="deleteFile(item.id,doc.id, doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
+                        
+                    </p>
                 </template>
             </Table>
         </div>
@@ -199,6 +204,7 @@ const handleValidationAction = async (validationPayload) => {
         editableFields: editableData.fields,
         timestamp: new Date().toISOString()
     };
+    console.log(editableData.fields);
     
     if (action === 'Valider') {
         if(editableData.fields.fournisseur2 === null){
@@ -209,32 +215,52 @@ const handleValidationAction = async (validationPayload) => {
             showAlert("Veuillez saisir un prix réel", "Oups!", "danger")
             return
         }
-        console.log('valeur de editableData.fields', editableData.fields);
+        // Recuperation des infos fournisseur
         const fournisseurSelectionneData = fournisseursAllData.value.find(f => f.id === editableData.fields.fournisseur2);
-        console.log('fournisseurSelectionneData', fournisseurSelectionneData);
         
+        // Verifier si le fournisseur a un contrat et activation des condition de validation 
+
         if (fournisseurSelectionneData) {
+            let nbrDoc = 0
             if (fournisseurSelectionneData.contrat === 'Oui') {
                 await handleValidation(item, editableData);
             }
             else {
-                    console.log("Le fournisseur n'a pas de contrat actif.", editableData.fields);
                     try{
-                        const { error: nbrDocError} = await supabase 
+                        const { count, error: nbrDocError} = await supabase 
                         .from('ses_doc_achat')
                         .select('*', { count: 'exact', head: true})
+                        .eq('id_item', item.id)
 
                         if (nbrDocError) throw nbrDocError
 
-                        const nbrDoc = count || 0
-                        console.log('nombre de doc', nbrDoc);
-                        
+                        nbrDoc = count || 0
                     }catch(error){
                         showAlert("Erreur lors de la recherche du nombre de document", "Oups!", "danger")
                         console.error('Erreur lors de la recherche du nombre de document:', error.message);
                     }
-                    
-                }
+
+                    if(editableData.fields.totalR < 1000000 && nbrDoc < 1){
+                        showAlert("Veuillez ajouter au moins un proforma", "Oups!", "danger")
+                        return
+                    }
+                    if(editableData.fields.totalR >= 1000000 && editableData.fields.totalR < 5000000 && nbrDoc < 4){
+                        showAlert("Veuillez ajouter au moins 3 proforma et un tableau comparatif ou une lettre de dérogation", "Oups!", "danger")
+                        return
+                    }
+
+                    if(editableData.fields.totalR >= 5000000 && editableData.fields.totalR < 16000000 && nbrDoc < 5){
+                        showAlert("Veuillez ajouter au moins 4 proforma et un tableau comparatif ou une lettre de dérogation", "Oups!", "danger")
+                        return
+                    }
+
+                    if(editableData.fields.totalR >= 16000000 && nbrDoc < 6){
+                        showAlert("Veuillez ajouter au moins un document d'appel d'offre !", "Oups!", "danger")
+                        return
+                    }
+
+                    await handleValidation(item, editableData);
+                }                
         }
         
     } else if (action === 'Rejeter') {
@@ -250,7 +276,7 @@ const handleValidation = async (item, editableData) => {
         console.log('je valide maintenant');
         
 
-        /*
+        
         // Préparer les données à mettre à jour
         const updateData = {
             niv_val: 3, // Passer au niveau suivant de validation (responsable financier)
@@ -267,13 +293,11 @@ const handleValidation = async (item, editableData) => {
         
         // Actualiser les données
         await getDemandeDetails();
+        showAlert("Item validé avec succès !", "Oups!", "success")
         
-        console.log('Validation réussie pour l\'item:', item.id);
-        alert('Item validé avec succès !');
-        */
     } catch (error) {
         console.error('Erreur lors de la validation:', error);
-        alert('Erreur lors de la validation !');
+        showAlert("Erreur lors de la validation !", "Oups!", "danger")
     }
 };
 
@@ -444,6 +468,35 @@ const deleteFile = async (id_item,id_doc, nameStorage) => {
     } catch (error) {
         console.error('Erreur lors de la suppression du fichier :', error.message)
         showAlert('Erreur lors de la suppression du fichier', 'Oups!', 'danger')
+    }
+}
+
+const downloadFile = async (name_doc,nameStorage) => {
+    const path = `achats/${nameStorage}`
+    try {
+        const encoding = encodeURI(path)
+        // Générer une URL signée pour le téléchargement
+        const { data, error } = await supabase
+        .storage
+        .from('sesame_doc')
+        .createSignedUrl(encoding, 60); // URL valide 60 secondes
+
+        if (error) throw error;
+        
+        // Lancer le téléchargement
+        const a = document.createElement('a');
+        a.href = data.signedUrl;
+        a.download = name_doc;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        if (error) throw error;
+        
+        showAlert('Fichier télecharger avec succès du stockage', 'Succès', 'success')
+
+    } catch (error) {
+        console.error('Erreur lors du télechargement du fichier :', error.message)
+        showAlert('Erreur lors du télechargement du fichier', 'Oups!', 'danger')
     }
 }
 // LIFECYCLE HOOKS

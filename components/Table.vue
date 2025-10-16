@@ -1,7 +1,6 @@
 <!-- Composant Table (enfant) -->
 <template>
     <table class="table table-borderless table-striped">
-        {{ rowsInput2 }}
         <thead class="table-header">
             <tr>
                 <th v-for="col in columns" :key="col.key" :style="getStyle(col)">
@@ -12,16 +11,16 @@
         </thead>
         <!-- Si tableaux pas vide -->
         <tbody v-if="tableinputadd == false">
-            <tr v-for="(item, rowIndex) in rows" :key="item.id">
+            <tr v-for="(item, rowIndex) in rowsInput2" :key="item.id">
                 <td v-for="col in columns" :key="col.key" :class="col.etat ? 'td-fixed' : ''">
                     <!-- Si la colonne est éditable -->
                     <template v-if="col.editable">
                         <select 
                             v-if="col.type == 'select'" 
                             class="form-control" 
-                            v-model="rows[rowIndex][col.key]" 
+                            v-model="rowsInput2[rowIndex][col.key]" 
                             :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : false"
-                            @change="changement(rowIndex, col.key, rows[rowIndex][col.key])">
+                            @change="changement(rowIndex, col.key, rowsInput2[rowIndex][col.key])">
                             <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
                             <option v-if="col.autre" value="autre">Autre...</option>
                         </select>
@@ -31,8 +30,8 @@
                             class="form-control" 
                             :placeholder="col.placeholder ? col.placeholder : col.label" 
                             :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : false" 
-                            v-model="rows[rowIndex][col.key]"
-                            @input="changement(rowIndex, col.key, rows[rowIndex][col.key])">
+                            v-model="rowsInput2[rowIndex][col.key]"
+                            @input="changement(rowIndex, col.key, rowsInput2[rowIndex][col.key])">
                         </textarea>
                         <input 
                             v-else
@@ -41,8 +40,8 @@
                             class="form-control"
                             :placeholder="col.placeholder ? col.placeholder : col.label"
                             :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : false"
-                            v-model="rows[rowIndex][col.key]"
-                            @input="changement(rowIndex, col.key, rows[rowIndex][col.key])"
+                            v-model="rowsInput2[rowIndex][col.key]"
+                            @input="changement(rowIndex, col.key, rowsInput2[rowIndex][col.key])"
                         />
                         
                     </template>
@@ -309,8 +308,6 @@ watch(rowsInput2, (newValue) => {
         if (row.qte && row.prixR) {
             row.totalR = row.qte * row.prixR;
         }
-        console.log('Changement Input2', row.totalR);
-        
     });
 }, { deep: true });
 // METHODES //
@@ -336,7 +333,7 @@ const getEditableDataForRow = (item, rowIndex) => {
     // Parcourir toutes les colonnes pour identifier celles qui sont éditables
     props.columns.forEach(col => {
         if (col.editable) {
-            editableFields[col.key] = props.rows[rowIndex][col.key];
+            editableFields[col.key] = rowsInput2.value[rowIndex][col.key];
         }
     });
     
@@ -385,10 +382,10 @@ const changement = (rowIndex, fieldKey, value) => {
 }
 const updateData2 = () => {
     console.log('input 2', rowsInput2.value);
-    // Calculer les totaux avant d'émettre
     rowsInput2.value.forEach(row => {
-        if (row.qte || row.prixR) {
-            row.totalR = (row.qte ? row.qte : 0) * (row.prixR ? row.prixR : 0);
+        if (row.qte || row.prix) {
+            row.total = (row.qte ? row.qte : 0) * (row.prix ? row.prix : 0);
+            console.log('row.total', row.total);
         }
     });
     emit('update_table_data', [...rowsInput2.value]);
