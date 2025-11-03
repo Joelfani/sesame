@@ -7,7 +7,8 @@
                 <button class="btn btn-outline-success">Exporter vers Excel</button>
                 <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#afe" @click="recoreryFournisseur">A.F.E</button>
                 <client-only>
-                    <button class="btn btn-outline-secondary" @click="generatePDF">Bon de commande</button>
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bc" @click="recoreryFournisseur">Bon de commande</button>
+                    <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modDoc" @click="doc_recovery({id:route.params.id})">Liste document</button>
                 </client-only>
                 
             </div>
@@ -55,6 +56,7 @@
         <!-- Modal AFE -->
         <Modal id="afe" title="Autorisation formelle d'engagement">
             <div class="pdf-content">
+                <label >Sélectionnez un fournisseur</label>
                 <select
                     class="form-control"
                     v-model="pdffournisseurSelected"
@@ -63,38 +65,204 @@
                         {{ option.nom }}
                     </option>
                 </select>
+                <hr>
+                <span v-if="pdfButtonLoading">Traitement ...</span>
+                <button class="btn btn-outline-dark" @click="generatePDF('pdfafe')" :disabled="pdfButtonLoading">Générer un AFE</button>            
+                <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
             </div>
         </Modal>
+        <!-- Modal BC -->
+        <Modal id="bc" title="Bon de commande">
+            <div class="pdf-content">
+                <label >Sélectionnez un fournisseur</label>
+                <select
+                    class="form-control"
+                    v-model="pdffournisseurSelected"
+                >
+                    <option v-for="option in fournisseurAfe" :key="option.id" :value="option.nom">
+                        {{ option.nom }}
+                    </option>
+                </select>
+                <label for="">Référence</label>
+                <input type="text" class="form-control" v-model="refBc">
+                <label for="">Mode de paiement</label>
+                <input type="text" class="form-control" v-model="paimentMode">
+                <label for="">Au nom de:</label>
+                <input type="text" class="form-control" v-model="auNomDe">
+                <label for="">Taxe:</label>
+                <Cleave 
+                    class="form-control" 
+                    v-model="taxe" 
+                    :options="{ 
+                        numeral: true, 
+                        delimiter: ' ', // espace comme séparateur
+                        numeralThousandsGroupStyle: 'thousand' }" 
+                    placeholder="Entrez le taux"
+                />
+                <label for="">Remise:</label>
+                <Cleave 
+                    class="form-control" 
+                    v-model="remise" 
+                    :options="{ 
+                        numeral: true, 
+                        delimiter: ' ', // espace comme séparateur
+                        numeralThousandsGroupStyle: 'thousand' }"
+                    placeholder="Entrez le taux"
+
+                />
+                <hr>
+                <span v-if="pdfButtonLoading">Traitement ...</span>
+                <button class="btn btn-outline-dark" @click="generatePDF('pdfbc')" :disabled="pdfButtonLoading">Générer un BC</button>            
+                <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </Modal>
+        <!-- Contenu PDF caché  AFE-->
         <div v-if="pdf">
-            <div id="pdf" style="width: 794px; min-height: 1123px; padding: 20px; background: white;">
-                <div class="d-flex justify-content-between align-items-center mt-5">
-                    <img src="/logo.png" style="width: 110px; height: 100px;">
-                    <p> Association PROMotion Economique et Sociale (PROMES)</p>
+            <div id="pdfafe" style="width: 794px; min-height: 1123px; padding: 20px; background: white; display: flex; flex-direction: column;">
+                <!-- Contenu principal qui prend l'espace disponible -->
+                <div style="flex: 1;">
+                    <div class="d-flex justify-content-between align-items-center mt-5">
+                        <img src="/logo.png" style="width: 110px; height: 100px;">
+                        <p style="font-weight: bold;"> Association PROMotion Economique et Sociale (PROMES)</p>
+                    </div>
+                    <div class="d-flex justify-content-around align-items-center">
+                        <h4 style="font-weight: bold;">Autorisation formelle d'engagement</h4>
+                    </div>
+                    <div class="d-flex justify-content-around align-items-center">
+                        <h5><span style="font-weight: bold;">Objet : </span> {{ dataObj.nom }}</h5>
+                    </div>
+                    <div class="d-flex justify-content-around align-items-center m-3">
+                        <h5><span style="font-weight: bold;">Date : </span> {{ date }}</h5>
+                        
+                        <h5><span style="font-weight: bold;">Fournisseur : </span> {{ pdffournisseurSelected }}</h5>
+                    </div>
+                    <div class="container mt-4">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom">
+                                <thead>
+                                    <tr>
+                                        <th width="40%">Designation</th>
+                                        <th width="15%">Montant</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="detail in fournisseurPdfDetails" :key="detail.id">
+                                        <td>{{ detail.designation }}</td>
+                                        <td class="amount-column">{{ detail.totalR }}</td>
+                                    </tr>
+                                    <tr class="total-section">
+                                        <td colspan="1" class="text-end fw-bold">Total</td>
+                                        <td class="amount-column">{{ pdfDetailTotal }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="m-3">
+                        <h6><span style="font-weight: bold;">Affectation </span></h6>
+                        <p v-for="detail in fournisseurPdfDetails" :key="detail.id">{{ detail.imputation }}</p>
+                    </div>
                 </div>
-                <div class="d-flex  justify-content-around align-items-center">
-                    <h4>Autorisation formelle d'engagement</h4>
-                </div>
-                <div class="d-flex  justify-content-around align-items-center m-3">
-                    <h5>Date : {{ date }}</h5>
-                    <h5>Fournisseur : {{ pdffournisseur }}</h5>
-                </div>
-                <div class="d-flex  justify-content-around align-items-center m-3">
-                    <h6>Description</h6>
-                    <h6>Montant</h6>
-                </div>
-                <div v-for="detail in fournisseurPdfDetails" :key="detail.id" class="d-flex  justify-content-around align-items-center m-3">
-                    <p>{{ detail }}</p>
-                    <p>{{ }}</p>
+                
+                <!-- Section qui reste en bas -->
+                <div style="margin-top: auto;">
+                    <div class="m-3">
+                        <h6><span style="font-weight: bold;">Le Responsable du programme</span></h6>
+                    </div>
+                    <br><br><br>
+                    <div class="m-3">
+                        <h6><span style="font-weight: bold;">Nom et Date</span></h6>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        
+        <!-- Contenu PDF caché  BC-->
+        <div v-if="pdf">
+            <div id="pdfbc" style="width: 794px; min-height: 1123px; padding: 20px; background: white; display: flex; flex-direction: column;">
+                <!-- Contenu principal qui prend l'espace disponible -->
+                <div style="flex: 1;">
+                    
+                        <img src="/logo.png" style="width: 110px; height: 100px;" class="m-3">
+                        <p style="font-weight: bold;">ASSOCIATION PROMES</p>
+                        <p style="font-weight: bold;">Enceinte UCM Ambatoroka</p>
+                        <p style="font-weight: bold;">101 ANTANANARIVO</p>
+                        <p style="font-weight: bold;">NIF : 4000232696</p>
+                        <p style="font-weight: bold;">STAT : 8899 11 2013 003715</p>
+                        <p style="font-weight: bold;">TEL : 034 28 072 55</p>
+
+                    <div class="d-flex justify-content-around align-items-center">
+                        <h4 style="font-weight: bold;">BON DE COMMANDE REF {{ refBc }}</h4>
+                    </div>
+                    <div class="d-flex justify-content-end m-3">
+                        <div class="">
+                            <h5> {{ pdffournisseurSelected }} </h5>
+                            <h5><span style="font-weight: bold;">NIF :</span> {{ pdffournisseurSelected }}</h5>
+                            <h5><span style="font-weight: bold;">STAT :</span> {{ pdffournisseurSelected }}</h5>
+                        </div>
+                    </div>
+                    <div class="container mt-4">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom">
+                                <thead>
+                                    <tr>
+                                        <th width="40%">Designation</th>
+                                        <th width="15%">Unité</th>
+                                        <th width="20%">Prix</th>
+                                        <th width="25%">MONTANT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="detail in fournisseurPdfDetails" :key="detail.id">
+                                        <td>{{ detail.designation }}</td>
+                                        <td>{{ detail.qte }}</td>
+                                        <td>{{ detail.prixR }}</td>
+                                        <td class="amount-column">{{ detail.totalR }}</td>
+                                    </tr>
+                                    <!-- Ligne taxe -->
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">MONTANT HT</td>
+                                        <td class="amount-column">
+                                            {{ pdfDetailTotal }}
+                                        </td>
+                                    </tr>
+                                    <!-- Ligne taxe -->
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Taxe {{ taxe }}%</td>
+                                        <td class="amount-column">
+                                            {{ mtaxe }}
+                                        </td>
+                                    </tr>
+                                    <!-- Ligne Remise -->
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Remise {{ remise }} %</td>
+                                        <td class="amount-column">
+                                            {{ mremise }}
+                                        </td>
+                                    </tr>
+                                    <!-- Ligne MONTANT TTC -->
+                                    <tr class="total-section">
+                                        <td colspan="3" class="text-end fw-bold">MONTANT TTC</td>
+                                        <td class="amount-column">{{ pdfDetailTotal  + mtaxe - mremise }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <p style="font-weight: bold;">Mode de paiement par {{ paimentMode }} au nom de {{ auNomDe }}</p>
+                    <p style="font-weight: bold;">Arreté a la somme de {{ nbrWord }} Ariary</p>
+                    <p style="font-weight: bold;">A Antananarivo, le {{ date }}</p>
+                    <br><br><br>
+                    <p style="font-weight: bold;">Le client / PROMES</p>
+            </div>
+        </div>
+    </div>
     </div>
 </template>
 
 <script setup>
 import { tableTete } from '~/assets/js/CommonVariable.js';
+import n2words from 'n2words'
+import Cleave from 'vue-cleave-component'
 // Services
 const supabase = useSupabaseClient()
 // Store
@@ -106,11 +274,12 @@ const tableRef = ref(null);
 
 // Définition des colonnes du tableau
 const columns = [
-    ...tableTete,
+    { key: 'num', label: 'N°'},
+    ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
     { key: 'imputation', label: 'Imputation analytique' },
     { key: 'fournisseur2', label: 'Fournisseur Réel' },
     { key: 'prixR', label: 'Prix Réel' },
-    { key: 'totalR', label: 'Montant Réel' },
+    { key: 'totalR', label: 'Montant Réel' }, 
 ];
 
 // DATA
@@ -121,11 +290,29 @@ const doc_achat = ref([]) // contient les documents reliers a une article de l'a
 const fournisseurAfe = ref([]); // Pour le modal AFE
 const pdffournisseurSelected = ref('')
 const fournisseurPdfDetails = ref([])
-const isLoading = ref(false)
+const pdfDetailTotal = computed(() => {
+    return fournisseurPdfDetails.value.reduce((sum, item) => sum + (item.totalR || 0), 0);
+});
+const refBc = ref('')
+const paimentMode = ref('')
+const auNomDe = ref('')
+
 
 //data for pdf
 const pdf = ref(true)
 const date = ref(new Date().toLocaleDateString())
+const pdfButtonLoading = ref(false)
+const nbrWord = computed(() => {
+    return n2words(pdfDetailTotal.value, { lang: 'fr' })
+})
+const taxe = ref(null)
+const remise = ref(0)
+const mtaxe = computed(() => {
+    return (pdfDetailTotal.value * taxe.value) / 100;
+})
+const mremise = computed(() => {
+    return (pdfDetailTotal.value * remise.value) / 100;
+})
 // Alert system
 const alert = ref({
     show: false,
@@ -151,6 +338,7 @@ const showAlert = (message, title, type) => {
 }
 // Récupération des données
 const getDemandeDetails = async () => {
+    
     try {
         const { data, error } = await supabase
             .from('ses_demItems')
@@ -164,7 +352,7 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == 3 ? 0 : item.niv_val == 8 ? 2 : 1, // Adapter pour le niveau finance
+                etat: item.niv_val == 3 ? 0 : item.niv_val == 8 ? 2 : item.niv_val < 3 ? 4 : 1, // Adapter pour le niveau finance
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
                 // Mapper les champs pour l'affichage
                 fournisseur2: item.fournisseur2?.nom || '',
@@ -174,13 +362,20 @@ const getDemandeDetails = async () => {
         });
         
         demande_details.value = allDataView;
+        // fournisseur pour AFE dont les articles sont au niv 3
+        const filterdataforfourniseur = data.filter(item => item.niv_val == 3);
 
-        const fournisseurForAfe = data.map(item => {
-            return {
-                nom: item.fournisseur2?.nom || '',
-                id: item.fournisseur2?.id || null,
-            };
-        })
+        const fournisseurForAfe = Array.from(
+                new Map(
+                    filterdataforfourniseur.map(item => [
+                    item.fournisseur2?.id, // clé unique
+                    {
+                        nom: item.fournisseur2?.nom || '',
+                        id: item.fournisseur2?.id || null,
+                    }
+                    ])
+                ).values()
+                )
 
         fournisseurAfe.value = fournisseurForAfe
 
@@ -254,11 +449,10 @@ const handleValidation = async (item, editableData) => {
         await getDemandeDetails();
         
         console.log('Validation financière réussie pour l\'item:', item.id);
-        alert('Item validé avec succès par le responsable financier !');
         
     } catch (error) {
         console.error('Erreur lors de la validation financière:', error);
-        alert('Erreur lors de la validation financière !');
+        showAlert('Erreur lors de la validation financière !', 'Oups!', 'danger');
     }
 };
 
@@ -286,11 +480,10 @@ const handleRejection = async (item, editableData) => {
         await getDemandeDetails();
         
         console.log('Rejet financier réussi pour l\'item:', item.id);
-        alert('Item rejeté par le responsable financier !');
         
     } catch (error) {
         console.error('Erreur lors du rejet financier:', error);
-        alert('Erreur lors du rejet financier !');
+        showAlert('Erreur lors du rejet financier !', 'Oups!', 'danger');
     }
 };
 
@@ -363,29 +556,39 @@ const downloadFile = async (name_doc,nameStorage) => {
         showAlert('Erreur lors du télechargement du fichier', 'Oups!', 'danger')
     }
 }
-
-// Configuration du formulaire d'AFE
-const inputAfe = computed(() => [
-    {
-        id: 'fournisseur',
-        type: 'select',
-        label: 'Sélectionnez le fournisseur',
-        required: true,
-        options: fournisseurAfe.value.map(item => ({
-            value: item.id,
-            text: item.nom
-        })),
-        initialValue: ''
-    },
-])
 // PDF
-const generatePDF = async () => {
-
+const generatePDF = async (domname) => {
+    pdfButtonLoading.value = true
+    if (domname === 'pdfafe' && !pdffournisseurSelected.value) {
+        showAlert('Veuillez sélectionner un fournisseur avant de générer le PDF.', 'Oups', 'danger');
+        pdfButtonLoading.value = false;
+        return;
+    }
+    if (domname === 'pdfbc' && !pdffournisseurSelected.value) {
+        showAlert('Veuillez sélectionner un fournisseur avant de générer le PDF.', 'Oups', 'danger');
+        pdfButtonLoading.value = false;
+        return;
+    }
+    if (domname === 'pdfbc' && !refBc.value) {
+        showAlert('Veuillez entrer une référence avant de générer le PDF.', 'Oups', 'danger');
+        pdfButtonLoading.value = false;
+        return;
+    }
+    if (domname === 'pdfbc' && !paimentMode.value) {
+        showAlert('Veuillez entrer un mode de paiement avant de générer le PDF.', 'Oups', 'danger');
+        pdfButtonLoading.value = false;
+        return;
+    }
+    if (domname === 'pdfbc' && !auNomDe.value) {
+        showAlert('Veuillez entrer un nom avant de générer le PDF.', 'Oups', 'danger');
+        pdfButtonLoading.value = false;
+        return;
+    }
     // Import dynamique uniquement côté client
     const html2canvas = (await import('html2canvas')).default
     const { jsPDF } = await import('jspdf')
 
-    const element = document.getElementById('pdf') // capture le DOM 
+    const element = document.getElementById(domname) // capture le DOM 
     if (!element) {
         console.error('Aucun élément avec id="pdf" trouvé')
         return
@@ -403,11 +606,12 @@ const generatePDF = async () => {
 
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
     pdf.save('AFE.pdf')
+    pdfButtonLoading.value = false  
+    
 }
 // Watchers
 watch(pdffournisseurSelected, (newValue) => {
     fournisseurPdfDetails.value = demande_details.value.filter(item => item.fournisseur2 === newValue)
-    console.log('test', fournisseurPdfDetails.value);
 }, { deep: true });
 
 // LIFECYCLE HOOKS
@@ -415,3 +619,16 @@ onMounted(() => {
     getDemandeDetails();
 });
 </script>
+<style scoped>
+    .table-custom {
+        border: 1px solid #dee2e6;
+    }
+    .table-custom th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .amount-column {
+        text-align: right;
+        font-weight: 500;
+    }
+</style>

@@ -13,22 +13,22 @@
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/validation">Mes validations</NuxtLink>
                 </li>
-                <li class="nav-item">
+                <li v-if="userStore.achat" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/achat">Achats</NuxtLink>
                 </li>
-                <li class="nav-item">
+                <li v-if="userStore.finance" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/finance">Finances</NuxtLink>
                 </li>
-                <li class="nav-item">
+                <li v-if="userStore.dpr" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/dpr">DPR</NuxtLink>
                 </li>
-                <li class="nav-item">
+                <li v-if="userStore.cheque" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/cheque">Chèques</NuxtLink>
                 </li>
-                <li class="nav-item">
+                <li v-if="userStore.livraison" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/livraison">Livraisons</NuxtLink>
                 </li>
-                <li class="nav-item">
+                <li v-if="userStore.fournisseur" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Mes fournisseur</NuxtLink>
                 </li>
                 

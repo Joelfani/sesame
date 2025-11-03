@@ -69,6 +69,8 @@ const send_connexion = async (formData) => {
             .from('users')
             .select('email')
             .eq('email', formData.email)
+            .eq('sesame', true)
+            .eq('activer', true)
             .maybeSingle()
         if (userError) throw userError
         if (!existingUser) {

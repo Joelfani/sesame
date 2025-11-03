@@ -9,7 +9,7 @@
                 <p>{{ userStore.email }}</p>
                 <p>{{ userStore.resp }}</p>
                 <div v-if="isEditing" class="change_avatar d-flex align-items-center gap-2">
-                    <div v-for="n in 5" :key="n" class="d-flex flex-column align-items-center gap-2">
+                    <div v-for="n in 12" :key="n" class="d-flex flex-column align-items-center gap-2">
                         <img :src="`/avatar/${type_avatar}${n}.png`" alt="Avatar" class="avatar-image-change" />
                         <input class="form-check-input" type="radio" name="avatar" :value="n" v-model="selectedAvatar" />
                     </div>      
@@ -97,7 +97,7 @@
                             name="sup" 
                             class="form-select"  
                             v-model="formData.sup" 
-                            :disabled="true"
+                            :disabled="!isEditing"
                         >
                             <option value="">Aucun supérieur</option>
                             <option 
@@ -120,7 +120,84 @@
             </div>
             <div class="col-4">
                 <h3>Accès</h3>
-                <!-- Section accès à développer -->
+                <div class="row">
+                    <div class="col">
+                        <p>Demande</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            :disabled="true"
+                            checked
+                        >
+                    </div>
+                    <div class="col">
+                        <p>validation</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            :disabled="true"
+                            checked
+                        >
+                    </div>
+                    <div class="col">
+                        <p>Achat</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            v-model="formData.droits.achat" 
+                            :disabled="true"
+                        >
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <p>Finance</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            v-model="formData.droits.finance" 
+                            :disabled="true"
+                        >
+                    </div>
+                    <div class="col">
+                        <p>DPR</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            v-model="formData.droits.dpr" 
+                            :disabled="true"
+                        >
+                    </div>
+                    <div class="col">
+                        <p>Chèque</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            v-model="formData.droits.cheque" 
+                            :disabled="true"
+                        >
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <p>Livraison</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            v-model="formData.droits.livraison" 
+                            :disabled="true"
+                        >
+                    </div>
+                    <div class="col">
+                        <p>Fournisseur</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            v-model="formData.droits.fournisseur" 
+                            :disabled="true"
+                        >
+                    </div>
+                </div>
             </div>
             <div class="col-2">
                 <h3>Droits</h3>
@@ -192,7 +269,13 @@ const formData = ref({
     droits: {
         add: false,
         edit: false,
-        delet: false
+        delet: false,
+        achat: false,
+        finance: false,
+        dpr: false,
+        cheque: false,
+        livraison: false,
+        fournisseur: false
     }
 })
 
@@ -217,7 +300,13 @@ const initializeData = () => {
         droits: {
             add: userStore.add || false,
             edit: userStore.edit || false,
-            delet: userStore.delet || false
+            delet: userStore.delet || false,
+            achat: userStore.achat || false,
+            finance: userStore.finance || false,
+            dpr: userStore.dpr || false,
+            cheque: userStore.cheque || false,
+            livraison: userStore.livraison || false,
+            fournisseur: userStore.fournisseur || false
         }
     }
 
@@ -231,8 +320,6 @@ const initializeData = () => {
     // Copie pour l'annulation
     originalData.value = JSON.parse(JSON.stringify(formData.value))
 
-
-    console.log('avatar:', type_avatar.value);
     
 }
 
@@ -243,7 +330,7 @@ const loadSuperieurs = async () => {
             .from('users')
             .select('id, full_name')
             .eq('sesame', true) // Seulement les utilisateurs avec accès Sesame
-        
+            
         if (!error && data) {
             superieursList.value = data.filter(user => user.id !== userStore.id)
         }
@@ -315,7 +402,6 @@ const saveChanges = async () => {
         // Notification de succès
 
         alertPop('Profil mis à jour avec succès!','success','Succès')
-        console.log('Profil mis à jour avec succès!')
         
     } catch (error) {
         alertPop('Erreur lors de la sauvegarde.','danger','Oups!')

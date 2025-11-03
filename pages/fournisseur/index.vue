@@ -101,6 +101,8 @@ const columns = [
     { key: 'contrat', label: 'Sous contrat' },
     { key: 'adresse', label: 'Adresse' },
     { key: 'type', label: 'Type de produits' },
+    { key: 'nif', label: 'NIF' },
+    { key: 'stat', label: 'STAT' },
 ]
 //COMPUTED
 // Configuration du formulaire d'ajout
@@ -126,7 +128,6 @@ const fournisseurInputs = computed(() => [
         type: 'email',
         label: 'Email',
         placeholder: 'contact@fournisseur.com',
-        required: true,
         initialValue: ''
     },
     {
@@ -155,6 +156,18 @@ const fournisseurInputs = computed(() => [
         required: true,
         initialValue: '',
         placeholder: 'Ex: Électronique, Alimentaire, etc.',
+    },
+    {
+        id: 'nif',
+        type: 'text',
+        label: 'NIF',
+        initialValue: '',
+    },
+    {
+        id: 'stat',
+        type: 'text',
+        label: 'STAT',
+        initialValue: '',
     }
 ])
 const addInitilialValues = ref([])
@@ -165,7 +178,9 @@ const getInitialForm = () => {
         email: '',
         contrat: '',
         adresse: '',
-        type: ''
+        type: '',
+        nif: '',
+        stat: ''
     }
 }
 // Configuration du formulaire de modification
@@ -222,6 +237,19 @@ const inputModifier = computed(() => [
         placeholder: 'Ex: Électronique, Alimentaire, etc.',
         initialValue: initialValuesMod.value.type || '' 
     }
+    ,
+    {
+        id: 'nif',
+        type: 'text',
+        label: 'NIF',
+        initialValue: initialValuesMod.value.nif || '' 
+    },
+    {
+        id: 'stat',
+        type: 'text',
+        label: 'STAT',
+        initialValue: initialValuesMod.value.stat || '' 
+    }
 ])
 
 
@@ -276,7 +304,8 @@ const addFournisseur = async (formData) => {
             contrat: formData.contrat,
             adresse: formData.adresse?.trim() || '',
             type: formData.type,
-            
+            nif: formData.nif,
+            stat: formData.stat
         }
         
         // Insérer en base de données
@@ -399,10 +428,10 @@ onMounted(async () => {
         if (realtimeStore && typeof realtimeStore.subscribeToTable === 'function') {
             realtimeStore.subscribeToTable('ses_fournisseurs', 'fournisseurs', fournisseurs, 'id', 'desc')
         } else {
-            console.error('❌ Store realtime non disponible')
+            console.error('Store realtime non disponible')
         }
     } catch (error) {
-        console.error('❌ Erreur lors de l\'initialisation:', error)
+        console.error('Erreur lors de l\'initialisation:', error)
         showAlert('Erreur lors de l\'initialisation de la page', 'Erreur', 'danger')
     }
 })

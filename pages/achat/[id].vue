@@ -3,7 +3,12 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>DÉTAILS DE LA DEMANDE</h1>
-            <button class="btn btn-outline-success">Exporter vers Excel</button>
+            <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
+            <client-only>
+                <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modDoc" @click="doc_recovery({id:route.params.id})">Ajouter document
+
+                </button> 
+            </client-only>
             <div class="link_demande">
             </div>
         </div>
@@ -28,7 +33,6 @@
                 :actions="[
                     { label: 'Valider', color: 'success' },
                     { label: 'Rejeter', color: 'danger' },
-                    { label: 'Document', color: 'outline-dark' , active_modal:true, type_modal:4, }
                 ]"
                 title_modal_neutre="Ajouter un document"
                 @validation_action="handleValidationAction"
@@ -54,6 +58,30 @@
         </div>
         <!-- Alert pour les notifications -->
         <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
+
+        <!-- Modal neutre type 4 -->
+        <Modal id="modDoc" title="Ajouter un document">
+            
+                <div class="text-center">
+                <p>Séléctionner un fichier (pdf,png,jpeg,jpg):</p>
+                    
+                    <input class="form-control" ref="fileInput" type="file" @change="fonctionFiles"></input>
+                    
+                    <p v-if="uploading">Enregistrement du fichier en cours ...</p>
+                    
+                    <button class="btn btn-outline-success" @click="upload_file(route.params.id)" :disabled="uploading">Enregistrer ce fichier</button>
+                    <hr>
+                    
+                    <h5 style="font-weight: bold;">Liste des documents associés</h5>
+                    
+                    <p v-for="doc in doc_achat" :key="doc.id" style="font-weight: bold;">
+                        {{ doc.name_doc }}
+                        <button class="btn btn-outline-secondary" @click="downloadFile(doc.name_doc, doc.nameStorage)"><img src="/public/icon/download.png" style="width: 20px; height: 20px;"></button>
+                        <button class="btn btn-outline-light" @click="deleteFile(route.params.id,doc.id, doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
+                    </p>
+                </div>
+            
+        </Modal>
     </div>
     
 </template>
@@ -72,7 +100,8 @@ const tableRef = ref(null);
 
 // Définition des colonnes du tableau
 const columns = computed(() => [
-    ...tableTete,
+    { key: 'num', label: 'N°'},
+    ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
     { key: 'imputation', label: 'Imputation analytique'},
     { 
         key: "fournisseur2", 
@@ -138,11 +167,10 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == 2 ? 0 : item.niv_val == 8 ? 2 : 1, // Adapter pour le niveau acheteur 
+                etat: item.niv_val == 2 ? 0 : item.niv_val == 8 ? 2 : item.niv_val < 2 ? 4 : 1, // Adapter pour le niveau acheteur 
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
             };
         });
-        
         demande_details.value = allDataView;
         
         // Récupération des informations de l'objet
@@ -215,11 +243,14 @@ const handleValidationAction = async (validationPayload) => {
             showAlert("Veuillez saisir un prix réel", "Oups!", "danger")
             return
         }
+
+        await handleValidation(item, editableData);
         // Recuperation des infos fournisseur
-        const fournisseurSelectionneData = fournisseursAllData.value.find(f => f.id === editableData.fields.fournisseur2);
+        //const fournisseurSelectionneData = fournisseursAllData.value.find(f => f.id === editableData.fields.fournisseur2);
         
         // Verifier si le fournisseur a un contrat et activation des condition de validation 
-
+        //condition individuelle selon le montant et le nbr de doc 
+        /*
         if (fournisseurSelectionneData) {
             let nbrDoc = 0
             if (fournisseurSelectionneData.contrat === 'Oui') {
@@ -261,7 +292,7 @@ const handleValidationAction = async (validationPayload) => {
 
                     await handleValidation(item, editableData);
                 }                
-        }
+        }*/
         
     } else if (action === 'Rejeter') {
         await handleRejection(item, editableData);
@@ -293,7 +324,7 @@ const handleValidation = async (item, editableData) => {
         
         // Actualiser les données
         await getDemandeDetails();
-        showAlert("Item validé avec succès !", "Oups!", "success")
+        showAlert("Item validé avec succès !", "Succès!", "success")
         
     } catch (error) {
         console.error('Erreur lors de la validation:', error);
@@ -367,7 +398,7 @@ const doc_recovery = async (item) =>{
         const { data, error } = await supabase
         .from('ses_doc_achat')
         .select('*')
-        .eq('id_item', item.id)
+        .eq('id_obj', item.id)
 
         if (error) throw error
 
@@ -427,7 +458,7 @@ const upload_file = async (id_item) => {
                 name_doc: fileName.value,
                 url_doc: fileUrl.value,
                 nameStorage: filesNameStorage,
-                id_item: id_item
+                id_obj: id_item
             }
         ])
 
@@ -499,6 +530,35 @@ const downloadFile = async (name_doc,nameStorage) => {
         showAlert('Erreur lors du télechargement du fichier', 'Oups!', 'danger')
     }
 }
+const exportToExcel = async () => {
+    try {
+        const data = demande_details.value
+
+        // Préparer les données pour l'exportation
+        const exportData = data.map(item => ({
+            'Num': item.num,
+            'Désignation': item.designation,
+            'Spécificités techniques': item.spec,
+            'Quantité': item.qte,
+            'Prix Unitaire': item.prix,
+            'Fournisseur': item.fournisseur?.nom || '',
+            'Délai': formatDate(item.delai),
+            'Imputation Analytique': item.imputation || '',
+            'Fournisseur Réel': item.fournisseur2 || '',
+            'Prix Réel': item.prixR || '',
+            'Montant Réel': item.totalR || ''
+        }));
+
+        const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`
+
+        await exportExcel(exportData, nameExcel);
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'exportation vers Excel:', error);
+        showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
+    }
+};
+
 // LIFECYCLE HOOKS
 onMounted(() => {
     getDemandeDetails();

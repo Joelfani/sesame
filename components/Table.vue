@@ -1,4 +1,4 @@
-<!-- Composant Table (enfant) -->
+<!-- Composant Table (enfant) - VERSION CORRIGÉE -->
 <template>
     <table class="table table-borderless table-striped">
         <thead class="table-header">
@@ -34,7 +34,7 @@
                             @input="changement(rowIndex, col.key, rowsInput2[rowIndex][col.key])">
                         </textarea>
                         <input 
-                            v-else
+                            v-else-if ="col.type != 'number'"
                             :type="col.type ? col.type : 'text'"
                             :min="col.min ? col.min : ''"
                             class="form-control"
@@ -43,7 +43,18 @@
                             v-model="rowsInput2[rowIndex][col.key]"
                             @input="changement(rowIndex, col.key, rowsInput2[rowIndex][col.key])"
                         />
-                        
+                        <Cleave
+                            v-else
+                            class="form-control" 
+                            :options="{ 
+                                numeral: true, 
+                                delimiter: ' ',
+                                numeralThousandsGroupStyle: 'thousand' }"
+                            :placeholder="col.placeholder ? col.placeholder : col.label"
+                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : false"
+                            v-model="rowsInput2[rowIndex][col.key]"
+                            @input.native="handleCleaveInput($event, rowIndex, col.key)"
+                        />
                     </template>
                     <!-- Si la colonne est normale -->
                     <template v-else>
@@ -62,7 +73,6 @@
                             <span v-if="item.etat == 2" style="color: red;">Rejeté</span>
                             <div v-if="item.etat == 0">
                                 <span v-for="action in actions" :key="action.label">
-                                    <!-- Si on a besoin d'un modal et validation -->
                                     <button 
                                         v-if="action.active_modal"
                                         :class="'btn btn-' + action.color" 
@@ -79,10 +89,8 @@
                                         style="margin-bottom: 10px; margin-right: 5px;"
                                         @click="handleValidationAction(action.label, item, rowIndex)">
                                         {{ action.label }}
-                                        
                                     </button>
                                 </span>
-                                
                             </div>
                         </div>
                         <!-- Si pas de validation mais modal -->
@@ -99,7 +107,6 @@
                             </button>
                         </div>
                     </div>
-                    <!-- Si la colonne est normale sans validation mais modal -->
                     <div v-else>
                         <slot name="actions" :item="item"></slot>
                     </div>
@@ -116,7 +123,8 @@
                         <option v-if="col.autre" value="autre">Autre ...</option>
                     </select>
                     <textarea v-else-if="col.type == 'textarea'" rows="2" class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rowsInput[rowIndex][col.key]" @input="updateData"></textarea>
-                    <input v-else
+                    <input 
+                        v-else-if ="col.type != 'number'"
                         :type="col.type ? col.type : 'text'"
                         :min="col.min ? col.min : ''"
                         class="form-control"
@@ -125,8 +133,19 @@
                         v-model="rowsInput[rowIndex][col.key]"
                         @input="updateData"
                     />
+                    <Cleave
+                        v-else
+                        class="form-control" 
+                        :options="{
+                            numeral: true,
+                            delimiter: ' ',
+                            numeralThousandsGroupStyle: 'thousand' }"
+                        :placeholder="col.placeholder ? col.placeholder : col.label"
+                        :disabled="col.disabled ? col.disabled : false"
+                        v-model="rowsInput[rowIndex][col.key]"
+                        @input.native="handleCleaveInputAdd($event, rowIndex, col.key)"
+                    />
                 </td>
-                <!-- Bouton supprimer pour add new item in the purchase table -->
                 <td v-if="showActions">
                     <button class="btn btn-danger" @click="removeRow(rowIndex)">Supprimer</button>
                 </td>
@@ -139,17 +158,15 @@
         </tbody>
     </table>
 
-    <!-- Si tableau vide faire une loading -->
     <div v-if="rows.length <= 0 && !tableinputadd">
         <Loading dataload="des données"></Loading>
     </div>
 
-    <!-- Modals existantes... -->
-    <!-- Modal de modification type 1 -->
+    <!-- Modals -->
     <Modal v-for="item in rows" :id="'mod1' + item.id" :title="'Modifier ' + title_modal_edit">
         <slot name="modal1" :item="item"></slot>
     </Modal>
-    <!-- Modal de suppression type 2 -->
+    
     <Modal v-for="item in rows" :id="'mod2' + item.id" title="ÊTES-VOUS SÛR DE VOULOIR SUPPRIMER ?">
         <div class="text-center">
             <h5 style="color: red">Cette action est irréversible !</h5>
@@ -161,8 +178,6 @@
         </div>
     </Modal>
 
-
-    <!-- Modal d'archivage type 3 -->
     <Modal v-for="item in rows" :id="'mod3' + item.id" :title="item.etat_del ? 'CONFIRMER LE DESARCHIVAGE ?' : 'ÊTES-VOUS SÛR DE VOULOIR ARCHIVER ?'">
         <div class="text-center">
             <button class="btn btn-secondary" data-bs-dismiss="modal" @click="deleteItem2(item.id, item.etat_del)">
@@ -172,88 +187,38 @@
         </div>
     </Modal>
 
-    <!-- Modal neutre type 4 -->
     <Modal v-for="item in rows" :id="'mod4' + item.id" :title="title_modal_neutre">
         <slot name="modal4" :item="item"></slot>
     </Modal>
-    <!-- Alert pour les notifications -->
+    
     <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
+import Cleave from 'vue-cleave-component'
 
-// Services
 const supabase = useSupabaseClient()
 
-// Props
 const props = defineProps({
-    rows: {
-        type: Array,
-        default: []
-    },
-    columns: {
-        type: Array,
-        required: true
-    },
-    showActions: {
-        type: Boolean,
-        default: true
-    },
-    type_but_link: {
-        type: Boolean,
-        default: false
-    },
-    but_link_path: {
-        type: String,
-        default: ''
-    },
-    type_but_modal: {
-        type: Boolean,
-        default: false
-    },
-    name_but_action: {
-        type: String,
-        default: ''
-    },
-    actions: {
-        type: Array,
-        default: []
-    },
-    tableinputadd: {
-        type: Boolean,
-        default: false
-    },
-    addRow: {
-        type: Boolean,
-        default: false
-    },
-    autre: {
-        type: Boolean,
-        default: false
-    },
-    but_Validation: {
-        type: Boolean,
-        default: false
-    },
-    modal_but: {
-        type: Boolean,
-        default: false
-    },
-    title_modal_edit: {
-        type: String,
-    },
-    tableDelete: {
-        type: String,
-        default: ''
-    },
-    title_modal_neutre: {
-        type: String,
-        default:'Need a title'
-    }
+    rows: { type: Array, default: [] },
+    columns: { type: Array, required: true },
+    showActions: { type: Boolean, default: true },
+    type_but_link: { type: Boolean, default: false },
+    but_link_path: { type: String, default: '' },
+    type_but_modal: { type: Boolean, default: false },
+    name_but_action: { type: String, default: '' },
+    actions: { type: Array, default: [] },
+    tableinputadd: { type: Boolean, default: false },
+    addRow: { type: Boolean, default: false },
+    autre: { type: Boolean, default: false },
+    but_Validation: { type: Boolean, default: false },
+    modal_but: { type: Boolean, default: false },
+    title_modal_edit: { type: String },
+    tableDelete: { type: String, default: '' },
+    title_modal_neutre: { type: String, default:'Need a title' }
 })
 
-// Déclaration des événements
 const emit = defineEmits([
     'recovery_data', 
     'delete', 
@@ -264,60 +229,62 @@ const emit = defineEmits([
     'function_but_neutre'
 ])
 
-// DATA
-// Alert system
 const alert = ref({
     show: false,
     message: '',
     title: '',
-    type: '' // success, error, warning, info
+    type: ''
 })
 
-// Reactive variables
-const rowsInput = ref([]); // reactive pour Vue
-const rowsInput2 = ref([]);// pour les input editable
-//charger les donnees du rows
-rowsInput2.value = props.rows
-
-// Stocker les données éditables modifiées pour chaque ligne
+const rowsInput = ref([]);
+const rowsInput2 = ref([]);
 const editableData = ref({});
+const isUpdating = ref(false); // FLAG pour éviter les boucles
 
-// WATCH pour surveiller les changements dans rowsInput
-watch(rowsInput, (newValue) => {
-    // Calculer les totaux automatiquement
-    newValue.forEach(row => {
-        if (row.qte && row.prix) {
-            row.total = row.qte * row.prix;
-        }
-    });
-}, { deep: true });
-
-// WATCH pour surveiller les changements dans rowsInput2
+// CORRECTION 1: Watch avec flush: 'post' et vérification du flag
 watch(
     () => props.rows,
     (newRows) => {
-        if (newRows && newRows.length > 0) {
-        rowsInput2.value = JSON.parse(JSON.stringify(newRows)); // copie propre, évite les effets de bord = modifie le parent sans le vouloir 
+        if (newRows && newRows.length > 0 && !isUpdating.value) {
+            rowsInput2.value = JSON.parse(JSON.stringify(newRows));
         }
     },
-    { immediate: true, deep: true } // immediate = exécution dès le montage
+    { immediate: true, deep: true, flush: 'post' }
 );
-watch(rowsInput2, (newValue) => {
-    // Calculer les totaux automatiquement
-    newValue.forEach(row => {
-        if (row.qte && row.prixR) {
-            row.totalR = row.qte * row.prixR;
-        }
-    });
-}, { deep: true });
-// METHODES //
 
-// Nouvelle méthode pour gérer les actions de validation
+// CORRECTION 3: Méthode pour gérer les inputs Cleave
+const handleCleaveInput = (event, rowIndex, fieldKey) => {
+    // Récupérer la valeur brute (sans formatage)
+    const rawValue = event.target.value.replace(/\s/g, ''); // Enlever les espaces
+    const numericValue = parseFloat(rawValue) || 0;
+    
+    // Mettre à jour la valeur dans rowsInput2
+    rowsInput2.value[rowIndex][fieldKey] = numericValue;
+    
+    // Appeler changement avec la valeur numérique
+    changement(rowIndex, fieldKey, numericValue);
+}
+
+// CORRECTION 4: Méthode changement simplifiée sans récursion
+const changement = (rowIndex, fieldKey, value) => {
+    // Convertir la valeur en nombre si c'est une chaîne
+    const numericValue = typeof value === 'string' ? (parseFloat(value.replace(/\s/g, '')) || 0) : (value || 0);
+    
+    // Calculer totalR si nécessaire
+    if ((fieldKey === 'qte' || fieldKey === 'prixR') && rowsInput2.value[rowIndex]) {
+        const qte = fieldKey === 'qte' ? numericValue : (rowsInput2.value[rowIndex].qte || 0);
+        const prixR = fieldKey === 'prixR' ? numericValue : (rowsInput2.value[rowIndex].prixR || 0);
+        
+        rowsInput2.value[rowIndex].totalR = qte * prixR;
+    }
+    
+    // Tracker le changement
+    onEditableFieldChange(rowIndex, fieldKey, numericValue);
+}
+
 const handleValidationAction = (actionType, item, rowIndex) => {
-    // Récupérer toutes les données éditables de cette ligne
     const editableRowData = getEditableDataForRow(item, rowIndex);
     
-    // Émettre l'événement avec le type d'action, l'item original et les données éditables
     emit('validation_action', {
         action: actionType,
         item: item,
@@ -326,11 +293,9 @@ const handleValidationAction = (actionType, item, rowIndex) => {
     });
 };
 
-// Méthode pour récupérer les données éditables d'une ligne spécifique
 const getEditableDataForRow = (item, rowIndex) => {
     const editableFields = {};
     
-    // Parcourir toutes les colonnes pour identifier celles qui sont éditables
     props.columns.forEach(col => {
         if (col.editable) {
             editableFields[col.key] = rowsInput2.value[rowIndex][col.key];
@@ -344,84 +309,62 @@ const getEditableDataForRow = (item, rowIndex) => {
     };
 };
 
-// Méthode pour tracker les changements dans les champs éditables
 const onEditableFieldChange = (rowIndex, fieldKey, value) => {
-    if (!editableData.value[props.rows[rowIndex].id]) {
-        editableData.value[props.rows[rowIndex].id] = {};
+    const itemId = props.rows[rowIndex]?.id;
+    if (!itemId) return;
+    
+    if (!editableData.value[itemId]) {
+        editableData.value[itemId] = {};
     }
     
-    editableData.value[props.rows[rowIndex].id][fieldKey] = value;
+    editableData.value[itemId][fieldKey] = value;
     
-    // Émettre l'événement de changement
     emit('editable_field_change', {
-        itemId: props.rows[rowIndex].id,
+        itemId: itemId,
         rowIndex: rowIndex,
         fieldKey: fieldKey,
         value: value,
-        allEditableData: editableData.value[props.rows[rowIndex].id]
+        allEditableData: editableData.value[itemId]
     });
 };
 
-// Méthode pour émettre les données vers le parent
-const updateData = () => {    
-    // Calculer les totaux avant d'émettre
+const updateData = () => {
+    // Calculer les totaux pour rowsInput
     rowsInput.value.forEach(row => {
-        if (row.qte || row.prix) {
-            row.total = (row.qte ? row.qte : 0) * (row.prix ? row.prix : 0);
-            console.log('row.total', row.total);
+        if (row.qte && row.prix) {
+            row.total = row.qte * row.prix;
         }
     });
     emit('update_table_data', [...rowsInput.value]);
-    
-    
 };
-//activation fonction de changement champs editables
-const changement = (rowIndex, fieldKey, value) => {
-    onEditableFieldChange(rowIndex, fieldKey, value);
-    updateData2();
-}
-const updateData2 = () => {
-    console.log('input 2', rowsInput2.value);
-    rowsInput2.value.forEach(row => {
-        if (row.qte || row.prix) {
-            row.total = (row.qte ? row.qte : 0) * (row.prix ? row.prix : 0);
-            console.log('row.total', row.total);
-        }
-    });
-    emit('update_table_data', [...rowsInput2.value]);
-};
-// Ajouter une nouvelle ligne vide
+
 const addRowFunction = () => {
     const newRow = {};
     props.columns.forEach((col) => {
         if (col.key === 'num') {
-            newRow['num'] = rowsInput.value.length + 1; // Auto-increment ID
+            newRow['num'] = rowsInput.value.length + 1;
         } else {
-            newRow[col.key] = ''; // Initialiser les autres champs à vide
+            newRow[col.key] = '';
         }
     })
     rowsInput.value.push(newRow);
 };
 
-// Supprimer une ligne
 const removeRow = (index) => {
     rowsInput.value.splice(index, 1);
     for (let i = 0; i < rowsInput.value.length; i++) {
-        rowsInput.value[i].num = i + 1; // Réinitialiser les IDs
+        rowsInput.value[i].num = i + 1;
     }
 };
 
-// Méthode pour exposer les données (utilisable par le parent via ref)
 const getTableData = () => {
     return [...rowsInput.value];
 };
 
-// Méthode pour récupérer toutes les données éditables modifiées
 const getAllEditableData = () => {
     return editableData.value;
 };
 
-// Supprimer un élément
 const deleteItem = async (id) => {
     try {
         const { error } = await supabase
@@ -434,7 +377,6 @@ const deleteItem = async (id) => {
     } catch (error) {
         showAlert("Erreur lors de la suppression de l'élément", 'Oups!', 'danger')
         console.error('Error deleting item:', error)
-        throw error
     }
 };
 
@@ -451,11 +393,9 @@ const deleteItem2 = async (id, etat) => {
     } catch (error) {
         showAlert("Erreur lors de la suppression de l'élément", 'Oups!', 'danger')
         console.error('Error deleting item:', error)
-        throw error
     }
 };
 
-// Afficher une alerte
 const showAlert = (message, title, type) => {
     alert.value = {
         show: true,
@@ -464,13 +404,11 @@ const showAlert = (message, title, type) => {
         type
     }
 
-    // Auto-hide après 5 secondes
     setTimeout(() => {
         alert.value.show = false
     }, 5000)
 }
 
-// Condition sur le style
 const getStyle = (col) => {
     const defaultStyle = {
         minWidth: col.type === 'select' ? '200px'
@@ -485,15 +423,9 @@ const getStyle = (col) => {
     }
 };
 
-// Exposition des fonctions pour qu'elles soient accessibles depuis le parent
 defineExpose({
     getTableData,
     getAllEditableData,
     getEditableDataForRow
-    
-});
-
-// LIFECYCLE HOOKS
-onMounted(() => {
 });
 </script>

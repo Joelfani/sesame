@@ -13,6 +13,12 @@ state: () => ({
     avatar:null,
     sup:'',
     niv:null,
+    achat:false,
+    finance:false,
+    dpr:false,
+    cheque:false,
+    livraison:false,
+    fournisseur:false,
     add:'',
     edit:'',
     delet:'',
@@ -30,6 +36,12 @@ actions: {
     this.avatar = user.avatar
     this.sup = user.sup
     this.niv = user.niv
+    this.achat = user.achat
+    this.finance = user.finance
+    this.dpr = user.dpr
+    this.cheque = user.cheque
+    this.livraison = user.livraison
+    this.fournisseur = user.fournisseur
     this.add = user.add
     this.edit = user.edit
     this.delet = user.delet

@@ -4,7 +4,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>VALIDATION AU NIVEAU DE L' ACHETEUR</h1>
             <div class="link_demande">
-                <NuxtLink to="/achat/historique" class="btn btn-outline-success">Historique des validations</NuxtLink>
+                
             </div>
         </div>
         

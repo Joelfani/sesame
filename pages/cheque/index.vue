@@ -1,10 +1,10 @@
 <template>
-    <div class="demandes_validation_page">
+    <div class="demandes_attente_cheque_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>VALIDATION AU NIVEAU DU DPR</h1>
+            <h1>DEMANDES EN ATTENTE DE CHÈQUE</h1>
             <div class="link_demande">
-                <NuxtLink to="/dpr/historique" class="btn btn-outline-success">Historique des validations</NuxtLink>
+                <NuxtLink to="/cheques/historique" class="btn btn-outline-success">Historique des chèques</NuxtLink>
             </div>
         </div>
         
@@ -26,13 +26,13 @@
             <input v-else type="search" placeholder="Rechercher une demande" class="form-control mb-3" style="width: 250px; margin-right: 10px;" v-model="search_term" @input="filterData">
         </div>
         
-        <!-- Tableau des demandes à valider -->
+        <!-- Tableau des demandes en attente de chèque -->
         <div class="table_block_list">
             <Table
                 :columns="columns"
                 :rows="filtered_demandes"
                 :type_but_link="true" 
-                but_link_path="dpr/" 
+                but_link_path="cheque/" 
                 name_but_action="Voir"
             />
         </div>
@@ -51,11 +51,11 @@ const columns = [
     { key: 'date', label: 'Date de la demande' },
     { key: 'id_user', label: 'Nom du demandeur' },
     { key: 'nom', label: 'Objet de la demande' },
-    { key: 'nbrnv', label: 'Nombre d\'article non validé'},
+    { key: 'nbrnv', label: 'Nombre d\'article en attente'},
 ];
 
 // Variables réactives
-const liste_demandes_a_valider = ref([]) // Liste originale
+const liste_demandes_attente_cheque = ref([]) // Liste originale
 const filtered_demandes = ref([]) // Liste filtrée pour l'affichage
 const choix_filtre = ref('num');
 const search_term = ref('');
@@ -63,7 +63,7 @@ const date_debut = ref('');
 const date_fin = ref('');
 
 /* METHODS */
-const getValidationDPR = async () => {
+const getDemandesAttenteCheque = async () => {
     try {
         const { data: dataObj, error: errorObj } = await supabase
             .from('ses_demandeObj')
@@ -74,19 +74,19 @@ const getValidationDPR = async () => {
        
         if (errorObj) throw errorObj;
         
-        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 4
-        const demandesAvecArticlesNiveau4 = [];
+        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 5
+        const demandesAvecArticlesNiveau5 = [];
        
         for (let i = 0; i < dataObj.length; i++) {
             const { count, error: itemsError } = await supabase
                 .from('ses_demItems')
                 .select('id', { count: 'exact', head: true })
                 .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', 4); 
+                .eq('niv_val', 5); 
            
             if (itemsError) throw itemsError;
             
-            // Si cette demande a des articles avec niv_val = 4
+            // Si cette demande a des articles avec niv_val = 5
             if (count > 0) {
                 dataObj[i].nbrnv = count;
                 
@@ -105,14 +105,14 @@ const getValidationDPR = async () => {
 
                 dataObj[i].id_user = nameDemandeur[0]?.full_name || 'Nom non trouvé';
                 
-                demandesAvecArticlesNiveau4.push(dataObj[i]);
+                demandesAvecArticlesNiveau5.push(dataObj[i]);
             }
         }
         
-        liste_demandes_a_valider.value = demandesAvecArticlesNiveau4;
-        filtered_demandes.value = [...demandesAvecArticlesNiveau4]; // Initialiser la liste filtrée
+        liste_demandes_attente_cheque.value = demandesAvecArticlesNiveau5;
+        filtered_demandes.value = [...demandesAvecArticlesNiveau5]; // Initialiser la liste filtrée
        
-        console.log('liste demandes niveau DPR', liste_demandes_a_valider.value);
+        console.log('liste demandes en attente de chèque', liste_demandes_attente_cheque.value);
        
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
@@ -122,13 +122,13 @@ const getValidationDPR = async () => {
 // Fonction de filtrage des données
 const filterData = () => {
     if (!search_term.value.trim()) {
-        filtered_demandes.value = [...liste_demandes_a_valider.value];
+        filtered_demandes.value = [...liste_demandes_attente_cheque.value];
         return;
     }
     
     const term = search_term.value.toLowerCase().trim();
     
-    filtered_demandes.value = liste_demandes_a_valider.value.filter(item => {
+    filtered_demandes.value = liste_demandes_attente_cheque.value.filter(item => {
         switch (choix_filtre.value) {
             case 'num':
                 return item.id.toString().includes(term);
@@ -143,11 +143,11 @@ const filterData = () => {
 // Fonction de filtrage par date
 const filterByDate = () => {
     if (!date_debut.value && !date_fin.value) {
-        filtered_demandes.value = [...liste_demandes_a_valider.value];
+        filtered_demandes.value = [...liste_demandes_attente_cheque.value];
         return;
     }
     
-    filtered_demandes.value = liste_demandes_a_valider.value.filter(item => {
+    filtered_demandes.value = liste_demandes_attente_cheque.value.filter(item => {
         const itemDate = new Date(item.date_original);
         const debut = date_debut.value ? new Date(date_debut.value) : null;
         const fin = date_fin.value ? new Date(date_fin.value) : null;
@@ -168,7 +168,7 @@ watch(choix_filtre, () => {
     search_term.value = '';
     date_debut.value = '';
     date_fin.value = '';
-    filtered_demandes.value = [...liste_demandes_a_valider.value];
+    filtered_demandes.value = [...liste_demandes_attente_cheque.value];
 });
 
 // Fonction de formatage de date
@@ -183,6 +183,6 @@ const formatDate = (dateString) => {
 
 // Lifecycle
 onMounted(() => {
-    getValidationDPR();
+    getDemandesAttenteCheque();
 });
 </script>

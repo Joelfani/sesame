@@ -51,7 +51,7 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
         try {
         const { data, error } = await supabase
             .from('ses_demItems')
-            .select('*')
+            .select('*,fournisseur(nom)')
             .eq('id_obj', route.params.id)
             .order('num', { ascending: true });
         if (error) throw error;
@@ -70,6 +70,7 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
                         item.niv_val === 9 ? 'Refusée par le responsable d\'achat' :
                         item.niv_val === 10 ? 'Refusée par le responsable financier' : 'Refusée par le DPR',
             delai: formatDate(item.delai),// Formatage de la date en jj/mm/aaaa
+            fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
             };
         });
 

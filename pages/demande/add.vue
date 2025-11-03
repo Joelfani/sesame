@@ -65,7 +65,7 @@
         { key: "num", label: "N°", type:'number',min:'1',disabled: true, style: {height: '62px'}},
         { key: "designation", label: "Désignation", type:'textarea',style: {height: '62px'}},
         { key: "qte", type:'number',min:'1', label: "Nombre" },
-        {   key: "spec", label: "Spécificités techniques, les références, photos (à bien préciser)", type:'textarea',placeholder: " " },
+        {   key: "spec", label: "Spécificités techniques, les références (à bien préciser)", type:'textarea',placeholder: " " },
         { key: "fournisseur", label: "Fournisseur possible",type:'select',
             options: fournisseurs.value,
         },

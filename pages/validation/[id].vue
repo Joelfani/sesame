@@ -3,7 +3,7 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>DÉTAILS DE LA DEMANDE</h1>
-            <button class="btn btn-outline-success">Exporter vers Excel</button>
+            <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
             <div class="link_demande">
             </div>
         </div>
@@ -34,18 +34,42 @@
                 @editable_field_change="handleEditableFieldChange"
             />
         </div>
+        <!-- Alert pour les notifications -->
+        <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
 </template>
 
 <script setup>
 import { tableTete } from '~/assets/js/CommonVariable.js';
-
+import {exportExcel} from '~/assets/js/export.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
 const route = useRoute();
 
+// Alert system
+const alert = ref({
+    show: false,
+    message: '',
+    title: '',
+    type: '' // success, error, warning, info
+})
+
+// Afficher une alerte
+const showAlert = (message, title, type) => {
+    alert.value = {
+        show: true,
+        message,
+        title,
+        type
+    }
+
+    // Auto-hide après 5 secondes
+    setTimeout(() => {
+        alert.value.show = false
+    }, 5000)
+}
 // Référence vers le composant Table
 const tableRef = ref(null);
 
@@ -119,6 +143,7 @@ const getDemandeDetails = async () => {
         
     } catch (error) {
         console.log(error);
+        showAlert('Erreur lors de la récupération des détails de la demande.', 'Oops', 'danger');
     }
 };
 
@@ -149,8 +174,6 @@ const handleValidationAction = async (validationPayload) => {
 // Gestion de la validation
 const handleValidation = async (item, editableData) => {
     try {
-        console.log('Validation de l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
         
         // Préparer les données à mettre à jour
         const updateData = {
@@ -159,22 +182,26 @@ const handleValidation = async (item, editableData) => {
         };
         
         // Mettre à jour dans la base de données
+        if(editableData.fields.imputation === undefined || editableData.fields.imputation === null || editableData.fields.imputation === ''){
+            showAlert('Veuillez sélectionner une imputation analytique avant de valider.', 'Oops', 'danger');
+            return;
+        }
         const { error } = await supabase
             .from('ses_demItems')
             .update(updateData)
             .eq('id', item.id);
-        
+
         if (error) throw error;
         
         // Actualiser les données
         await getDemandeDetails();
         
         console.log('Validation réussie pour l\'item:', item.id);
-        alert('Item validé avec succès !');
+        showAlert('Item validé avec succès !', 'Succès', 'success');
         
     } catch (error) {
         console.error('Erreur lors de la validation:', error);
-        alert('Erreur lors de la validation !');
+        showAlert('Erreur lors de la validation !', 'Oops', 'danger');
     }
 };
 
@@ -202,11 +229,11 @@ const handleRejection = async (item, editableData) => {
         await getDemandeDetails();
         
         console.log('Rejet réussi pour l\'item:', item.id);
-        alert('Item rejeté !');
+        showAlert('Item rejeté avec succès !', 'Succès', 'success');
         
     } catch (error) {
         console.error('Erreur lors du rejet:', error);
-        alert('Erreur lors du rejet !');
+        showAlert('Erreur lors du rejet !', 'Oops', 'danger');
     }
 };
 
@@ -233,6 +260,38 @@ const formatDate = (dateString) => {
     const year = d.getFullYear();
     const formattedDate = `${day}/${month}/${year}`;
     return formattedDate;
+};
+
+const exportToExcel = async () => {
+    try {
+        const { data, error } = await supabase
+            .from('ses_demItems')
+            .select('*, fournisseur(nom)')
+            .eq('id_obj', route.params.id)
+            .order('num', { ascending: true });
+        
+        if (error) throw error;
+
+        // Préparer les données pour l'exportation
+        const exportData = data.map(item => ({
+            'Num': item.num,
+            'Désignation': item.designation,
+            'Spécificités techniques': item.spec,
+            'Quantité': item.qte,
+            'Prix Unitaire': item.prix,
+            'Fournisseur': item.fournisseur?.nom || '',
+            'Délai': formatDate(item.delai),
+            'Imputation Analytique': item.imputation || ''
+        }));
+
+        const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`
+
+        await exportExcel(exportData, nameExcel);
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'exportation vers Excel:', error);
+        showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
+    }
 };
 
 // LIFECYCLE HOOKS
