@@ -88,7 +88,7 @@
 
 <script setup>
 import { tableTete } from '~/assets/js/CommonVariable.js';
-
+import {exportExcel} from '~/assets/js/export.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
@@ -172,6 +172,7 @@ const getDemandeDetails = async () => {
             };
         });
         demande_details.value = allDataView;
+        console.log('data get',demande_details.value );
         
         // Récupération des informations de l'objet
         const { data: demandeObj, error: demandeObjError } = await supabase
@@ -533,7 +534,7 @@ const downloadFile = async (name_doc,nameStorage) => {
 const exportToExcel = async () => {
     try {
         const data = demande_details.value
-
+        console.log(data)
         // Préparer les données pour l'exportation
         const exportData = data.map(item => ({
             'Num': item.num,
@@ -541,10 +542,10 @@ const exportToExcel = async () => {
             'Spécificités techniques': item.spec,
             'Quantité': item.qte,
             'Prix Unitaire': item.prix,
-            'Fournisseur': item.fournisseur?.nom || '',
-            'Délai': formatDate(item.delai),
+            'Fournisseur': item.fournisseur|| '',
+            'Délai': item.delai,
             'Imputation Analytique': item.imputation || '',
-            'Fournisseur Réel': item.fournisseur2 || '',
+            'Fournisseur Réel': fournisseursAllData.value.find(f => f.id === item.fournisseur2)?.nom || '' ,
             'Prix Réel': item.prixR || '',
             'Montant Réel': item.totalR || ''
         }));

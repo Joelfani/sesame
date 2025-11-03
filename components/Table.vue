@@ -58,7 +58,7 @@
                     </template>
                     <!-- Si la colonne est normale -->
                     <template v-else>
-                        <span :style="item.etat == 4 ? 'color:#d19017': item.etat == 1 ? 'color:#29a825': item.etat == 2 ? 'color:red': ''">
+                        <span :style="item.etat == 4 ? 'color:#d19017': item.etat == 1 ? 'color:#29a825': item.etat == 2 ? 'color:red': item.niv_val == 7 ? 'color:#29a825': item.niv_val == 8 ? 'color:red': ''">
                             {{ item[col.key] }}
                         </span>
                     </template>

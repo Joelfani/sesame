@@ -4,10 +4,10 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>DÉTAILS DE LA DEMANDE</h1>
             <div class="">
-                <button class="btn btn-outline-success">Exporter vers Excel</button>
-                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#afe" @click="recoreryFournisseur">A.F.E</button>
+                <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#afe">A.F.E</button>
                 <client-only>
-                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bc" @click="recoreryFournisseur">Bon de commande</button>
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bc">Bon de commande</button>
                     <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modDoc" @click="doc_recovery({id:route.params.id})">Liste document</button>
                 </client-only>
                 
@@ -35,7 +35,6 @@
                 :actions="[
                     { label: 'Valider', color: 'success' },
                     { label: 'Rejeter', color: 'danger' },
-                    { label: 'Document', color: 'outline-dark' , active_modal:true, type_modal:4, }
                 ]"
                 title_modal_neutre="Liste des documents associés"
                 @validation_action="handleValidationAction"
@@ -67,7 +66,7 @@
                 </select>
                 <hr>
                 <span v-if="pdfButtonLoading">Traitement ...</span>
-                <button class="btn btn-outline-dark" @click="generatePDF('pdfafe')" :disabled="pdfButtonLoading">Générer un AFE</button>            
+                <button class="btn btn-outline-dark" @click="generatePDF('pdfafe','AFE')" :disabled="pdfButtonLoading">Générer un AFE</button>            
                 <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
             </div>
         </Modal>
@@ -112,7 +111,7 @@
                 />
                 <hr>
                 <span v-if="pdfButtonLoading">Traitement ...</span>
-                <button class="btn btn-outline-dark" @click="generatePDF('pdfbc')" :disabled="pdfButtonLoading">Générer un BC</button>            
+                <button class="btn btn-outline-dark" @click="generatePDF('pdfbc','Bon de commande')" :disabled="pdfButtonLoading">Générer un BC</button>            
                 <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
             </div>
         </Modal>
@@ -196,8 +195,8 @@
                     <div class="d-flex justify-content-end m-3">
                         <div class="">
                             <h5> {{ pdffournisseurSelected }} </h5>
-                            <h5><span style="font-weight: bold;">NIF :</span> {{ pdffournisseurSelected }}</h5>
-                            <h5><span style="font-weight: bold;">STAT :</span> {{ pdffournisseurSelected }}</h5>
+                            <h5><span style="font-weight: bold;">NIF :</span> {{ nif }}</h5>
+                            <h5><span style="font-weight: bold;">STAT :</span> {{ stat }}</h5>
                         </div>
                     </div>
                     <div class="container mt-4">
@@ -207,7 +206,7 @@
                                     <tr>
                                         <th width="40%">Designation</th>
                                         <th width="15%">Unité</th>
-                                        <th width="20%">Prix</th>
+                                        <th width="20%">Prix unitaire</th>
                                         <th width="25%">MONTANT</th>
                                     </tr>
                                 </thead>
@@ -256,6 +255,19 @@
             </div>
         </div>
     </div>
+    <!-- Modal neutre type 4 -->
+        <Modal id="modDoc" title="Liste des documents associés">
+            
+                <div class="text-center">
+                    
+                    <p v-for="doc in doc_achat" :key="doc.id" style="font-weight: bold;">
+                        {{ doc.name_doc }}
+                        <button class="btn btn-outline-secondary" @click="downloadFile(doc.name_doc, doc.nameStorage)"><img src="/public/icon/download.png" style="width: 20px; height: 20px;"></button>
+                        <button class="btn btn-outline-light" @click="deleteFile(route.params.id,doc.id, doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
+                    </p>
+                </div>
+            
+        </Modal>
     </div>
 </template>
 
@@ -263,6 +275,7 @@
 import { tableTete } from '~/assets/js/CommonVariable.js';
 import n2words from 'n2words'
 import Cleave from 'vue-cleave-component'
+import {exportExcel} from '~/assets/js/export.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
@@ -290,12 +303,15 @@ const doc_achat = ref([]) // contient les documents reliers a une article de l'a
 const fournisseurAfe = ref([]); // Pour le modal AFE
 const pdffournisseurSelected = ref('')
 const fournisseurPdfDetails = ref([])
+const nifstat = ref([])
+const nif = ref('')
+const stat = ref('')
 const pdfDetailTotal = computed(() => {
     return fournisseurPdfDetails.value.reduce((sum, item) => sum + (item.totalR || 0), 0);
 });
 const refBc = ref('')
 const paimentMode = ref('')
-const auNomDe = ref('')
+const auNomDe = ref('') 
 
 
 //data for pdf
@@ -342,7 +358,7 @@ const getDemandeDetails = async () => {
     try {
         const { data, error } = await supabase
             .from('ses_demItems')
-            .select('*, fournisseur(nom), fournisseur2(nom,id)')
+            .select('*, fournisseur(nom), fournisseur2(nom,id,nif,stat)')
             .eq('id_obj', route.params.id)
             .order('num', { ascending: true });
         
@@ -372,6 +388,8 @@ const getDemandeDetails = async () => {
                     {
                         nom: item.fournisseur2?.nom || '',
                         id: item.fournisseur2?.id || null,
+                        nif: item.fournisseur2?.nif || '',
+                        stat: item.fournisseur2?.stat || '',
                     }
                     ])
                 ).values()
@@ -517,7 +535,7 @@ const doc_recovery = async (item) =>{
         const { data, error } = await supabase
         .from('ses_doc_achat')
         .select('*')
-        .eq('id_item', item.id)
+        .eq('id_obj', item.id) 
 
         if (error) throw error
 
@@ -557,7 +575,7 @@ const downloadFile = async (name_doc,nameStorage) => {
     }
 }
 // PDF
-const generatePDF = async (domname) => {
+const generatePDF = async (domname,namepdf) => {
     pdfButtonLoading.value = true
     if (domname === 'pdfafe' && !pdffournisseurSelected.value) {
         showAlert('Veuillez sélectionner un fournisseur avant de générer le PDF.', 'Oups', 'danger');
@@ -605,13 +623,46 @@ const generatePDF = async (domname) => {
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
 
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-    pdf.save('AFE.pdf')
+    const name = namepdf + '.pdf'
+    pdf.save(name)
     pdfButtonLoading.value = false  
     
 }
+
+const exportToExcel = async () => {
+    try {
+        const data = demande_details.value
+        console.log(data)
+        // Préparer les données pour l'exportation
+        const exportData = data.map(item => ({
+            'Num': item.num,
+            'Désignation': item.designation,
+            'Spécificités techniques': item.spec,
+            'Quantité': item.qte,
+            'Prix Unitaire': item.prix,
+            'Fournisseur': item.fournisseur|| '',
+            'Délai': item.delai,
+            'Imputation Analytique': item.imputation || '',
+            'Fournisseur Réel':item.fournisseur|| '',
+            'Prix Réel': item.prixR || '',
+            'Montant Réel': item.totalR || ''
+        }));
+
+        const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`
+
+        await exportExcel(exportData, nameExcel);
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'exportation vers Excel:', error);
+        showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
+    }
+};
 // Watchers
 watch(pdffournisseurSelected, (newValue) => {
     fournisseurPdfDetails.value = demande_details.value.filter(item => item.fournisseur2 === newValue)
+    nifstat.value = fournisseurAfe.value.filter(item => item.nom === newValue)
+    nif.value = nifstat.value[0]?nifstat.value[0].nif :''
+    stat.value = nifstat.value[0]?nifstat.value[0].stat :''
 }, { deep: true });
 
 // LIFECYCLE HOOKS

@@ -62,13 +62,11 @@ import {tableTete} from '~/assets/js/CommonVariable.js';
             etat: item.niv_val === 1 ? 'En attente de validation chez votre superieur' :
                     item.niv_val === 2 ? 'En attente de validation chez le responsable d\'achat' :
                         item.niv_val === 3 ? 'En attente de validation chez le responsable financier' :
-                        item.niv_val === 4 ? 'En attente de validation chez le DPR' : 
-                        item.niv_val === 5 ? 'En attente de validation chez le responsable financier pour chèque' :
-                        item.niv_val === 6 ? 'En attente de validation chez le responsable d\'achat livraison' :
-                        item.niv_val === 7 ? 'Validée' :
-                        item.niv_val === 8 ? 'Refusée par le superieur' :
-                        item.niv_val === 9 ? 'Refusée par le responsable d\'achat' :
-                        item.niv_val === 10 ? 'Refusée par le responsable financier' : 'Refusée par le DPR',
+                        item.niv_val === 4 ? 'En attente de validation du DPR' : 
+                        item.niv_val === 5 ? 'En attente d\'émission de chèque' :
+                        item.niv_val === 6 ? 'En attente de livraison' :
+                        item.niv_val === 7 ? 'Validée' : 
+                        item.niv_val === 8 ? 'Votre demande a été refusée' : 'Erreur',
             delai: formatDate(item.delai),// Formatage de la date en jj/mm/aaaa
             fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
             };

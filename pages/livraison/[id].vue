@@ -2,7 +2,7 @@
     <div class="purchase_page">
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>DÉTAILS DE LA DEMANDE - GESTION CHÈQUE</h1>
+            <h1>DÉTAILS DE LA DEMANDE - GESTION LIVRAISON</h1>
             <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
             <div class="link_demande">
             </div>
@@ -27,7 +27,7 @@
                 :type_but_modal="true"
                 :but_Validation="true"
                 :actions="[
-                    { label: 'Chèque émis', color: 'success' },
+                    { label: 'Livré', color: 'success' },
                     { label: 'Rejeter', color: 'secondary' }
                 ]"
                 @validation_action="handleValidationAction"
@@ -60,21 +60,18 @@ const columns = [
     { key: 'prixR', label: 'Prix Réel' },
     { key: 'totalR', label: 'Montant Réel' },
     { key: 'observation_dpr', label: 'Observation DPR'},
+    { key: 'num_cheque', label: 'N° Chèque'},
+    { key: 'date_emission_cheque', label: 'Date d\'émission'},
+    { key: 'observation_cheque', label: 'Observation Chèque'},
     { 
-        key: 'num_cheque', 
-        label: 'N° Chèque', 
-        editable: true, 
-        type: 'text'
-    },
-    { 
-        key: 'date_emission_cheque', 
-        label: 'Date d\'émission', 
+        key: 'date_livraison', 
+        label: 'Date de livraison', 
         editable: true, 
         type: 'date'
     },
     { 
-        key: 'observation_cheque', 
-        label: 'Observation Chèque', 
+        key: 'observation_livraison', 
+        label: 'Observation Livraison', 
         editable: true, 
         type: 'textarea'
     }
@@ -125,14 +122,15 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == 5 ? 0 : item.niv_val == 8 ? 2 : item.niv_val < 5 ? 4 : 1,
+                etat: item.niv_val == 6 ? 0 : item.niv_val == 8 ? 2 : item.niv_val < 6 ? 4 : 1,
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
                 // Mapper les champs pour l'affichage
                 fournisseur2: item.fournisseur2?.nom || '',
                 prix2: item.prixR || item.prix || 0,
                 total2: item.totalR || item.total || 0,
-                // Formater la date d'émission si elle existe
-                date_emission_cheque: item.date_emission_cheque
+                // Formater les dates si elles existent
+                date_emission_cheque: item.date_emission_cheque ? formatDate(item.date_emission_cheque) : '',
+                date_livraison: item.date_livraison
             };
         });
         
@@ -162,7 +160,7 @@ const getDemandeDetails = async () => {
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
     
-    console.log('Action de gestion chèque:', action);
+    console.log('Action de gestion livraison:', action);
     console.log('Item original:', item);
     console.log('Données éditables:', editableData);
     
@@ -175,35 +173,29 @@ const handleValidationAction = async (validationPayload) => {
         timestamp: new Date().toISOString()
     };
     
-    if (action === 'Chèque émis') {
-        await handleChequeEmis(item, editableData);
+    if (action === 'Livré') {
+        await handleLivraison(item, editableData);
     } else if (action === 'Rejeter') {
         await handleRejection(item, editableData);
     }
 };
 
-// Gestion de l'émission du chèque
-const handleChequeEmis = async (item, editableData) => {
+// Gestion de la livraison
+const handleLivraison = async (item, editableData) => {
     try {
-        console.log('Émission de chèque pour l\'item:', item.id);
+        console.log('Livraison pour l\'item:', item.id);
         console.log('Avec les données éditables:', editableData.fields);
         
-        // Vérifier que le numéro de chèque est renseigné
-        if (!editableData.fields.num_cheque || editableData.fields.num_cheque.trim() === '') {
-            showAlert('Veuillez renseigner le numéro de chèque !', 'Oops', 'danger');
-            return;
-        }
-
-        // Vérifier que la date d'emision de chèque est renseigné
-        if (!editableData.fields.date_emission_cheque) {
-            showAlert('Veuillez renseigner la date d\'emission de chèque !', 'Oops', 'danger');
+        // Vérifier que la date de livraison est renseignée
+        if (!editableData.fields.date_livraison) {
+            showAlert('Veuillez renseigner la date de livraison !', 'Oops', 'danger');
             return;
         }
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 6, // Passer au niveau suivant (chèque émis)
-            date_emission_cheque: editableData.fields.date_emission_cheque || new Date().toISOString().split('T')[0],
+            niv_val: 7, // Passer au niveau suivant (livré)
+            date_livraison: editableData.fields.date_livraison,
             ...editableData.fields // Inclure toutes les données éditables modifiées
         };
         
@@ -217,10 +209,10 @@ const handleChequeEmis = async (item, editableData) => {
         
         // Actualiser les données
         await getDemandeDetails();
-        showAlert('Chèque émis avec succès !', 'Succès', 'success');
+        showAlert('Article livré avec succès !', 'Succès', 'success');
     } catch (error) {
-        console.error('Erreur lors de l\'émission du chèque:', error);
-        showAlert('Erreur lors de l\'émission du chèque !', 'Oops', 'danger');
+        console.error('Erreur lors de la livraison:', error);
+        showAlert('Erreur lors de la livraison !', 'Oops', 'danger');
     }
 };
 
@@ -295,11 +287,13 @@ const exportToExcel = async () => {
             'Montant Réel': item.totalR || '',
             'Observation DPR': item.observation_dpr || '',
             'N° Chèque': item.num_cheque || '',
-            'Date d\'émission':item.date_emission_cheque? formatDate(item.date_emission_cheque):'',
-            'Observation Chèque': item.observation_cheque || ''
+            'Date d\'émission': item.date_emission_cheque || '',
+            'Observation Chèque': item.observation_cheque || '',
+            'Date de livraison': item.date_livraison ? formatDate(item.date_livraison) : '',
+            'Observation Livraison': item.observation_livraison || ''
         }));
 
-        const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`
+        const nameExcel = `Details_Livraison_Demande_Num_${route.params.id}`
 
         await exportExcel(exportData, nameExcel);
         

@@ -3,7 +3,7 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>DÉTAILS DE LA DEMANDE - VALIDATION DPR</h1>
-            <button class="btn btn-outline-success">Exporter vers Excel</button>
+            <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
             <div class="link_demande">
             </div>
         </div>
@@ -34,12 +34,14 @@
                 @editable_field_change="handleEditableFieldChange"
             />
         </div>
+        <!-- Alert pour les notifications -->
+        <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
 </template>
 
 <script setup>
 import { tableTete } from '~/assets/js/CommonVariable.js';
-
+import {exportExcel} from '~/assets/js/export.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
@@ -51,7 +53,8 @@ const tableRef = ref(null);
 
 // Définition des colonnes du tableau
 const columns = [
-    ...tableTete,
+    { key: 'num', label: 'N°'},
+    ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
     { key: 'imputation', label: 'Imputation analytique' },
     { key: 'fournisseur2', label: 'Fournisseur Réel' },
     { key: 'prixR', label: 'Prix Réel' },
@@ -69,7 +72,31 @@ const dataObj = ref([]);
 const demande_details = ref([]);
 const validationData = ref(null); // Pour stocker les données de validation pour debug
 
+// Alert system
+const alert = ref({
+    show: false,
+    message: '',
+    title: '',
+    type: '' // success, error, warning, info
+})
+
 // METHODES
+
+// Afficher une alerte
+const showAlert = (message, title, type) => {
+    alert.value = {
+        show: true,
+        message,
+        title,
+        type
+    }
+
+    // Auto-hide après 5 secondes
+    setTimeout(() => {
+        alert.value.show = false
+    }, 5000)
+}
+
 //recuperation des données
 const getDemandeDetails = async () => {
     try {
@@ -164,11 +191,10 @@ const handleValidation = async (item, editableData) => {
         await getDemandeDetails();
         
         console.log('Validation DPR réussie pour l\'item:', item.id);
-        alert('Item validé avec succès par le DPR !');
-        
+        showAlert('Item validé avec succès!', 'Succès', 'success')
     } catch (error) {
         console.error('Erreur lors de la validation DPR:', error);
-        alert('Erreur lors de la validation !');
+        showAlert('Erreur lors de la validation !', 'Oups!', 'danger')
     }
 };
 
@@ -197,11 +223,11 @@ const handleRejection = async (item, editableData) => {
         await getDemandeDetails();
         
         console.log('Rejet DPR réussi pour l\'item:', item.id);
-        alert('Item rejeté par le DPR !');
+        showAlert('Item rejeté par le DPR !', 'Succès', 'success')
         
     } catch (error) {
         console.error('Erreur lors du rejet DPR:', error);
-        alert('Erreur lors du rejet !');
+        showAlert('Erreur lors du rejet !', 'Oups!', 'danger')
     }
 };
 
@@ -228,7 +254,35 @@ const formatDate = (dateString) => {
     const formattedDate = `${day}/${month}/${year}`;
     return formattedDate;
 };
+const exportToExcel = async () => {
+    try {
+        const data = demande_details.value
+        console.log(data)
+        // Préparer les données pour l'exportation
+        const exportData = data.map(item => ({
+            'Num': item.num,
+            'Désignation': item.designation,
+            'Spécificités techniques': item.spec,
+            'Quantité': item.qte,
+            'Prix Unitaire': item.prix,
+            'Fournisseur': item.fournisseur|| '',
+            'Délai': item.delai,
+            'Imputation Analytique': item.imputation || '',
+            'Fournisseur Réel':item.fournisseur|| '',
+            'Prix Réel': item.prixR || '',
+            'Montant Réel': item.totalR || '',
+            'Observation DPR': item.observation_dpr || ''
+        }));
 
+        const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`
+
+        await exportExcel(exportData, nameExcel);
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'exportation vers Excel:', error);
+        showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
+    }
+};
 // LIFECYCLE HOOKS
 onMounted(() => {
     getDemandeDetails();

@@ -1,8 +1,8 @@
 <template>
-    <div class="demandes_attente_cheque_page">
+    <div class="demandes_attente_livraison_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>DEMANDES EN ATTENTE DE CHÈQUE</h1>
+            <h1>DEMANDES EN ATTENTE DE LIVRAISON</h1>
             <div class="link_demande">
             </div>
         </div>
@@ -25,13 +25,13 @@
             <input v-else type="search" placeholder="Rechercher une demande" class="form-control mb-3" style="width: 250px; margin-right: 10px;" v-model="search_term" @input="filterData">
         </div>
         
-        <!-- Tableau des demandes en attente de chèque -->
+        <!-- Tableau des demandes en attente de livraison -->
         <div class="table_block_list">
             <Table
                 :columns="columns"
                 :rows="filtered_demandes"
                 :type_but_link="true" 
-                but_link_path="cheque/" 
+                but_link_path="livraison/" 
                 name_but_action="Voir"
             />
         </div>
@@ -54,7 +54,7 @@ const columns = [
 ];
 
 // Variables réactives
-const liste_demandes_attente_cheque = ref([]) // Liste originale
+const liste_demandes_attente_livraison = ref([]) // Liste originale
 const filtered_demandes = ref([]) // Liste filtrée pour l'affichage
 const choix_filtre = ref('num');
 const search_term = ref('');
@@ -62,7 +62,7 @@ const date_debut = ref('');
 const date_fin = ref('');
 
 /* METHODS */
-const getDemandesAttenteCheque = async () => {
+const getDemandesAttenteLivraison = async () => {
     try {
         const { data: dataObj, error: errorObj } = await supabase
             .from('ses_demandeObj')
@@ -73,19 +73,19 @@ const getDemandesAttenteCheque = async () => {
        
         if (errorObj) throw errorObj;
         
-        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 5
-        const demandesAvecArticlesNiveau5 = [];
+        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 6
+        const demandesAvecArticlesNiveau6 = [];
        
         for (let i = 0; i < dataObj.length; i++) {
             const { count, error: itemsError } = await supabase
                 .from('ses_demItems')
                 .select('id', { count: 'exact', head: true })
                 .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', 5); 
+                .eq('niv_val', 6); 
            
             if (itemsError) throw itemsError;
             
-            // Si cette demande a des articles avec niv_val = 5
+            // Si cette demande a des articles avec niv_val = 6
             if (count > 0) {
                 dataObj[i].nbrnv = count;
                 
@@ -104,14 +104,14 @@ const getDemandesAttenteCheque = async () => {
 
                 dataObj[i].id_user = nameDemandeur[0]?.full_name || 'Nom non trouvé';
                 
-                demandesAvecArticlesNiveau5.push(dataObj[i]);
+                demandesAvecArticlesNiveau6.push(dataObj[i]);
             }
         }
         
-        liste_demandes_attente_cheque.value = demandesAvecArticlesNiveau5;
-        filtered_demandes.value = [...demandesAvecArticlesNiveau5]; // Initialiser la liste filtrée
+        liste_demandes_attente_livraison.value = demandesAvecArticlesNiveau6;
+        filtered_demandes.value = [...demandesAvecArticlesNiveau6]; // Initialiser la liste filtrée
        
-        console.log('liste demandes en attente de chèque', liste_demandes_attente_cheque.value);
+        console.log('liste demandes en attente de livraison', liste_demandes_attente_livraison.value);
        
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
@@ -121,13 +121,13 @@ const getDemandesAttenteCheque = async () => {
 // Fonction de filtrage des données
 const filterData = () => {
     if (!search_term.value.trim()) {
-        filtered_demandes.value = [...liste_demandes_attente_cheque.value];
+        filtered_demandes.value = [...liste_demandes_attente_livraison.value];
         return;
     }
     
     const term = search_term.value.toLowerCase().trim();
     
-    filtered_demandes.value = liste_demandes_attente_cheque.value.filter(item => {
+    filtered_demandes.value = liste_demandes_attente_livraison.value.filter(item => {
         switch (choix_filtre.value) {
             case 'num':
                 return item.id.toString().includes(term);
@@ -142,11 +142,11 @@ const filterData = () => {
 // Fonction de filtrage par date
 const filterByDate = () => {
     if (!date_debut.value && !date_fin.value) {
-        filtered_demandes.value = [...liste_demandes_attente_cheque.value];
+        filtered_demandes.value = [...liste_demandes_attente_livraison.value];
         return;
     }
     
-    filtered_demandes.value = liste_demandes_attente_cheque.value.filter(item => {
+    filtered_demandes.value = liste_demandes_attente_livraison.value.filter(item => {
         const itemDate = new Date(item.date_original);
         const debut = date_debut.value ? new Date(date_debut.value) : null;
         const fin = date_fin.value ? new Date(date_fin.value) : null;
@@ -167,7 +167,7 @@ watch(choix_filtre, () => {
     search_term.value = '';
     date_debut.value = '';
     date_fin.value = '';
-    filtered_demandes.value = [...liste_demandes_attente_cheque.value];
+    filtered_demandes.value = [...liste_demandes_attente_livraison.value];
 });
 
 // Fonction de formatage de date
@@ -182,6 +182,6 @@ const formatDate = (dateString) => {
 
 // Lifecycle
 onMounted(() => {
-    getDemandesAttenteCheque();
+    getDemandesAttenteLivraison();
 });
 </script>
