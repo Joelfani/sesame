@@ -111,9 +111,9 @@ const getValidationAchat = async () => {
         
         liste_demandes_a_valider.value = demandesAvecArticlesNiveau2;
         filtered_demandes.value = [...demandesAvecArticlesNiveau2]; // Initialiser la liste filtrée
-       
+
         console.log('liste demandes niveau acheteur', liste_demandes_a_valider.value);
-       
+
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
     }

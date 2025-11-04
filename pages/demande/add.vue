@@ -166,10 +166,23 @@
             .insert(insertData);
 
         if (insertItemError) throw insertItemError;
-
+        
         showAlert('Demande envoyée avec succès', 'Succès', 'success');
-        console.log('Table data:', tableData);
-        console.log('Table data sent successfully');
+        
+        // Enregistrement dans historique
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: insertedId,
+                action: 'Envoie d\'une demande d\'achat numéro ' + insertedId,
+            });
+
+        if (insertHistError) throw insertHistError;
+
+        
+        
         navigateTo('/demande')
     } catch (error) {
         showAlert('Erreur lors de l\'envoi', 'Oups!', 'danger');

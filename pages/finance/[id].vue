@@ -466,6 +466,19 @@ const handleValidation = async (item, editableData) => {
         // Actualiser les données
         await getDemandeDetails();
         
+        // Enregistrement dans historique
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: route.params.id,
+                id_item: item.id,
+                action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+            });
+
+        if (insertHistError) throw insertHistError;
+        
         console.log('Validation financière réussie pour l\'item:', item.id);
         
     } catch (error) {
@@ -496,6 +509,20 @@ const handleRejection = async (item, editableData) => {
         
         // Actualiser les données
         await getDemandeDetails();
+        
+        // Enregistrement dans historique
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: route.params.id,
+                id_item: item.id,
+                action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                type: 'rejeter',
+            });
+
+        if (insertHistError) throw insertHistError;
         
         console.log('Rejet financier réussi pour l\'item:', item.id);
         

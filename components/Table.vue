@@ -160,8 +160,8 @@
 
     <div v-if="rows.length <= 0 && !tableinputadd">
         <Loading dataload="des données"></Loading>
+        <h1>Aucun enregistrement trouvé pour le moment</h1>
     </div>
-
     <!-- Modals -->
     <Modal v-for="item in rows" :id="'mod1' + item.id" :title="'Modifier ' + title_modal_edit">
         <slot name="modal1" :item="item"></slot>
@@ -265,7 +265,7 @@ const handleCleaveInput = (event, rowIndex, fieldKey) => {
     changement(rowIndex, fieldKey, numericValue);
 }
 
-// CORRECTION 4: Méthode changement simplifiée sans récursion
+// Méthode changement simplifiée sans récursion
 const changement = (rowIndex, fieldKey, value) => {
     // Convertir la valeur en nombre si c'est une chaîne
     const numericValue = typeof value === 'string' ? (parseFloat(value.replace(/\s/g, '')) || 0) : (value || 0);
@@ -281,6 +281,19 @@ const changement = (rowIndex, fieldKey, value) => {
     // Tracker le changement
     onEditableFieldChange(rowIndex, fieldKey, numericValue);
 }
+
+const handleCleaveInputAdd = (event, rowIndex, fieldKey) => {
+    // Récupérer la valeur brute (sans les espaces de formatage)
+    const rawValue = event.target.value.replace(/\s/g, '');
+    // Convertir en nombre
+    const numericValue = parseFloat(rawValue) || 0;
+    
+    // Mettre à jour la valeur dans rowsInput
+    rowsInput.value[rowIndex][fieldKey] = numericValue;
+    
+    // Appeler updateData pour recalculer les totaux et émettre l'événement
+    updateData();
+};
 
 const handleValidationAction = (actionType, item, rowIndex) => {
     const editableRowData = getEditableDataForRow(item, rowIndex);
@@ -335,6 +348,8 @@ const updateData = () => {
             row.total = row.qte * row.prix;
         }
     });
+    console.log('data update',rowsInput.value);
+    
     emit('update_table_data', [...rowsInput.value]);
 };
 

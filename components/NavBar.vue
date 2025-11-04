@@ -29,9 +29,11 @@
                     <NuxtLink class="nav-link btn btn-light" to="/livraison">Livraisons</NuxtLink>
                 </li>
                 <li v-if="userStore.fournisseur" class="nav-item">
-                    <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Mes fournisseur</NuxtLink>
+                    <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Fournisseur</NuxtLink>
                 </li>
-                
+                <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/historique">Historique</NuxtLink>
+                </li>
                 <li class="nav-item">
                     <div class="notification" @click="afficher_notif">
                         <div class="point_notif"></div>

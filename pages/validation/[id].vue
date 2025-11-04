@@ -75,10 +75,11 @@ const tableRef = ref(null);
 
 // Définition des colonnes du tableau
 const columns = [
-    ...tableTete,
+    { key: 'num', label: 'N°'},
+    ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
     { 
         key: 'imputation', 
-        label: 'Imputation analytique', 
+        label: 'Imputation analytique',  
         editable: true, 
         type: 'select', 
         options: [
@@ -195,8 +196,20 @@ const handleValidation = async (item, editableData) => {
         
         // Actualiser les données
         await getDemandeDetails();
+
+        // Enregistrement dans historique
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: route.params.id,
+                id_item: item.id,
+                action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+            });
+
+        if (insertHistError) throw insertHistError;
         
-        console.log('Validation réussie pour l\'item:', item.id);
         showAlert('Item validé avec succès !', 'Succès', 'success');
         
     } catch (error) {
@@ -228,7 +241,20 @@ const handleRejection = async (item, editableData) => {
         // Actualiser les données
         await getDemandeDetails();
         
-        console.log('Rejet réussi pour l\'item:', item.id);
+        // Enregistrement dans historique
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: route.params.id,
+                id_item: item.id,
+                action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                type: 'rejeter',
+            });
+
+        if (insertHistError) throw insertHistError;
+
         showAlert('Item rejeté avec succès !', 'Succès', 'success');
         
     } catch (error) {

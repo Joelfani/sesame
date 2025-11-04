@@ -209,6 +209,20 @@ const handleLivraison = async (item, editableData) => {
         
         // Actualiser les données
         await getDemandeDetails();
+
+        // Enregistrement dans historique
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: route.params.id,
+                id_item: item.id,
+                action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id
+            });
+
+        if (insertHistError) throw insertHistError;
+
         showAlert('Article livré avec succès !', 'Succès', 'success');
     } catch (error) {
         console.error('Erreur lors de la livraison:', error);
@@ -236,7 +250,20 @@ const handleRejection = async (item, editableData) => {
         // Actualiser les données
         await getDemandeDetails();
         
-        console.log('Rejet réussi pour l\'item:', item.id);
+        // Enregistrement dans historique
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: route.params.id,
+                id_item: item.id,
+                action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                type: 'rejeter',
+            });
+
+        if (insertHistError) throw insertHistError;
+
         showAlert('Item rejeté !', 'Succès', 'success');
     } catch (error) {
         console.error('Erreur lors du rejet:', error);
