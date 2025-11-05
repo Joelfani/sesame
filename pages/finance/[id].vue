@@ -318,9 +318,6 @@ const auNomDe = ref('')
 const pdf = ref(true)
 const date = ref(new Date().toLocaleDateString())
 const pdfButtonLoading = ref(false)
-const nbrWord = computed(() => {
-    return n2words(pdfDetailTotal.value, { lang: 'fr' })
-})
 const taxe = ref(null)
 const remise = ref(0)
 const mtaxe = computed(() => {
@@ -328,6 +325,15 @@ const mtaxe = computed(() => {
 })
 const mremise = computed(() => {
     return (pdfDetailTotal.value * remise.value) / 100;
+})
+
+// Transformation total en Lettre
+const nbrWord = computed(() => {
+  const total = Number(pdfDetailTotal.value) 
+              + Number(mtaxe.value || 0) 
+              - Number(mremise.value || 0)
+  if (isNaN(total)) return ''
+  return n2words(total, { lang: 'fr' })
 })
 // Alert system
 const alert = ref({
