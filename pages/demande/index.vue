@@ -3,7 +3,8 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>LISTE DE TOUTES MES DEMANDES</h1>
             <div class="link_demande">
-                <NuxtLink to="/demande/add" class="btn btn-outline-success">Faire une demande</NuxtLink>
+                <NuxtLink v-if="userStore.sup != ''" to="/demande/add" class="btn btn-outline-success">Faire une demande</NuxtLink>
+                <button v-else class="btn btn-outline-success" @click="alertNoSup">Faire une demande</button>
                 <NuxtLink to="/demande/tdb" class="btn btn-outline-secondary">Tableau de bord</NuxtLink>
             </div>
         </div>
@@ -29,6 +30,8 @@
         <div class="table_block_list">
             <Table :columns="columns" :rows="filtered_demandes" :type_but_link="true" but_link_path="demande/" name_but_action="Voir"/>
         </div>
+        <!-- Alert pour les notifications -->
+        <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
 </template>
 
@@ -55,7 +58,33 @@ const columns = [
 const liste_demande = ref([]); // Liste originale
 const filtered_demandes = ref([]); // Liste filtrée pour l'affichage
 
+// Alert system
+    const alert = ref({
+        show: false,
+        message: '',
+        title: '',
+        type: '' // success, error, warning, info
+    })
+
+    // Afficher une alerte
+    const showAlert = (message, title, type) => {
+    alert.value = {
+        show: true,
+        message,
+        title,
+        type
+    }
+    
+    // Auto-hide après 5 secondes
+    setTimeout(() => {
+        alert.value.show = false
+    }, 5000)
+}
+
 // METHODS //
+const alertNoSup = () => {
+    showAlert('Veuillez choisir un supérieur avant de faire une demande', 'Oups!', 'danger');
+}
 const getDemande = async () => {
     try {
         const { data: dataObj, error: errorObj } = await supabase

@@ -372,8 +372,9 @@ const saveChanges = async () => {
         const updateData = {
             full_name: formData.value.full_name,
             name_user: formData.value.name_user,
-            tel: formData.value.telephone,
-            resp: formData.value.fonction,
+            tel: formData.value.tel,
+            resp: formData.value.resp,
+            sup: formData.value.sup,
             avatar: selectedAvatar.value,
         }
         
@@ -382,9 +383,7 @@ const saveChanges = async () => {
             .from('users')
             .update(updateData)
             .eq('id', userStore.id)
-            .select()
-            .single()
-        
+            
         if (error) {
             throw error
         }
