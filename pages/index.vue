@@ -74,7 +74,7 @@ const send_connexion = async (formData) => {
             .maybeSingle()
         if (userError) throw userError
         if (!existingUser) {
-            alertPop('Aucun compte trouvé avec cet email.','danger','Oups!')
+            alertPop('Aucun compte trouvé avec cet email ou votre compte n\'est pas encore activer veuillez contacter l\'administrateur pour l\'activation','danger','Oups!')
             return
         }
         // Connexion avec Supabase

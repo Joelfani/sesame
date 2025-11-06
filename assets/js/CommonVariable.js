@@ -5,7 +5,7 @@ export const tableTete = [
             { key: 'spec', label: 'Spécificités techniques, les références (à bien préciser)' , style: {minWidth: '450px'}},
             { key: 'fournisseur', label: 'Fournisseur possible' },
             { key: 'prix', label: 'Prix unitaire (en Ar)' },
-            { key: 'delai', label: 'Date de livraison' },
+            { key: 'delai', label: 'Date de livraison prévue' },
             { key: 'total', label: 'Montant (en Ar)' },
             { key: 'com', label: 'Commentaire' },
         ]

@@ -20,7 +20,7 @@ import '~/assets/css/loginPage.css'
 
 // Utilisation du module @nuxtjs/supabase
 const supabase = useSupabaseClient()
-
+const router = useRouter()
 //DATA //
 const genres = ref([
     { id: 'h', name_genre: 'Homme' },
@@ -57,10 +57,10 @@ const input = computed(() => [
     {
         id: 'genre',
         type: 'select',
-        options: genres.value.map(genre => ({
-            value: genre.id,
-            text: genre.name_genre
-        })),
+        options:[
+            { value: 'h', text: 'Homme' },
+            { value: 'f', text: 'Femme' },
+        ],
         required: true,
         etat_option_login: true,
         option_label: 'le genre'
@@ -107,7 +107,7 @@ const send_register = async (formData) => {
             email: formData.email,
             password: formData.password,
             options: {
-                emailRedirectTo: 'http://localhost:3000/'
+                emailRedirectTo: 'https://achat-sesame.vercel.app' // Indiquer a supabase ou redirectionner l'utilisateur apres avoir cliquer sur le lien 
             }
         })
 
@@ -129,6 +129,11 @@ const send_register = async (formData) => {
         if (updateError) throw updateError
 
         alertPop('Inscription réussie! Veuillez vérifier votre e-mail pour confirmer votre compte.','success','Succès!')
+
+        setTimeout(() => {
+            router.push('/')
+        }, 3000);
+        
 
     } catch (error) {
         console.error('Error during registration:', error)

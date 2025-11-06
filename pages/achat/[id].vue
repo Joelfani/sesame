@@ -335,6 +335,7 @@ const handleValidation = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                niv_val:3
             });
 
         if (insertHistError) throw insertHistError;
@@ -380,6 +381,7 @@ const handleRejection = async (item, editableData) => {
                 id_item: item.id,
                 action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
                 type: 'rejeter',
+                niv_val:8
             });
 
         if (insertHistError) throw insertHistError;

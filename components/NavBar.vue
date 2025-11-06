@@ -31,42 +31,40 @@
                 <li v-if="userStore.fournisseur" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Fournisseur</NuxtLink>
                 </li>
+                <li v-if="userStore.type_compte === 1" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Utilisateurs</NuxtLink>
+                </li>
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/historique">Historique</NuxtLink>
                 </li>
                 <li class="nav-item">
                     <div class="notification" @click="afficher_notif">
-                        <div class="point_notif"></div>
+                        <div v-if="solos.length > 0 || sups.length > 0 || others.length > 0" class="point_notif"></div>
                         <img src="/public/icon/bell.png" alt="notification" class="notification_icon">
                     </div>
                 <div v-if="notif" class="list_notification">
-                    <div class="fermer_notif"><img src="/public/icon/croix.png" alt="fermer_notif" style="height: 10px; width: 10px;" @click="afficher_notif"></div>
-                    <div class="one_notif">
-                        <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numero 1</div>
-                        <div class="detail" style="font-size: 14px;">Demande valider par le responsable de finance</div>
-                        <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">23 Aout 2025</div>
+                    <div class="fermer_notif"><img src="/public/icon/croix.png" alt="fermer_notif" style="height: 10px; width: 10px;" @click="close_notif"></div>
+
+                    <!-- NOTIF SUP -->
+                    <div v-for="solo in solos" :key="solo.id" class="one_notif">
+                        <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numéros {{ solo.id_obj?.id }}</div>
+                        <div class="detail" style="font-size: 14px;">Mise à jours sur la demande numéros {{ solo.id_obj?.id }}</div>
+                        <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">{{ solo.created_at }}</div>
                     </div>
-                    <div class="one_notif">
-                        <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numero 1</div>
-                        <div class="detail" style="font-size: 14px;">Demande valider par superieur</div>
-                        <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">23 Aout 2025</div>
+
+                    <!-- NOTIF SUP -->
+                    <div v-for="sup in sups" :key="sup.id" class="one_notif">
+                        <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numéros {{ sup.id_obj?.id }}</div>
+                        <div class="detail" style="font-size: 14px;">Nouvelle demande numéros {{ sup.id_obj?.id }}</div>
+                        <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">{{ sup.created_at }}</div>
                     </div>
-                    <div class="one_notif">
-                        <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numero 1</div>
-                        <div class="detail" style="font-size: 14px;">Demande valider</div>
-                        <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">23 Aout 2025</div>
+
+                    <!-- NOTIF OTHERS -->
+                    <div v-for="other in others" :key="other.id" class="one_notif">
+                        <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numéros {{ other.id_obj }}</div>
+                        <div class="detail" style="font-size: 14px;">Demande en attente de validation {{ other.niv_val === 2 ? 'au niveau de l\'achat' : other.niv_val === 3 ? 'au niveau de la finance' : other.niv_val === 4 ? 'au niveau du DPR' : other.niv_val === 5 ? 'pour emission de chèque' : 'pour livraison'  }}</div>
+                        <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">{{ other.created_at }}</div>
                     </div>
-                    <div class="one_notif">
-                        <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numero 1</div>
-                        <div class="detail" style="font-size: 14px;">Demande valider</div>
-                        <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">23 Aout 2025</div>
-                    </div>
-                    <div class="one_notif">
-                        <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numero 1</div>
-                        <div class="detail" style="font-size: 14px;">Demande valider</div>
-                        <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">23 Aout 2025</div>
-                    </div>
-                    
                 </div>                
                 </li>
                 <li class="nav-item">
@@ -85,16 +83,154 @@ import '~/assets/css/navbar.css'
 
 import { ref } from 'vue';
 //IMPORT
-
+// Utilisation du module @nuxtjs/supabase
+const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
 
 
 //DATA
 const notif = ref(false);
+const data_notif = ref([])
+const resultats = {};
+const solos = ref([])
+const sups = ref([])
+const others = ref([])
 
 //METHODS
-const afficher_notif = () => {
+const afficher_notif = async () => {
     notif.value = !notif.value;
+    get_notif();
 };
+const get_notif = async () => {
+    try{
+        // NOTIF SOLO
+        const { data: notif_solo, error: error_solo } = await supabase
+        .from('ses_histo')
+        .select('*, id_obj!inner(*,id_user)') // inner permet de faire une jointure interne 'INNER JOIN'
+        .eq('id_obj.id_user', userStore.id)
+        .neq('niv_val', 1)
+        .eq('stat_not_sol', false)
+        .order('id',{ ascending: false })
+        
+        
+
+        if (error_solo) throw error_solo;
+        solos.value = notif_solo
+        console.log('notif solo', solos.value);
+        
+        
+        //NOTIF SUP
+        
+        const { data: notif_sup, error: error_sup } = await supabase
+        .from('ses_histo')
+        .select('*, id_obj!inner(*,id_sup)') // inner permet de faire une jointure interne 'INNER JOIN'
+        .eq('id_obj.id_sup', userStore.id)
+        .eq('niv_val', 1)
+        .eq('stat_not', false)
+        .order('id',{ ascending: false })
+        
+        
+        if (error_sup) throw error_sup;
+        sups.value = notif_sup
+
+        console.log('notif sup', sups.value);
+        
+        //AUTRE NOTIF
+        const niveaux = [
+            { key: 'achat', niv: 2},
+            { key: 'finance', niv: 3},
+            { key: 'dpr', niv: 4},
+            { key: 'cheque', niv: 5},
+            { key: 'livraison', niv: 6},
+        ];
+
+        for (const { key, niv } of niveaux) {
+            if (userStore[key] === true) {
+               // recrée la requête à chaque tour
+                const { data, error } = await supabase
+                .from('ses_histo')
+                .select('*')
+                .eq('stat_not', false)
+                .eq('niv_val', niv)
+                .order('id', { ascending: false })
+
+                if (error) throw error
+
+                resultats[key] = data || [] // stocke chaque résultat par rôle
+            }
+        }
+        others.value = {...resultats}
+
+        
+        // Fusion des données
+        /*
+        data_notif.value = {
+            notif_solo,
+            notif_sup,
+            ...resultats
+        };*/
+        others.value = [
+        ...Object.values(others.value) // récupère tous les tableaux
+        ].flat() // aplatit en un seul tableau
+        
+        console.log('data all',others.value);
+        
+    }catch (error) {
+        console.log(error);
+    }
+}
+const close_notif = async () =>{
+    notif.value = !notif.value;
+    try{
+        
+        for (const {id } of solos.value){
+        
+        const {error} = await supabase
+        .from('ses_histo')
+        .update({ stat_not_sol: true })
+        .eq('id', id);
+        if (error) throw error;
+        
+        }
+
+        for (const {id } of sups.value){
+        const {error} = await supabase
+        .from('ses_histo')
+        .update({ stat_not: true })
+        .eq('id', id);
+        if (error) throw error;
+        
+        }
+
+        for (const {id } of others.value){
+        const {error} = await supabase
+        .from('ses_histo')
+        .update({ stat_not: true })
+        .eq('id', id);
+        if (error) throw error;
+        
+        }
+        get_notif();
+    }catch(error){
+        console.log(error);
+    }
+    
+}
+
+// LIFECYCLE HOOKS
+onMounted(() => {
+    
+    get_notif();
+    
+    // Puis rappel toutes les 5 secondes (5000 ms)
+    const intervalId = setInterval(() => {
+        get_notif()
+    }, 500)
+
+    // On nettoie quand le composant est démonté
+    onUnmounted(() => {
+        clearInterval(intervalId)
+    })
+});
 </script>

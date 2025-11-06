@@ -51,7 +51,7 @@ const columns = [
     { key: 'date', label: 'Date de la demande' },
     { key: 'id_user', label: 'Nom du demandeur' },
     { key: 'nom', label: 'Objet de la demande' },
-    { key: 'nbrnv', label: 'Nombre d\'article non validé'},
+    { key: 'nbrnv', label: 'Nombre d\'article à valider'},
 ];
 
 // Variables réactives

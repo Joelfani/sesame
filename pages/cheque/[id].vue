@@ -2,7 +2,7 @@
     <div class="purchase_page">
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>DÉTAILS DE LA DEMANDE - GESTION CHÈQUE</h1>
+            <h1>DÉTAILS DE LA DEMANDE - GESTION DU CHÈQUE</h1>
             <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
             <div class="link_demande">
             </div>
@@ -74,7 +74,7 @@ const columns = [
     },
     { 
         key: 'observation_cheque', 
-        label: 'Observation Chèque', 
+        label: 'Observation sur le Chèque', 
         editable: true, 
         type: 'textarea'
     }
@@ -227,6 +227,7 @@ const handleChequeEmis = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Emission de chèque de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                niv_val:6
             });
 
         if (insertHistError) throw insertHistError;
@@ -268,6 +269,7 @@ const handleRejection = async (item, editableData) => {
                 id_item: item.id,
                 action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
                 type: 'rejeter',
+                niv_val:8
             });
 
         if (insertHistError) throw insertHistError;

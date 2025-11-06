@@ -204,7 +204,7 @@
                             <table class="table table-bordered table-custom">
                                 <thead>
                                     <tr>
-                                        <th width="40%">Designation</th>
+                                        <th width="40%">Désignation</th>
                                         <th width="15%">Unité</th>
                                         <th width="20%">Prix unitaire</th>
                                         <th width="25%">MONTANT</th>
@@ -248,7 +248,7 @@
                         </div>
                     </div>
                     <p style="font-weight: bold;">Mode de paiement par {{ paimentMode }} au nom de {{ auNomDe }}</p>
-                    <p style="font-weight: bold;">Arreté a la somme de {{ nbrWord }} Ariary</p>
+                    <p style="font-weight: bold;">Arrêté à la somme de {{ nbrWord }} Ariary</p>
                     <p style="font-weight: bold;">A Antananarivo, le {{ date }}</p>
                     <br><br><br>
                     <p style="font-weight: bold;">Le client / PROMES</p>
@@ -481,6 +481,7 @@ const handleValidation = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                niv_val:4
             });
 
         if (insertHistError) throw insertHistError;
@@ -526,6 +527,7 @@ const handleRejection = async (item, editableData) => {
                 id_item: item.id,
                 action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
                 type: 'rejeter',
+                niv_val:8
             });
 
         if (insertHistError) throw insertHistError;

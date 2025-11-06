@@ -21,7 +21,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-6">
+            <div class="col-7">
                 <h3>Informations Personnel</h3>
                 <div class="row">
                     <div class="col">
@@ -118,7 +118,7 @@
                     
                 </div>
             </div>
-            <div class="col-4">
+            <div class="col-5">
                 <h3>Accès</h3>
                 <div class="row">
                     <div class="col">
@@ -194,38 +194,6 @@
                             class="form-control form-check-input" 
                             type="checkbox" 
                             v-model="formData.droits.fournisseur" 
-                            :disabled="true"
-                        >
-                    </div>
-                </div>
-            </div>
-            <div class="col-2">
-                <h3>Droits</h3>
-                <div class="row">
-                    <div class="col">
-                        <p>Ajouter</p>
-                        <input 
-                            class="form-control form-check-input" 
-                            type="checkbox" 
-                            v-model="formData.droits.add" 
-                            :disabled="true"
-                        >
-                    </div>
-                    <div class="col">
-                        <p>Modifier</p>
-                        <input 
-                            class="form-control form-check-input" 
-                            type="checkbox" 
-                            v-model="formData.droits.edit" 
-                            :disabled="true"
-                        >
-                    </div>
-                    <div class="col">
-                        <p>Supprimer</p>
-                        <input 
-                            class="form-control form-check-input" 
-                            type="checkbox" 
-                            v-model="formData.droits.delet" 
                             :disabled="true"
                         >
                     </div>

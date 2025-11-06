@@ -16,15 +16,12 @@
                 <select
                     v-if="input.type === 'select'"
                     class="form-control"
-                    :name="input.id"
-                    :value="input.value"
                     v-model="formData[input.id]"
                     :required="input.required ?? false"
                     :disabled="input.disabled ?? false "
                     :placeholder="input.placeholder"
                 >
-                    <option v-if="input.etat_option_login" :disabled="true" :selected="true" :hidden="true">Sélectionner {{ input.option_label }}</option>
-                    <option v-for="option in input.options" :key="option.value" :value="option.value">
+                    <option v-for="option in input.options" :key="option.value" :value="option.value"> 
                         {{ option.text }}
                     </option>
                 </select>
