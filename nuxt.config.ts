@@ -13,6 +13,10 @@ export default defineNuxtConfig({
   ],
   
   app: {
+    head: {
+      title: 'Demande d\'achat - SESAME',
+      
+    },
     pageTransition: { name: 'page', mode: 'out-in' },
   },
   

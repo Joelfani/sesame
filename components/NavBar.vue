@@ -37,9 +37,11 @@
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/suivi">Suivi</NuxtLink>
                 </li>
+                <!--
                 <li v-if="userStore.type_compte === 1" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Utilisateurs</NuxtLink>
                 </li>
+                -->
                 <li v-if="userStore.type_compte === 1" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/historique">Actions</NuxtLink>
                 </li>
