@@ -32,6 +32,7 @@
                 ]"
                 @validation_action="handleValidationAction"
                 @editable_field_change="handleEditableFieldChange"
+                :loading="loading"
             />
         </div>
         <!-- Alert pour les notifications -->
@@ -40,13 +41,16 @@
 </template>
 
 <script setup>
-import { tableTete } from '~/assets/js/CommonVariable.js';
+import { tableTete,niveau } from '~/assets/js/CommonVariable.js';
 import {exportExcel} from '~/assets/js/export.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
 const route = useRoute();
+
+//loading
+const loading = ref(true);
 
 // Alert system
 const alert = ref({
@@ -83,21 +87,1063 @@ const columns = [
         editable: true, 
         type: 'select', 
         options: [
-            { value: 'SADMINDIVERS', label: 'SADMINDIVERS' },
-            { value: 'SADMIN', label: 'SADMIN' },
-            { value: 'SBOEAP', label: 'SBOEAP' },
-            { value: 'SBOEOSP', label: 'SBOEOSP' },
-            { value: 'SBOESUP', label: 'SBOESUP' },
-            { value: 'SBOE', label: 'SBOE' },
-            { value: 'SEIAP', label: 'SEIAP' },
-            { value: 'SEI', label: 'SEI' },
-            { value: 'SPROFAP', label: 'SPROFAP' },
-            { value: 'SPROF', label: 'SPROF' },
-            { value: 'SRSSUP', label: 'SRSSUP' },
-            { value: 'SRS', label: 'SRS' },
-            { value: 'SSE', label: 'SSE' },
-            { value: 'SSL', label: 'SSL' },
-        ]
+            {
+                "value": "ADMAGIOF",
+                "label": "ADMAGIOF"
+            },
+            {
+                "value": "ADMAGIOS",
+                "label": "ADMAGIOS"
+            },
+            {
+                "value": "ADMASSFO",
+                "label": "ADMASSFO"
+            },
+            {
+                "value": "ADMASSVH",
+                "label": "ADMASSVH"
+            },
+            {
+                "value": "ADMAUDIT",
+                "label": "ADMAUDIT"
+            },
+            {
+                "value": "ADMBUCLE",
+                "label": "ADMBUCLE"
+            },
+            {
+                "value": "ADMCARBS",
+                "label": "ADMCARBS"
+            },
+            {
+                "value": "ADMCARBV",
+                "label": "ADMCARBV"
+            },
+            {
+                "value": "ADMDENRF",
+                "label": "ADMDENRF"
+            },
+            {
+                "value": "ADMDEPLT",
+                "label": "ADMDEPLT"
+            },
+            {
+                "value": "ADMEXTRA",
+                "label": "ADMEXTRA"
+            },
+            {
+                "value": "ADMFLOTT",
+                "label": "ADMFLOTT"
+            },
+            {
+                "value": "ADMMATCU",
+                "label": "ADMMATCU"
+            },
+            {
+                "value": "ADMPARKI",
+                "label": "ADMPARKI"
+            },
+            {
+                "value": "ADMPOSTE",
+                "label": "ADMPOSTE"
+            },
+            {
+                "value": "ADMPRDIM",
+                "label": "ADMPRDIM"
+            },
+            {
+                "value": "ADMPSTDI",
+                "label": "ADMPSTDI"
+            },
+            {
+                "value": "ADMPUBLI",
+                "label": "ADMPUBLI"
+            },
+            {
+                "value": "ADMREPVH",
+                "label": "ADMREPVH"
+            },
+            {
+                "value": "APACUTOP",
+                "label": "APACUTOP"
+            },
+            {
+                "value": "APAUTFRA",
+                "label": "APAUTFRA"
+            },
+            {
+                "value": "APAUTIMP",
+                "label": "APAUTIMP"
+            },
+            {
+                "value": "APAUTPST",
+                "label": "APAUTPST"
+            },
+            {
+                "value": "APCERNOL",
+                "label": "APCERNOL"
+            },
+            {
+                "value": "APCIMTRL",
+                "label": "APCIMTRL"
+            },
+            {
+                "value": "APCLBMAT",
+                "label": "APCLBMAT"
+            },
+            {
+                "value": "APCLEVE1",
+                "label": "APCLEVE1"
+            },
+            {
+                "value": "APCLEVE2",
+                "label": "APCLEVE2"
+            },
+            {
+                "value": "APCLLUDC",
+                "label": "APCLLUDC"
+            },
+            {
+                "value": "APCLMC27",
+                "label": "APCLMC27"
+            },
+            {
+                "value": "APCLMCET",
+                "label": "APCLMCET"
+            },
+            {
+                "value": "APCLPRCL",
+                "label": "APCLPRCL"
+            },
+            {
+                "value": "APCLVIND",
+                "label": "APCLVIND"
+            },
+            {
+                "value": "APCLVOYC",
+                "label": "APCLVOYC"
+            },
+            {
+                "value": "APEADMIN",
+                "label": "APEADMIN"
+            },
+            {
+                "value": "APEAGIOS",
+                "label": "APEAGIOS"
+            },
+            {
+                "value": "APEASIMP",
+                "label": "APEASIMP"
+            },
+            {
+                "value": "APEASPST",
+                "label": "APEASPST"
+            },
+            {
+                "value": "APEAUELC",
+                "label": "APEAUELC"
+            },
+            {
+                "value": "APETBSCP",
+                "label": "APETBSCP"
+            },
+            {
+                "value": "APETSHIR",
+                "label": "APETSHIR"
+            },
+            {
+                "value": "APEVENMT",
+                "label": "APEVENMT"
+            },
+            {
+                "value": "APFRSANT",
+                "label": "APFRSANT"
+            },
+            {
+                "value": "APFRSVAC",
+                "label": "APFRSVAC"
+            },
+            {
+                "value": "APINTEND",
+                "label": "APINTEND"
+            },
+            {
+                "value": "APINTGAZ",
+                "label": "APINTGAZ"
+            },
+            {
+                "value": "APMATNET",
+                "label": "APMATNET"
+            },
+            {
+                "value": "APREMCER",
+                "label": "APREMCER"
+            },
+            {
+                "value": "APRFLIMP",
+                "label": "APRFLIMP"
+            },
+            {
+                "value": "APRFLPST",
+                "label": "APRFLPST"
+            },
+            {
+                "value": "APSPIBCH",
+                "label": "APSPIBCH"
+            },
+            {
+                "value": "APSPIPST",
+                "label": "APSPIPST"
+            },
+            {
+                "value": "APSPISOR",
+                "label": "APSPISOR"
+            },
+            {
+                "value": "APSTECVF",
+                "label": "APSTECVF"
+            },
+            {
+                "value": "APSTECVJ",
+                "label": "APSTECVJ"
+            },
+            {
+                "value": "APSTEECT",
+                "label": "APSTEECT"
+            },
+            {
+                "value": "APSTEVMO",
+                "label": "APSTEVMO"
+            },
+            {
+                "value": "APVADPER",
+                "label": "APVADPER"
+            },
+            {
+                "value": "APVSTFOY",
+                "label": "APVSTFOY"
+            },
+            {
+                "value": "DPRFRNTS",
+                "label": "DPRFRNTS"
+            },
+            {
+                "value": "EQAPDPLT",
+                "label": "EQAPDPLT"
+            },
+            {
+                "value": "EQAPIMPR",
+                "label": "EQAPIMPR"
+            },
+            {
+                "value": "EQAPSTAG",
+                "label": "EQAPSTAG"
+            },
+            {
+                "value": "EQSVADFA",
+                "label": "EQSVADFA"
+            },
+            {
+                "value": "EQSVADFO",
+                "label": "EQSVADFO"
+            },
+            {
+                "value": "EQUIPSEM",
+                "label": "EQUIPSEM"
+            },
+            {
+                "value": "MISFIERE",
+                "label": "MISFIERE"
+            },
+            {
+                "value": "PARTAMIS",
+                "label": "PARTAMIS"
+            },
+            {
+                "value": "PARTCART",
+                "label": "PARTCART"
+            },
+            {
+                "value": "PARTCONX",
+                "label": "PARTCONX"
+            },
+            {
+                "value": "PARTDBUS",
+                "label": "PARTDBUS"
+            },
+            {
+                "value": "PARTDEPL",
+                "label": "PARTDEPL"
+            },
+            {
+                "value": "PARTDINE",
+                "label": "PARTDINE"
+            },
+            {
+                "value": "PARTDJNR",
+                "label": "PARTDJNR"
+            },
+            {
+                "value": "PARTEVNT",
+                "label": "PARTEVNT"
+            },
+            {
+                "value": "PARTFRNT",
+                "label": "PARTFRNT"
+            },
+            {
+                "value": "PARTPARK",
+                "label": "PARTPARK"
+            },
+            {
+                "value": "PARTPERD",
+                "label": "PARTPERD"
+            },
+            {
+                "value": "PARTPLAQ",
+                "label": "PARTPLAQ"
+            },
+            {
+                "value": "PARTROL",
+                "label": "PARTROL"
+            },
+            {
+                "value": "PARTSIGN",
+                "label": "PARTSIGN"
+            },
+            {
+                "value": "PARTSOCO",
+                "label": "PARTSOCO"
+            },
+            {
+                "value": "PRESLCT1",
+                "label": "PRESLCT1"
+            },
+            {
+                "value": "PRESLCT2",
+                "label": "PRESLCT2"
+            },
+            {
+                "value": "PRESLCT3",
+                "label": "PRESLCT3"
+            },
+            {
+                "value": "PRESLCT4",
+                "label": "PRESLCT4"
+            },
+            {
+                "value": "PRESLCT5",
+                "label": "PRESLCT5"
+            },
+            {
+                "value": "PRESLCT6",
+                "label": "PRESLCT6"
+            },
+            {
+                "value": "Réunion MDRHE",
+                "label": "Réunion MDRHE"
+            },
+            {
+                "value": "SAANTIVR",
+                "label": "SAANTIVR"
+            },
+            {
+                "value": "SAASSUBA",
+                "label": "SAASSUBA"
+            },
+            {
+                "value": "SABATELC",
+                "label": "SABATELC"
+            },
+            {
+                "value": "SABATPOI",
+                "label": "SABATPOI"
+            },
+            {
+                "value": "SABATREP",
+                "label": "SABATREP"
+            },
+            {
+                "value": "SABATSER",
+                "label": "SABATSER"
+            },
+            {
+                "value": "SACARBGR",
+                "label": "SACARBGR"
+            },
+            {
+                "value": "SACARBTO",
+                "label": "SACARBTO"
+            },
+            {
+                "value": "SACERNOL",
+                "label": "SACERNOL"
+            },
+            {
+                "value": "SACOMASC",
+                "label": "SACOMASC"
+            },
+            {
+                "value": "SACONNEX",
+                "label": "SACONNEX"
+            },
+            {
+                "value": "SADDRFMS",
+                "label": "SADDRFMS"
+            },
+            {
+                "value": "SADEJEUN",
+                "label": "SADEJEUN"
+            },
+            {
+                "value": "SADEPLAC",
+                "label": "SADEPLAC"
+            },
+            {
+                "value": "SADMIFKT",
+                "label": "SADMIFKT"
+            },
+            {
+                "value": "SADOCFKT",
+                "label": "SADOCFKT"
+            },
+            {
+                "value": "SADONFKT",
+                "label": "SADONFKT"
+            },
+            {
+                "value": "SAELECTR",
+                "label": "SAELECTR"
+            },
+            {
+                "value": "SAESPORT",
+                "label": "SAESPORT"
+            },
+            {
+                "value": "SAFORMAT",
+                "label": "SAFORMAT"
+            },
+            {
+                "value": "SAGIOSBQ",
+                "label": "SAGIOSBQ"
+            },
+            {
+                "value": "SAHABILL",
+                "label": "SAHABILL"
+            },
+            {
+                "value": "SAHABIMP",
+                "label": "SAHABIMP"
+            },
+            {
+                "value": "SAIMPRES",
+                "label": "SAIMPRES"
+            },
+            {
+                "value": "SAINFOBM",
+                "label": "SAINFOBM"
+            },
+            {
+                "value": "SAINFOEN",
+                "label": "SAINFOEN"
+            },
+            {
+                "value": "SAINFRPL",
+                "label": "SAINFRPL"
+            },
+            {
+                "value": "SAJRDOUT",
+                "label": "SAJRDOUT"
+            },
+            {
+                "value": "SAMNGOUT",
+                "label": "SAMNGOUT"
+            },
+            {
+                "value": "SAMNGPCB",
+                "label": "SAMNGPCB"
+            },
+            {
+                "value": "SAMNGPRD",
+                "label": "SAMNGPRD"
+            },
+            {
+                "value": "SAMOBCHE",
+                "label": "SAMOBCHE"
+            },
+            {
+                "value": "SAPSTBAR",
+                "label": "SAPSTBAR"
+            },
+            {
+                "value": "SAPSTDER",
+                "label": "SAPSTDER"
+            },
+            {
+                "value": "SAPSTJAR",
+                "label": "SAPSTJAR"
+            },
+            {
+                "value": "SAPSTNET",
+                "label": "SAPSTNET"
+            },
+            {
+                "value": "SAPSTSEC",
+                "label": "SAPSTSEC"
+            },
+            {
+                "value": "SAPUBAVI",
+                "label": "SAPUBAVI"
+            },
+            {
+                "value": "SAREPCHE",
+                "label": "SAREPCHE"
+            },
+            {
+                "value": "SAREPGRP",
+                "label": "SAREPGRP"
+            },
+            {
+                "value": "SAREPIMP",
+                "label": "SAREPIMP"
+            },
+            {
+                "value": "SAREPMEU",
+                "label": "SAREPMEU"
+            },
+            {
+                "value": "SAREPMOB",
+                "label": "SAREPMOB"
+            },
+            {
+                "value": "SAREPORD",
+                "label": "SAREPORD"
+            },
+            {
+                "value": "SAREPSRP",
+                "label": "SAREPSRP"
+            },
+            {
+                "value": "SAREPSTB",
+                "label": "SAREPSTB"
+            },
+            {
+                "value": "SAREPTON",
+                "label": "SAREPTON"
+            },
+            {
+                "value": "SARF2FKT",
+                "label": "SARF2FKT"
+            },
+            {
+                "value": "SASEMBCH",
+                "label": "SASEMBCH"
+            },
+            {
+                "value": "SASEMGAT",
+                "label": "SASEMGAT"
+            },
+            {
+                "value": "SASEMPER",
+                "label": "SASEMPER"
+            },
+            {
+                "value": "SASEMREU",
+                "label": "SASEMREU"
+            },
+            {
+                "value": "SASRVEUR",
+                "label": "SASRVEUR"
+            },
+            {
+                "value": "SASSURAN",
+                "label": "SASSURAN"
+            },
+            {
+                "value": "SATRICOR",
+                "label": "SATRICOR"
+            },
+            {
+                "value": "SATRIPRE",
+                "label": "SATRIPRE"
+            },
+            {
+                "value": "SATSHIRT",
+                "label": "SATSHIRT"
+            },
+            {
+                "value": "SAVADDEP",
+                "label": "SAVADDEP"
+            },
+            {
+                "value": "SAVADPER",
+                "label": "SAVADPER"
+            },
+            {
+                "value": "SBACSLMD",
+                "label": "SBACSLMD"
+            },
+            {
+                "value": "SBADOCUM",
+                "label": "SBADOCUM"
+            },
+            {
+                "value": "SBAPCORI",
+                "label": "SBAPCORI"
+            },
+            {
+                "value": "SBAPCPRO",
+                "label": "SBAPCPRO"
+            },
+            {
+                "value": "SBAPDEFI",
+                "label": "SBAPDEFI"
+            },
+            {
+                "value": "SBAREMCE",
+                "label": "SBAREMCE"
+            },
+            {
+                "value": "SBASTGDP",
+                "label": "SBASTGDP"
+            },
+            {
+                "value": "SBASTGIN",
+                "label": "SBASTGIN"
+            },
+            {
+                "value": "SBATRPRO",
+                "label": "SBATRPRO"
+            },
+            {
+                "value": "SBATSVAK",
+                "label": "SBATSVAK"
+            },
+            {
+                "value": "SBAVSTEE",
+                "label": "SBAVSTEE"
+            },
+            {
+                "value": "SBAVSTEN",
+                "label": "SBAVSTEN"
+            },
+            {
+                "value": "SBAVSTES",
+                "label": "SBAVSTES"
+            },
+            {
+                "value": "SBCOMFLY",
+                "label": "SBCOMFLY"
+            },
+            {
+                "value": "SBCOMFRS",
+                "label": "SBCOMFRS"
+            },
+            {
+                "value": "SBCOSPFR",
+                "label": "SBCOSPFR"
+            },
+            {
+                "value": "SBDEJMIN",
+                "label": "SBDEJMIN"
+            },
+            {
+                "value": "SBOSPFRN",
+                "label": "SBOSPFRN"
+            },
+            {
+                "value": "SBSANCIE",
+                "label": "SBSANCIE"
+            },
+            {
+                "value": "SBSBUSNS",
+                "label": "SBSBUSNS"
+            },
+            {
+                "value": "SBSEMEQP",
+                "label": "SBSEMEQP"
+            },
+            {
+                "value": "SBSEMPLO",
+                "label": "SBSEMPLO"
+            },
+            {
+                "value": "SBSFORUM",
+                "label": "SBSFORUM"
+            },
+            {
+                "value": "SBSIMPME",
+                "label": "SBSIMPME"
+            },
+            {
+                "value": "SBSPARTO",
+                "label": "SBSPARTO"
+            },
+            {
+                "value": "SBSPCPAE",
+                "label": "SBSPCPAE"
+            },
+            {
+                "value": "SBSPERDM",
+                "label": "SBSPERDM"
+            },
+            {
+                "value": "SBSSALON",
+                "label": "SBSSALON"
+            },
+            {
+                "value": "SCLUBALL",
+                "label": "SCLUBALL"
+            },
+            {
+                "value": "SDELOFIB",
+                "label": "SDELOFIB"
+            },
+            {
+                "value": "SDEMENGT",
+                "label": "SDEMENGT"
+            },
+            {
+                "value": "SDIRICKX",
+                "label": "SDIRICKX"
+            },
+            {
+                "value": "SECOLAGE",
+                "label": "SECOLAGE"
+            },
+            {
+                "value": "SEQPMFOY",
+                "label": "SEQPMFOY"
+            },
+            {
+                "value": "SEXTINCT",
+                "label": "SEXTINCT"
+            },
+            {
+                "value": "SFRSANTE",
+                "label": "SFRSANTE"
+            },
+            {
+                "value": "SFRSBSP",
+                "label": "SFRSBSP"
+            },
+            {
+                "value": "SFRSSTAG",
+                "label": "SFRSSTAG"
+            },
+            {
+                "value": "SFRSTENU",
+                "label": "SFRSTENU"
+            },
+            {
+                "value": "SFRSTRAJ",
+                "label": "SFRSTRAJ"
+            },
+            {
+                "value": "SFRSVOYE",
+                "label": "SFRSVOYE"
+            },
+            {
+                "value": "SIMPRESS",
+                "label": "SIMPRESS"
+            },
+            {
+                "value": "SINTRNET",
+                "label": "SINTRNET"
+            },
+            {
+                "value": "SKOLOTAL",
+                "label": "SKOLOTAL"
+            },
+            {
+                "value": "SLOYERAB",
+                "label": "SLOYERAB"
+            },
+            {
+                "value": "SLOYERFI",
+                "label": "SLOYERFI"
+            },
+            {
+                "value": "SLOYERFO",
+                "label": "SLOYERFO"
+            },
+            {
+                "value": "SLOYERMJ",
+                "label": "SLOYERMJ"
+            },
+            {
+                "value": "SMANUTEN",
+                "label": "SMANUTEN"
+            },
+            {
+                "value": "SMATASJA",
+                "label": "SMATASJA"
+            },
+            {
+                "value": "SMATEPSA",
+                "label": "SMATEPSA"
+            },
+            {
+                "value": "SMATESSA",
+                "label": "SMATESSA"
+            },
+            {
+                "value": "SMATESSI",
+                "label": "SMATESSI"
+            },
+            {
+                "value": "SMATINFO",
+                "label": "SMATINFO"
+            },
+            {
+                "value": "SMATINFP",
+                "label": "SMATINFP"
+            },
+            {
+                "value": "SMATIPAC",
+                "label": "SMATIPAC"
+            },
+            {
+                "value": "SMATISPM",
+                "label": "SMATISPM"
+            },
+            {
+                "value": "SMATSAMI",
+                "label": "SMATSAMI"
+            },
+            {
+                "value": "SMATSETS",
+                "label": "SMATSETS"
+            },
+            {
+                "value": "SMATSIST",
+                "label": "SMATSIST"
+            },
+            {
+                "value": "SMENAGEF",
+                "label": "SMENAGEF"
+            },
+            {
+                "value": "SMOBFOYE",
+                "label": "SMOBFOYE"
+            },
+            {
+                "value": "SPACHTAB",
+                "label": "SPACHTAB"
+            },
+            {
+                "value": "SPACTAGI",
+                "label": "SPACTAGI"
+            },
+            {
+                "value": "SPACTCLI",
+                "label": "SPACTCLI"
+            },
+            {
+                "value": "SPACTLAN",
+                "label": "SPACTLAN"
+            },
+            {
+                "value": "SPAGICDI",
+                "label": "SPAGICDI"
+            },
+            {
+                "value": "SPAGITEL",
+                "label": "SPAGITEL"
+            },
+            {
+                "value": "SPCOORDO",
+                "label": "SPCOORDO"
+            },
+            {
+                "value": "SPCSCCHE",
+                "label": "SPCSCCHE"
+            },
+            {
+                "value": "SPCSCFER",
+                "label": "SPCSCFER"
+            },
+            {
+                "value": "SPCSCOGS",
+                "label": "SPCSCOGS"
+            },
+            {
+                "value": "SPDOCUMT",
+                "label": "SPDOCUMT"
+            },
+            {
+                "value": "SPFCEXAM",
+                "label": "SPFCEXAM"
+            },
+            {
+                "value": "SPFRNSCO",
+                "label": "SPFRNSCO"
+            },
+            {
+                "value": "SPHBTANA",
+                "label": "SPHBTANA"
+            },
+            {
+                "value": "SPJRNXQT",
+                "label": "SPJRNXQT"
+            },
+            {
+                "value": "SPLANVST",
+                "label": "SPLANVST"
+            },
+            {
+                "value": "SPMATLAB",
+                "label": "SPMATLAB"
+            },
+            {
+                "value": "SPMEDANI",
+                "label": "SPMEDANI"
+            },
+            {
+                "value": "SPMEDOUV",
+                "label": "SPMEDOUV"
+            },
+            {
+                "value": "SPPOLEDF",
+                "label": "SPPOLEDF"
+            },
+            {
+                "value": "SPPOLEJR",
+                "label": "SPPOLEJR"
+            },
+            {
+                "value": "SPPRSTUE",
+                "label": "SPPRSTUE"
+            },
+            {
+                "value": "SPSEMEQP",
+                "label": "SPSEMEQP"
+            },
+            {
+                "value": "SPTABLRD",
+                "label": "SPTABLRD"
+            },
+            {
+                "value": "SPTICBLO",
+                "label": "SPTICBLO"
+            },
+            {
+                "value": "SPTICDAC",
+                "label": "SPTICDAC"
+            },
+            {
+                "value": "SPTICRES",
+                "label": "SPTICRES"
+            },
+            {
+                "value": "SPVISTIC",
+                "label": "SPVISTIC"
+            },
+            {
+                "value": "SPVSTCLI",
+                "label": "SPVSTCLI"
+            },
+            {
+                "value": "SPVSTCLI",
+                "label": "SPVSTCLI"
+            },
+            {
+                "value": "SPVSTCSC",
+                "label": "SPVSTCSC"
+            },
+            {
+                "value": "SPVSTIFM",
+                "label": "SPVSTIFM"
+            },
+            {
+                "value": "SPVSTTDT",
+                "label": "SPVSTTDT"
+            },
+            {
+                "value": "SREPFOYE",
+                "label": "SREPFOYE"
+            },
+            {
+                "value": "SSLCONNE",
+                "label": "SSLCONNE"
+            },
+            {
+                "value": "SSLDEJEU",
+                "label": "SSLDEJEU"
+            },
+            {
+                "value": "SSLDEPLT",
+                "label": "SSLDEPLT"
+            },
+            {
+                "value": "SSLDPLAV",
+                "label": "SSLDPLAV"
+            },
+            {
+                "value": "SSLLIVRE",
+                "label": "SSLLIVRE"
+            },
+            {
+                "value": "SSLPER01",
+                "label": "SSLPER01"
+            },
+            {
+                "value": "SSLPER02",
+                "label": "SSLPER02"
+            },
+            {
+                "value": "SSLPER03",
+                "label": "SSLPER03"
+            },
+            {
+                "value": "SSLPER04",
+                "label": "SSLPER04"
+            },
+            {
+                "value": "SSLPER05",
+                "label": "SSLPER05"
+            },
+            {
+                "value": "SSLPER06",
+                "label": "SSLPER06"
+            },
+            {
+                "value": "SSLPER07",
+                "label": "SSLPER07"
+            },
+            {
+                "value": "SSLPER08",
+                "label": "SSLPER08"
+            },
+            {
+                "value": "SSLPER09",
+                "label": "SSLPER09"
+            },
+            {
+                "value": "SSLPER10",
+                "label": "SSLPER10"
+            },
+            {
+                "value": "SSLPER11",
+                "label": "SSLPER11"
+            },
+            {
+                "value": "SSLSUJET",
+                "label": "SSLSUJET"
+            },
+            {
+                "value": "SSORTIPR",
+                "label": "SSORTIPR"
+            },
+            {
+                "value": "SSORTSPI",
+                "label": "SSORTSPI"
+            },
+            {
+                "value": "SVIEASSO",
+                "label": "SVIEASSO"
+            }
+            ]
     }
 ];
 // DATA
@@ -108,6 +1154,7 @@ const validationData = ref(null); // Pour stocker les données de validation pou
 // METHODES
 //recuperation des données
 const getDemandeDetails = async () => {
+    loading.value = true;
     try {
         const { data, error } = await supabase
             .from('ses_demItems')
@@ -121,13 +1168,13 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == 1 ? 0 : item.niv_val == 8 ? 2 : 1,
+                etat: item.niv_val == niveau.superieur ? 0 : item.niv_val == niveau.refuse ? 2 : 1,
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
             };
         });
         
         demande_details.value = allDataView;
-        
+        loading.value = false;
         // Récupération des informations de l'objet
         const { data: demandeObj, error: demandeObjError } = await supabase
             .from('ses_demandeObj')
@@ -178,7 +1225,7 @@ const handleValidation = async (item, editableData) => {
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 2, // Passer au niveau suivant de validation
+            niv_val: niveau.superieur + 1, // Passer au niveau suivant de validation
             ...editableData.fields // Inclure toutes les données éditables modifiées
         };
         
@@ -206,7 +1253,7 @@ const handleValidation = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
-                niv_val: 2
+                niv_val: niveau.superieur + 1,
             });
 
         if (insertHistError) throw insertHistError;
@@ -227,7 +1274,7 @@ const handleRejection = async (item, editableData) => {
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 8, // Statut rejeté
+            niv_val: niveau.refuse, // Statut rejeté
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
         
@@ -252,7 +1299,7 @@ const handleRejection = async (item, editableData) => {
                 id_item: item.id,
                 action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
                 type: 'rejeter',
-                niv_val: 8
+                niv_val: niveau.refuse,
             });
 
         if (insertHistError) throw insertHistError;
@@ -309,7 +1356,8 @@ const exportToExcel = async () => {
             'Prix Unitaire': item.prix,
             'Fournisseur': item.fournisseur?.nom || '',
             'Délai': formatDate(item.delai),
-            'Imputation Analytique': item.imputation || ''
+            'Imputation Analytique': item.imputation || '',
+            'Statut': item.niv_val == niveau.superieur ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.superieur ? 'Validation pas encore a votre niveau' : 'Validé',
         }));
 
         const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`

@@ -14,6 +14,7 @@ state: () => ({
     sup:'',
     niv:null,
     achat:false,
+    afe:false,
     finance:false,
     dpr:false,
     cheque:false,
@@ -37,6 +38,7 @@ actions: {
     this.sup = user.sup
     this.niv = user.niv
     this.achat = user.achat
+    this.afe = user.afe
     this.finance = user.finance
     this.dpr = user.dpr
     this.cheque = user.cheque
@@ -57,6 +59,13 @@ actions: {
     this.avatar = newData.avatar || this.avatar
     this.sup = newData.sup || this.sup
     this.niv = newData.niv || this.niv
+    this.achat = newData.achat || this.achat
+    this.afe = newData.afe || this.afe
+    this.finance = newData.finance || this.finance
+    this.dpr = newData.dpr || this.dpr
+    this.cheque = newData.cheque || this.cheque
+    this.livraison = newData.livraison || this.livraison
+    this.fournisseur = newData.fournisseur || this.fournisseur
     this.add = newData.add || this.add
     this.edit = newData.edit || this.edit
     this.delet = newData.delet || this.delet

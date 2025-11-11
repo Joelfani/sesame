@@ -70,7 +70,7 @@
             options: fournisseurs.value,
         },
         { key: "prix", type:'number',min:'1', label: "Prix unitaire", placeholder: "P.U" },
-        { key: "delai", type:'date', label: "Date de livraison"},
+        { key: "delai", type:'date', label: "Date de livraison",style: {width: '200px'}},
         { key: "total", type:'number',min:'1',disabled: true, label: "Montant total (en Ar)", placeholder: "Montant" },
         { key: "com", label: "Commentaire", type:'textarea'},
     ])
@@ -131,10 +131,18 @@
     }
     
     if (tableData.some(item => !item.designation || !item.qte || !item.prix || !item.delai)) {
-        showAlert('Veuillez remplir tous les champs obligatoires dans la table (Designation, Quantité, Prix, Date)', 'Oups!', 'danger');
+        showAlert('Veuillez remplir tous les champs obligatoires dans la table (Designation, Nombre, Prix, Date)', 'Oups!', 'danger');
         return;
     }
-    
+    const dateNow = new Date();
+    if (tableData.some(item => new Date(item.delai) < dateNow)) {
+        showAlert('La date de livraison doit être ultérieure à la date actuelle', 'Oups!', 'danger');
+        return;
+    }
+    if (tableData.some(item => !item.fournisseur)) {
+        showAlert('Veuillez remplir tous les champs fournisseurs (sélectionnez "Autre..." si votre fournisseur n\'est pas défini)', 'Oups!', 'danger');
+        return;
+    }
     try {
         // 1. Insertion de l'objet et récupération de l'id
         const { data: insertedObj, error: insertObjError } = await supabase

@@ -34,12 +34,14 @@
                 :type_but_link="true" 
                 but_link_path="achat/" 
                 name_but_action="Voir"
+                :loading="loading"
             />
         </div>
     </div>
 </template>
 
 <script setup>
+import { niveau } from '~/assets/js/CommonVariable.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
@@ -53,7 +55,8 @@ const columns = [
     { key: 'nom', label: 'Objet de la demande' },
     { key: 'nbrnv', label: 'Nombre d\'article non validé'},
 ];
-
+//loading
+const loading = ref(true);
 // Variables réactives
 const liste_demandes_a_valider = ref([]) // Liste originale
 const filtered_demandes = ref([]) // Liste filtrée pour l'affichage
@@ -64,6 +67,7 @@ const date_fin = ref('');
 
 /* METHODS */
 const getValidationAchat = async () => {
+    loading.value = true;
     try {
         const { data: dataObj, error: errorObj } = await supabase
             .from('ses_demandeObj')
@@ -82,7 +86,7 @@ const getValidationAchat = async () => {
                 .from('ses_demItems')
                 .select('id', { count: 'exact', head: true })
                 .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', 2); 
+                .eq('niv_val', niveau.achat); 
            
             if (itemsError) throw itemsError;
             
@@ -111,7 +115,7 @@ const getValidationAchat = async () => {
         
         liste_demandes_a_valider.value = demandesAvecArticlesNiveau2;
         filtered_demandes.value = [...demandesAvecArticlesNiveau2]; // Initialiser la liste filtrée
-
+        loading.value = false;
         console.log('liste demandes niveau acheteur', liste_demandes_a_valider.value);
 
     } catch (error) {
@@ -125,7 +129,7 @@ const filterData = () => {
         filtered_demandes.value = [...liste_demandes_a_valider.value];
         return;
     }
-    
+    loading.value = true;
     const term = search_term.value.toLowerCase().trim();
     
     filtered_demandes.value = liste_demandes_a_valider.value.filter(item => {
@@ -138,6 +142,7 @@ const filterData = () => {
                 return true;
         }
     });
+    loading.value = false;
 }
 
 // Fonction de filtrage par date
@@ -146,7 +151,7 @@ const filterByDate = () => {
         filtered_demandes.value = [...liste_demandes_a_valider.value];
         return;
     }
-    
+    loading.value = true;
     filtered_demandes.value = liste_demandes_a_valider.value.filter(item => {
         const itemDate = new Date(item.date_original);
         const debut = date_debut.value ? new Date(date_debut.value) : null;
@@ -161,6 +166,7 @@ const filterByDate = () => {
         }
         return true;
     });
+    loading.value = false;
 }
 
 // Réinitialiser les filtres quand le type de filtre change

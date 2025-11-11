@@ -4,7 +4,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>DÉTAILS DE LA DEMANDE</h1>
         <div class="link_demande">
-            <NuxtLink to="/demande" class="btn btn-outline-secondary">Retour à la liste</NuxtLink>
+            <NuxtLink to="/suivi" class="btn btn-outline-secondary">Retour à la liste</NuxtLink>
         </div>
         </div>
 
@@ -80,7 +80,7 @@ const loading = ref(true);
                         item.niv_val === niveau.cheque ? 'En attente d\'émission de chèque' :
                         item.niv_val === niveau.livraison ? 'En attente de livraison' :
                         item.niv_val === niveau.valide ? 'Validée' : 
-                        item.niv_val === niveau.refuse ? 'Votre demande a été refusée' : 'Erreur',
+                        item.niv_val === niveau.refuse ? 'Demande refusée' : 'Erreur',
             delai: formatDate(item.delai),// Formatage de la date en jj/mm/aaaa
             fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
             };

@@ -2,11 +2,10 @@
     <div class="demandes_validation_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>LISTE DES DEMANDES À VALIDER</h1>
+            <h1>VALIDATION AU NIVEAU DE L' ADMINISTRATEUR D'ACHAT</h1>
             <div class="link_demande">
-                
             </div>
-        </div>
+        </div> 
         
         <!-- Champ de recherche -->
         <div class="d-flex align-items-center">
@@ -32,7 +31,7 @@
                 :columns="columns"
                 :rows="filtered_demandes"
                 :type_but_link="true" 
-                but_link_path="validation/" 
+                but_link_path="AFE/" 
                 name_but_action="Voir"
                 :loading="loading"
             />
@@ -43,7 +42,6 @@
 <script setup>
 import { niveau } from '~/assets/js/CommonVariable.js';
 // Services
-// Services
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
@@ -51,7 +49,7 @@ const userStore = useUserStore()
 const loading = ref(true);
 // Définition des colonnes du tableau
 const columns = [
-    { key: 'id', label: 'N° d\'enregistrement' },
+    { key: 'id', label: 'N°' },
     { key: 'date', label: 'Date de la demande' },
     { key: 'id_user', label: 'Nom du demandeur' },
     { key: 'nom', label: 'Objet de la demande' },
@@ -67,53 +65,57 @@ const date_debut = ref('');
 const date_fin = ref('');
 
 /* METHODS */
-const getValidation = async () => {
+const getValidationAchat = async () => {
     loading.value = true;
     try {
         const { data: dataObj, error: errorObj } = await supabase
             .from('ses_demandeObj')
             .select('*')
-            .eq('id_sup', userStore.id)
             .order('id', { ascending: false });
         
         console.log('dataObj', dataObj);
        
         if (errorObj) throw errorObj;
+        
+        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 2
+        const demandesAvecArticlesNiveau2 = [];
        
         for (let i = 0; i < dataObj.length; i++) {
             const { count, error: itemsError } = await supabase
                 .from('ses_demItems')
                 .select('id', { count: 'exact', head: true })
                 .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', niveau.superieur);
+                .eq('niv_val', niveau.afe); 
            
             if (itemsError) throw itemsError;
             
-            dataObj[i].nbrnv = count || 0; // S'assurer que c'est un nombre
-            
-            // Formater la date pour l'affichage
-            dataObj[i].date_formatted = formatDate(dataObj[i].date);
-            dataObj[i].date_original = dataObj[i].date; // Garder la date originale
-            dataObj[i].date = dataObj[i].date_formatted; // Pour l'affichage
+            // Si cette demande a des articles avec niv_val = 2
+            if (count > 0) {
+                dataObj[i].nbrnv = count;
+                
+                // Formater la date pour l'affichage
+                dataObj[i].date_formatted = formatDate(dataObj[i].date);
+                dataObj[i].date_original = dataObj[i].date; // Garder la date originale
+                dataObj[i].date = dataObj[i].date_formatted; // Pour l'affichage
 
-            //recuperer le nom du demandeur
-            const {data:nameDemandeur, error:nameDemandeurError} = await supabase
-            .from('users')
-            .select('full_name')
-            .eq('id', dataObj[i].id_user)
+                // Récupérer le nom du demandeur
+                const { data: nameDemandeur, error: nameDemandeurError } = await supabase
+                    .from('users')
+                    .select('full_name')
+                    .eq('id', dataObj[i].id_user);
 
-            if (nameDemandeurError) throw nameDemandeurError;
+                if (nameDemandeurError) throw nameDemandeurError;
 
-            dataObj[i].id_user = nameDemandeur[0].full_name || ''
+                dataObj[i].id_user = nameDemandeur[0]?.full_name || 'Nom non trouvé';
+                
+                demandesAvecArticlesNiveau2.push(dataObj[i]);
+            }
         }
         
-        // Filtrer seulement les demandes qui ont des articles à valider
-        const demandesAvecArticlesAValider = dataObj.filter(item => item.nbrnv > 0);
-        
-        liste_demandes_a_valider.value = demandesAvecArticlesAValider;
-        filtered_demandes.value = [...demandesAvecArticlesAValider]; // Initialiser la liste filtrée pour la recherche
+        liste_demandes_a_valider.value = demandesAvecArticlesNiveau2;
+        filtered_demandes.value = [...demandesAvecArticlesNiveau2]; // Initialiser la liste filtrée
         loading.value = false;
-        console.log('liste', liste_demandes_a_valider.value);
+        console.log('liste demandes niveau acheteur', liste_demandes_a_valider.value);
        
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
@@ -139,7 +141,7 @@ const filterData = () => {
                 return true;
         }
     });
-    loading.value = false;
+    loading.value = true;
 }
 
 // Fonction de filtrage par date
@@ -163,7 +165,7 @@ const filterByDate = () => {
         }
         return true;
     });
-    loading.value = false;
+    loading.value = true;
 }
 
 // Réinitialiser les filtres quand le type de filtre change
@@ -186,6 +188,6 @@ const formatDate = (dateString) => {
 
 // Lifecycle
 onMounted(() => {
-    getValidation();
+    getValidationAchat();
 });
 </script>

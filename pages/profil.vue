@@ -197,6 +197,15 @@
                             :disabled="true"
                         >
                     </div>
+                    <div class="col">
+                        <p>AFE-BC</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            v-model="formData.droits.afe" 
+                            :disabled="true"
+                        >
+                    </div>
                 </div>
             </div>
         </div>
@@ -243,7 +252,8 @@ const formData = ref({
         dpr: false,
         cheque: false,
         livraison: false,
-        fournisseur: false
+        fournisseur: false,
+        afe:false
     }
 })
 
@@ -274,7 +284,8 @@ const initializeData = () => {
             dpr: userStore.dpr || false,
             cheque: userStore.cheque || false,
             livraison: userStore.livraison || false,
-            fournisseur: userStore.fournisseur || false
+            fournisseur: userStore.fournisseur || false,
+            afe: userStore.afe || false
         }
     }
 

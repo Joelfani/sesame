@@ -58,7 +58,7 @@
                     </template>
                     <!-- Si la colonne est normale -->
                     <template v-else>
-                        <span :style="item.etat == 4 ? 'color:#d19017': item.etat == 1 ? 'color:#29a825': item.etat == 2 ? 'color:red': item.niv_val == 7 ? 'color:#29a825': item.niv_val == 8 ? 'color:red': ''">
+                        <span :style="item.etat == 4 ? 'color:#d19017': item.etat == 1 ? 'color:#29a825': item.etat == 2 ? 'color:red': item.niv_val == niveau.valide ? 'color:#29a825': item.niv_val == niveau.refuse ? 'color:red': item.etat == 'Votre demande a été refusée' ? 'color:red':''">
                             {{ item[col.key] }}
                         </span>
                     </template>
@@ -145,6 +145,8 @@
                         v-model="rowsInput[rowIndex][col.key]"
                         @input.native="handleCleaveInputAdd($event, rowIndex, col.key)"
                     />
+                    <p v-if="col.key === 'delai'" style="font-size: 12px; color: gray;">
+                    (Idealement 15 jours après la demande)</p>
                 </td>
                 <td v-if="showActions">
                     <button class="btn btn-danger" @click="removeRow(rowIndex)">Supprimer</button>
@@ -158,9 +160,12 @@
         </tbody>
     </table>
 
-    <div v-if="rows.length <= 0 && !tableinputadd">
+    <div v-if="loading && !tableinputadd">
         <Loading dataload="des données"></Loading>
-        <h1>Aucun enregistrement trouvé pour le moment</h1>
+    </div>
+
+    <div v-if="!loading && !tableinputadd && rows.length === 0">
+        <h1>Aucun enregistrement trouvé</h1>
     </div>
     <!-- Modals -->
     <Modal v-for="item in rows" :id="'mod1' + item.id" :title="'Modifier ' + title_modal_edit">
@@ -197,7 +202,8 @@
 <script setup>
 import { ref, watch, nextTick } from "vue";
 import Cleave from 'vue-cleave-component'
-
+import Loading from "./loading.vue";
+import {niveau} from '~/assets/js/CommonVariable.js';
 const supabase = useSupabaseClient()
 
 const props = defineProps({
@@ -216,7 +222,8 @@ const props = defineProps({
     modal_but: { type: Boolean, default: false },
     title_modal_edit: { type: String },
     tableDelete: { type: String, default: '' },
-    title_modal_neutre: { type: String, default:'Need a title' }
+    title_modal_neutre: { type: String, default:'Need a title' },
+    loading: { type: Boolean, default: false }
 })
 
 const emit = defineEmits([
@@ -245,7 +252,7 @@ const isUpdating = ref(false); // FLAG pour éviter les boucles
 watch(
     () => props.rows,
     (newRows) => {
-        if (newRows && newRows.length > 0 && !isUpdating.value) {
+        if (newRows && !isUpdating.value) {
             rowsInput2.value = JSON.parse(JSON.stringify(newRows));
         }
     },

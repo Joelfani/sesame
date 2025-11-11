@@ -16,6 +16,9 @@
                 <li v-if="userStore.achat" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/achat">Achats</NuxtLink>
                 </li>
+                <li v-if="userStore.afe" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/AFE">AFE-BC</NuxtLink>
+                </li>
                 <li v-if="userStore.finance" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/finance">Finances</NuxtLink>
                 </li>
@@ -31,11 +34,14 @@
                 <li v-if="userStore.fournisseur" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Fournisseur</NuxtLink>
                 </li>
+                <li class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/suivi">Suivi</NuxtLink>
+                </li>
                 <li v-if="userStore.type_compte === 1" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Utilisateurs</NuxtLink>
                 </li>
-                <li class="nav-item">
-                    <NuxtLink class="nav-link btn btn-light" to="/historique">Historique</NuxtLink>
+                <li v-if="userStore.type_compte === 1" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/historique">Actions</NuxtLink>
                 </li>
                 <li class="nav-item">
                     <div class="notification" @click="afficher_notif">
@@ -224,13 +230,14 @@ onMounted(() => {
     get_notif();
     
     // Puis rappel toutes les 5 secondes (5000 ms)
+    /*
     const intervalId = setInterval(() => {
         get_notif()
-    }, 500)
+    }, 500)*/
 
     // On nettoie quand le composant est démonté
     onUnmounted(() => {
-        clearInterval(intervalId)
+        //clearInterval(intervalId)
     })
 });
 </script>

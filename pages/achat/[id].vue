@@ -38,6 +38,7 @@
                 @validation_action="handleValidationAction"
                 @editable_field_change="handleEditableFieldChange"
                 @function_but_neutre = "doc_recovery"
+                :loading="loading"
 
             >
                 <template #modal4="{ item }">
@@ -87,14 +88,15 @@
 </template>
 
 <script setup>
-import { tableTete } from '~/assets/js/CommonVariable.js';
+import { tableTete,niveau } from '~/assets/js/CommonVariable.js';
 import {exportExcel} from '~/assets/js/export.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
 const route = useRoute();
-
+//loading
+const loading = ref(true);
 // Référence vers le composant Table
 const tableRef = ref(null);
 
@@ -154,6 +156,7 @@ const showAlert = (message, title, type) => {
 
 // Récupération des données
 const getDemandeDetails = async () => {
+    loading.value = true;
     try {
         const { data, error } = await supabase
             .from('ses_demItems')
@@ -167,11 +170,12 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == 2 ? 0 : item.niv_val == 8 ? 2 : item.niv_val < 2 ? 4 : 1, // Adapter pour le niveau acheteur 
+                etat: item.niv_val == niveau.achat ? 0 : item.niv_val == niveau.refuse ? 2 : item.niv_val < niveau.achat ? 4 : 1, // Adapter pour le niveau acheteur 
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
             };
         });
         demande_details.value = allDataView;
+        loading.value = false;
         console.log('data get',demande_details.value );
         
         // Récupération des informations de l'objet
@@ -307,11 +311,9 @@ const handleValidation = async (item, editableData) => {
         console.log('Avec les données éditables:', editableData.fields);
         console.log('je valide maintenant');
         
-
-        
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 3, // Passer au niveau suivant de validation (responsable financier)
+            niv_val: niveau.achat + 1, // Passer au niveau suivant de validation (responsable financier)
             ...editableData.fields // Inclure toutes les données éditables modifiées
         };
         
@@ -335,7 +337,7 @@ const handleValidation = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
-                niv_val:3
+                niv_val:niveau.achat + 1,
             });
 
         if (insertHistError) throw insertHistError;
@@ -351,12 +353,18 @@ const handleValidation = async (item, editableData) => {
 // Gestion du rejet 
 const handleRejection = async (item, editableData) => {
     try {
+        
+        for (const key in editableData.fields) {
+            if (editableData.fields[key] === "") {
+                editableData.fields[key] = null
+            }
+        }
         console.log('Rejet de l\'item:', item.id);
         console.log('Avec les données éditables:', editableData.fields);
-        
+
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 8, // Statut rejeté par l'acheteur
+            niv_val: niveau.refuse, // Statut rejeté par l'acheteur
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
         
@@ -381,17 +389,16 @@ const handleRejection = async (item, editableData) => {
                 id_item: item.id,
                 action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
                 type: 'rejeter',
-                niv_val:8
+                niv_val:niveau.refuse,
             });
 
         if (insertHistError) throw insertHistError;
         
         console.log('Rejet réussi pour l\'item:', item.id);
-        alert('Item rejeté !');
-        
+        showAlert("Item rejeté avec succès !", "Succès!", "success")
     } catch (error) {
         console.error('Erreur lors du rejet:', error);
-        alert('Erreur lors du rejet !');
+        showAlert("Erreur lors du rejet !", "Oups!", "danger")
     }
 };
 
@@ -577,7 +584,8 @@ const exportToExcel = async () => {
             'Imputation Analytique': item.imputation || '',
             'Fournisseur Réel': fournisseursAllData.value.find(f => f.id === item.fournisseur2)?.nom || '' ,
             'Prix Réel': item.prixR || '',
-            'Montant Réel': item.totalR || ''
+            'Montant Réel': item.totalR || '',
+            'Statut': item.niv_val == niveau.achat ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.achat ? 'Validation pas encore a votre niveau' : 'Validé',
         }));
 
         const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`

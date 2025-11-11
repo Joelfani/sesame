@@ -32,6 +32,7 @@
                 ]"
                 @validation_action="handleValidationAction"
                 @editable_field_change="handleEditableFieldChange"
+                :loading="loading"
             />
         </div>
         <!-- Alert pour les notifications -->
@@ -40,13 +41,15 @@
 </template>
 
 <script setup>
-import { tableTete } from '~/assets/js/CommonVariable.js';
+import { tableTete,niveau } from '~/assets/js/CommonVariable.js';
 import {exportExcel} from '~/assets/js/export.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
 const route = useRoute();
+//loading
+const loading = ref(true);
 
 // Référence vers le composant Table
 const tableRef = ref(null);
@@ -112,6 +115,7 @@ const showAlert = (message, title, type) => {
 
 //recuperation des données
 const getDemandeDetails = async () => {
+    loading.value = true;
     try {
         const { data, error } = await supabase
             .from('ses_demItems')
@@ -125,7 +129,7 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == 5 ? 0 : item.niv_val == 8 ? 2 : item.niv_val < 5 ? 4 : 1,
+                etat: item.niv_val == niveau.cheque ? 0 : item.niv_val == niveau.refuse ? 2 : item.niv_val < niveau.cheque ? 4 : 1,
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
                 // Mapper les champs pour l'affichage
                 fournisseur2: item.fournisseur2?.nom || '',
@@ -137,6 +141,7 @@ const getDemandeDetails = async () => {
         });
         
         demande_details.value = allDataView;
+        loading.value = false;
         console.log(demande_details.value);
         
         // Récupération des informations de l'objet
@@ -194,6 +199,12 @@ const handleChequeEmis = async (item, editableData) => {
             return;
         }
 
+        // ✅ Vérifier que le numéro de chèque contient uniquement des chiffres
+        if (!/^\d+$/.test(editableData.fields.num_cheque)) {
+            showAlert('Le numéro de chèque ne doit contenir que des chiffres !', 'Erreur de saisie', 'danger');
+            return;
+        }
+
         // Vérifier que la date d'emision de chèque est renseigné
         if (!editableData.fields.date_emission_cheque) {
             showAlert('Veuillez renseigner la date d\'emission de chèque !', 'Oops', 'danger');
@@ -202,7 +213,7 @@ const handleChequeEmis = async (item, editableData) => {
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 6, // Passer au niveau suivant (chèque émis)
+            niv_val: niveau.cheque + 1, // Passer au niveau suivant (chèque émis)
             date_emission_cheque: editableData.fields.date_emission_cheque || new Date().toISOString().split('T')[0],
             ...editableData.fields // Inclure toutes les données éditables modifiées
         };
@@ -227,7 +238,7 @@ const handleChequeEmis = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Emission de chèque de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
-                niv_val:6
+                niv_val:7
             });
 
         if (insertHistError) throw insertHistError;
@@ -244,7 +255,7 @@ const handleRejection = async (item, editableData) => {
     try {
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 8, // Statut rejeté
+            niv_val: niveau.refuse, // Statut rejeté
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
         
@@ -269,7 +280,7 @@ const handleRejection = async (item, editableData) => {
                 id_item: item.id,
                 action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
                 type: 'rejeter',
-                niv_val:8
+                niv_val:niveau.refuse
             });
 
         if (insertHistError) throw insertHistError;
@@ -326,7 +337,8 @@ const exportToExcel = async () => {
             'Observation DPR': item.observation_dpr || '',
             'N° Chèque': item.num_cheque || '',
             'Date d\'émission':item.date_emission_cheque? formatDate(item.date_emission_cheque):'',
-            'Observation Chèque': item.observation_cheque || ''
+            'Observation Chèque': item.observation_cheque || '',
+            'Statut': item.niv_val == niveau.cheque ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.cheque ? 'Validation pas encore a votre niveau' : 'Validé',
         }));
 
         const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`

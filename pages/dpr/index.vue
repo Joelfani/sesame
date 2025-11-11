@@ -34,17 +34,20 @@
                 :type_but_link="true" 
                 but_link_path="dpr/" 
                 name_but_action="Voir"
+                :loading="loading"
             />
         </div>
     </div>
 </template>
 
 <script setup>
+import { niveau } from '~/assets/js/CommonVariable.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
-
+//loading
+const loading = ref(true);
 // Définition des colonnes du tableau
 const columns = [
     { key: 'id', label: 'N°' },
@@ -64,6 +67,7 @@ const date_fin = ref('');
 
 /* METHODS */
 const getValidationDPR = async () => {
+    loading.value = true;
     try {
         const { data: dataObj, error: errorObj } = await supabase
             .from('ses_demandeObj')
@@ -74,7 +78,7 @@ const getValidationDPR = async () => {
        
         if (errorObj) throw errorObj;
         
-        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 4
+        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 5
         const demandesAvecArticlesNiveau4 = [];
        
         for (let i = 0; i < dataObj.length; i++) {
@@ -82,11 +86,11 @@ const getValidationDPR = async () => {
                 .from('ses_demItems')
                 .select('id', { count: 'exact', head: true })
                 .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', 4); 
+                .eq('niv_val', niveau.dpr); 
            
             if (itemsError) throw itemsError;
             
-            // Si cette demande a des articles avec niv_val = 4
+            // Si cette demande a des articles avec niv_val = 5
             if (count > 0) {
                 dataObj[i].nbrnv = count;
                 
@@ -111,7 +115,7 @@ const getValidationDPR = async () => {
         
         liste_demandes_a_valider.value = demandesAvecArticlesNiveau4;
         filtered_demandes.value = [...demandesAvecArticlesNiveau4]; // Initialiser la liste filtrée
-       
+        loading.value = false;
         console.log('liste demandes niveau DPR', liste_demandes_a_valider.value);
        
     } catch (error) {
@@ -125,7 +129,7 @@ const filterData = () => {
         filtered_demandes.value = [...liste_demandes_a_valider.value];
         return;
     }
-    
+    loading.value = true;
     const term = search_term.value.toLowerCase().trim();
     
     filtered_demandes.value = liste_demandes_a_valider.value.filter(item => {
@@ -138,6 +142,7 @@ const filterData = () => {
                 return true;
         }
     });
+    loading.value = false;
 }
 
 // Fonction de filtrage par date
@@ -146,7 +151,7 @@ const filterByDate = () => {
         filtered_demandes.value = [...liste_demandes_a_valider.value];
         return;
     }
-    
+    loading.value = true;
     filtered_demandes.value = liste_demandes_a_valider.value.filter(item => {
         const itemDate = new Date(item.date_original);
         const debut = date_debut.value ? new Date(date_debut.value) : null;
@@ -161,6 +166,7 @@ const filterByDate = () => {
         }
         return true;
     });
+    loading.value = false;
 }
 
 // Réinitialiser les filtres quand le type de filtre change

@@ -1,10 +1,9 @@
 <template>
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>LISTE DE TOUTES MES DEMANDES</h1>
+            <h1>SUIVI DE TOUTES LES DEMANDES VALIDÉES</h1>
             <div class="link_demande">
-                <NuxtLink v-if="userStore.sup != ''" to="/demande/add" class="btn btn-outline-success">Faire une demande</NuxtLink>
-                <button v-else class="btn btn-outline-success" @click="alertNoSup">Faire une demande</button>
+                
             </div>
         </div>
         
@@ -27,7 +26,7 @@
         </div>
 
         <div class="table_block_list">
-            <Table :columns="columns" :rows="filtered_demandes" :type_but_link="true" but_link_path="demande/" name_but_action="Voir" :loading="loading"/>
+            <Table :columns="columns" :rows="filtered_demandes" :type_but_link="true" but_link_path="suivi/" name_but_action="Voir" :loading="loading"/>
         </div>
         <!-- Alert pour les notifications -->
         <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
@@ -60,7 +59,7 @@ const columns = [
 
 const liste_demande = ref([]); // Liste originale
 const filtered_demandes = ref([]); // Liste filtrée pour l'affichage
-
+const allDataView = ref([]);
 // Alert system
     const alert = ref({
         show: false,
@@ -91,26 +90,117 @@ const alertNoSup = () => {
 const getDemande = async () => {
     loading.value = true;
     try {
-        const { data: dataObj, error: errorObj } = await supabase
-        .from('ses_demandeObj')
-        .select('*')
-        .eq('id_user', userStore.id)
-        .order('id', { ascending: false });
-        
-        if (errorObj) throw errorObj;
-        
-        for (let i = 0; i < dataObj.length; i++) {
-            const { data: itemsObj, error: itemsError } = await supabase
-            .from('ses_demItems')
-            .select('min:niv_val')
-            .eq('id_obj', dataObj[i].id)
-            .limit(1);
+        let dataObj = []; // Déclaration correcte en let au lieu de const
+        if(userStore.type_compte == 1){
+            console.log('admin');
             
-            if (itemsError) throw itemsError;
-            dataObj[i].niv_val = itemsObj[0]?.min;
+            // CAS ADMIN: Récupérer toutes les demandes
+            const { data: fetchedDataObj, error: errorObj } = await supabase
+                .from('ses_demandeObj')
+                .select('*')
+                .order('id', { ascending: false })
+            
+            if (errorObj) throw errorObj;
+            
+            dataObj = fetchedDataObj;
+
+            // Récupérer le niveau de validation minimum pour chaque demande
+            for (let i = 0; i < dataObj.length; i++) {
+                const { data: itemsObj, error: itemsError } = await supabase
+                    .from('ses_demItems')
+                    .select('niv_val')
+                    .eq('id_obj', dataObj[i].id);
+                
+                if (itemsError) throw itemsError;
+                
+                // Trouver le niveau minimum parmi tous les items
+                if (itemsObj && itemsObj.length > 0) {
+                    const minNivVal = Math.min(...itemsObj.map(item => item.niv_val));
+                    dataObj[i].niv_val = minNivVal;
+                } else {
+                    dataObj[i].niv_val = null;
+                }
+            }
+
+        } else if (userStore.achat || userStore.afe || userStore.finance || userStore.dpr) {
+            log('user with special rights');
+            // CAS 1: Utilisateurs avec droits spéciaux (achat, afe, finance, dpr)
+            const { data: fetchedDataObj, error: errorObj } = await supabase
+                .from('ses_demandeObj')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(20);
+            
+            if (errorObj) throw errorObj;
+            
+            dataObj = fetchedDataObj;
+
+            // Récupérer le niveau de validation minimum pour chaque demande
+            for (let i = 0; i < dataObj.length; i++) {
+                const { data: itemsObj, error: itemsError } = await supabase
+                    .from('ses_demItems')
+                    .select('niv_val')
+                    .eq('id_obj', dataObj[i].id);
+                
+                if (itemsError) throw itemsError;
+                
+                // Trouver le niveau minimum parmi tous les items
+                if (itemsObj && itemsObj.length > 0) {
+                    const minNivVal = Math.min(...itemsObj.map(item => item.niv_val));
+                    dataObj[i].niv_val = minNivVal;
+                } else {
+                    dataObj[i].niv_val = null;
+                }
+            }
+
+            // Filtrer selon le rôle de l'utilisateur
+            if (userStore.achat) {
+                dataObj = dataObj.filter(item => item.niv_val !== null && item.niv_val > niveau.achat);
+            } else if (userStore.afe) {
+                dataObj = dataObj.filter(item => item.niv_val !== null && item.niv_val > niveau.afe);
+            } else if (userStore.finance) {
+                dataObj = dataObj.filter(item => item.niv_val !== null && item.niv_val > niveau.finance);
+            } else if (userStore.dpr) {
+                dataObj = dataObj.filter(item => item.niv_val !== null && item.niv_val > niveau.dpr);
+            }
+            
+        } else {
+            console.log('normal user');
+            // CAS 2: Utilisateurs normaux (supérieurs)
+            const { data: fetchedDataObj, error: errorObj } = await supabase
+                .from('ses_demandeObj')
+                .select('*')
+                .eq('id_sup', userStore.id)
+                .order('id', { ascending: false })
+                .limit(20);
+            
+            console.log('dataObj', fetchedDataObj);
+            
+            if (errorObj) throw errorObj;
+            
+            dataObj = fetchedDataObj;
+
+            // Récupérer le niveau de validation minimum pour chaque demande
+            for (let i = 0; i < dataObj.length; i++) {
+                const { data: itemsObj, error: itemsError } = await supabase
+                    .from('ses_demItems')
+                    .select('niv_val')
+                    .eq('id_obj', dataObj[i].id);
+                
+                if (itemsError) throw itemsError;
+                
+                // Trouver le niveau minimum parmi tous les items
+                if (itemsObj && itemsObj.length > 0) {
+                    const minNivVal = Math.min(...itemsObj.map(item => item.niv_val));
+                    dataObj[i].niv_val = minNivVal;
+                } else {
+                    dataObj[i].niv_val = null;
+                }
+            }
         }
         
-        const allDataView = dataObj.map(item => {
+        // Mapper les données pour l'affichage
+        allDataView.value = dataObj.map(item => {
             return {
                 ...item,
                 niv_val: item.niv_val === niveau.superieur ? 'En attente de validation chez votre superieur' :
@@ -121,21 +211,23 @@ const getDemande = async () => {
                         item.niv_val === niveau.cheque ? 'En attente d\'émission de chèque' :
                         item.niv_val === niveau.livraison ? 'En attente de livraison' :
                         item.niv_val === niveau.valide ? 'Validée' :
-                        item.niv_val === niveau.refuse ? 'Votre demande a été refusée' : 'Erreur',
+                        item.niv_val === niveau.refuse ? 'Votre demande a été refusée' : 'Statut inconnu',
                 date: formatDate(item.date),
                 date_original: item.date // Garder la date originale pour les comparaisons
             };
         });
         
-        liste_demande.value = allDataView;
-        filtered_demandes.value = [...allDataView]; // Initialiser la liste filtrée
+        liste_demande.value = allDataView.value;
+        filtered_demandes.value = [...allDataView.value]; // Initialiser la liste filtrée
 
         loading.value = false;
 
         console.log('liste', liste_demande.value); 
         
     } catch (error) {
+        loading.value = false;
         console.error('Erreur lors de la récupération des demandes:', error);
+        showAlert('Erreur lors de la récupération des demandes', 'Erreur', 'danger');
     }
 }
 

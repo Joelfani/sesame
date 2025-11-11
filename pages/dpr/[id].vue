@@ -32,6 +32,7 @@
                 ]"
                 @validation_action="handleValidationAction"
                 @editable_field_change="handleEditableFieldChange"
+                :loading="loading"
             />
         </div>
         <!-- Alert pour les notifications -->
@@ -40,14 +41,15 @@
 </template>
 
 <script setup>
-import { tableTete } from '~/assets/js/CommonVariable.js';
+import { tableTete, niveau } from '~/assets/js/CommonVariable.js';
 import {exportExcel} from '~/assets/js/export.js';
 // Services
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
 const route = useRoute();
-
+//loading
+const loading = ref(true);
 // Référence vers le composant Table
 const tableRef = ref(null);
 
@@ -99,6 +101,7 @@ const showAlert = (message, title, type) => {
 
 //recuperation des données
 const getDemandeDetails = async () => {
+    loading.value = true;
     try {
         const { data, error } = await supabase
             .from('ses_demItems')
@@ -112,7 +115,7 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == 4 ? 0 : item.niv_val == 8 ? 2 : item.niv_val < 4 ? 4 : 1,
+                etat: item.niv_val == niveau.dpr ? 0 : item.niv_val == niveau.refuse ? 2 : item.niv_val < niveau.dpr ? 4 : 1,
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
                 // Mapper les champs pour l'affichage
                 fournisseur2: item.fournisseur2?.nom || '',
@@ -122,7 +125,7 @@ const getDemandeDetails = async () => {
         });
         
         demande_details.value = allDataView;
-        
+        loading.value = false;
         // Récupération des informations de l'objet
         const { data: demandeObj, error: demandeObjError } = await supabase
             .from('ses_demandeObj')
@@ -174,7 +177,7 @@ const handleValidation = async (item, editableData) => {
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 5, // Passer au niveau suivant de validation (niveau 5)
+            niv_val: niveau.dpr +1, // Passer au niveau suivant de validation (niveau 5)
             //date_val_dpr: new Date().toISOString(), // Date de validation DPR
             ...editableData.fields // Inclure toutes les données éditables modifiées
         };
@@ -198,7 +201,7 @@ const handleValidation = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
-                niv_val:5
+                niv_val:niveau.dpr +1,
             });
 
         if (insertHistError) throw insertHistError;
@@ -219,7 +222,7 @@ const handleRejection = async (item, editableData) => {
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: 8, // Statut rejeté
+            niv_val: niveau.refuse, // Statut rejeté
             //date_rej_dpr: new Date().toISOString(), // Date de rejet DPR
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
@@ -245,7 +248,7 @@ const handleRejection = async (item, editableData) => {
                 id_item: item.id,
                 action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
                 type: 'rejeter',
-                niv_val:8
+                niv_val:niveau.refuse,
             });
 
         if (insertHistError) throw insertHistError;
@@ -299,7 +302,8 @@ const exportToExcel = async () => {
             'Fournisseur Réel':item.fournisseur|| '',
             'Prix Réel': item.prixR || '',
             'Montant Réel': item.totalR || '',
-            'Observation DPR': item.observation_dpr || ''
+            'Observation DPR': item.observation_dpr || '',
+            'Statut': item.niv_val == niveau.dpr ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.dpr ? 'Validation pas encore a votre niveau' : 'Validé',
         }));
 
         const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`

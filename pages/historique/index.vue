@@ -2,7 +2,7 @@
     <div class="historique_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>HISTORIQUE DES ACTIONS</h1>
+            <h1>HISTORIQUES DES ACTIONS</h1>
         </div>
         
         <!-- Filtrage par date -->
@@ -32,6 +32,7 @@
                 :rows="filtered_historiques"
                 :type_but_link="false"
                 :show-actions="false"
+                :loading="loading"
             />
         </div>
     </div>
@@ -41,6 +42,9 @@
 // Services
 const supabase = useSupabaseClient()
 const userStore = useUserStore()
+//loading
+const loading = ref(true);
+
 // Définition des colonnes du tableau
 const columns = [
     { key: 'date', label: 'Date' },
@@ -57,6 +61,7 @@ const date_fin = ref('');
 
 /* METHODS */
 const getHistoriques = async () => {
+    loading.value = true;
     try {
         let query = supabase
         .from('ses_histo')
@@ -97,7 +102,7 @@ const getHistoriques = async () => {
         
         liste_historiques.value = dataHisto;
         filtered_historiques.value = [...dataHisto]; // Initialiser la liste filtrée
-
+        loading.value = false;
         console.log('liste historiques', liste_historiques.value);
 
     } catch (error) {
@@ -111,7 +116,7 @@ const filterByDate = () => {
         filtered_historiques.value = [...liste_historiques.value];
         return;
     }
-    
+    loading.value = true;
     filtered_historiques.value = liste_historiques.value.filter(item => {
         const itemDate = new Date(item.date_original);
         const debut = date_debut.value ? new Date(date_debut.value) : null;
@@ -129,6 +134,7 @@ const filterByDate = () => {
         }
         return true;
     });
+    loading.value = false;
 }
 
 // Fonction de formatage de date et heure
