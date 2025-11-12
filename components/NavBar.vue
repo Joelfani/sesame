@@ -232,14 +232,14 @@ onMounted(() => {
     get_notif();
     
     // Puis rappel toutes les 5 secondes (5000 ms)
-    /*
+    
     const intervalId = setInterval(() => {
         get_notif()
-    }, 500)*/
+    }, 500)
 
     // On nettoie quand le composant est démonté
     onUnmounted(() => {
-        //clearInterval(intervalId)
+        clearInterval(intervalId)
     })
 });
 </script>
