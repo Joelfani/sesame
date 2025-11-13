@@ -116,8 +116,10 @@
             return [];
         }
     };
-
+    const clickbutsend = ref(false);
     const sendTableData = async () => {
+    if(clickbutsend.value) return;
+    clickbutsend.value = true;
     // Validation des champs
     if (demObj.value === '') {
         showAlert('Veuillez remplir le champ objet', 'Oups!', 'danger');

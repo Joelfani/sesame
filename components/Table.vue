@@ -195,7 +195,9 @@
     <Modal v-for="item in rows" :id="'mod4' + item.id" :title="title_modal_neutre">
         <slot name="modal4" :item="item"></slot>
     </Modal>
-    
+    <Modal v-for="item in rows" :id="'mod5' + item.id" :title="title_modal_users">
+        <slot name="modal5" :item="item"></slot>
+    </Modal>
     <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
 </template>
 
@@ -223,7 +225,8 @@ const props = defineProps({
     title_modal_edit: { type: String },
     tableDelete: { type: String, default: '' },
     title_modal_neutre: { type: String, default:'Need a title' },
-    loading: { type: Boolean, default: false }
+    loading: { type: Boolean, default: false },
+    title_modal_users: { type: String, default:'Modifier status du compte' }
 })
 
 const emit = defineEmits([

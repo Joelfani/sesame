@@ -4,7 +4,7 @@
             <div v-for="input in inputs" :key="input.id">
                 <label :for="input.id"><span v-if="input.required" style="color: red;">*</span> {{ input.label}}</label>
                 <input
-                v-if="input.type === 'text' || input.type === 'email' || input.type === 'password' ||  input.type === 'date' || input.type === 'time'"
+                v-if="input.type === 'text' || input.type === 'email' || input.type === 'password' ||  input.type === 'date' || input.type === 'time' || input.type === 'checkbox'" 
                 :type="input.type"
                 class="form-control"
                 :id="input.id"

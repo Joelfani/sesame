@@ -37,7 +37,8 @@
 
                 // Accès à l'array réelle
                 const targetList = list[var_data] ?? list
-
+                console.log('list', targetList);
+                
                 if (payload.eventType === 'INSERT') {
                 const updatedList = order === 'desc'
                     ? [payload.new, ...targetList].sort((a, b) => b[key_order] - a[key_order])

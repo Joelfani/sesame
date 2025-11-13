@@ -36,6 +36,7 @@
                 @recovery_data="recovery_data"
                 @delete="handleDelete"
                 @load_data="loadFournisseurs"
+                :loading="loading"
 
             >
                 <!-- Modal de modification -->
@@ -79,6 +80,10 @@ const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
 const realtimeStore = useSubscribeStore()
+
+//loading
+const loading = ref(true);
+
 // DATA
 const fournisseurs = ref([])
 const filteredFournisseurs = ref([])
@@ -207,7 +212,6 @@ const inputModifier = computed(() => [
         type: 'email',
         label: 'Email',
         placeholder: 'contact@fournisseur.com',
-        required: true,
         initialValue: initialValuesMod.value.email || ''   
     },
     {
@@ -257,6 +261,7 @@ const inputModifier = computed(() => [
 
 // Charger la liste des fournisseurs
 const loadFournisseurs = async () => {
+    loading.value = true;
     try {
         isLoading.value = true
         
@@ -270,7 +275,7 @@ const loadFournisseurs = async () => {
         
         fournisseurs.value = data || []
         //filteredFournisseurs.value = [...fournisseurs.value]
-        
+        loading.value = false;
     } catch (error) {
         console.error('Erreur lors du chargement des fournisseurs:', error)
         showAlert('Erreur lors du chargement des fournisseurs', 'Oups!', 'danger')
@@ -332,12 +337,12 @@ const filterFournisseurs = () => {
         filteredFournisseurs.value = [...fournisseurs.value]
         return
     }
-    
+    loading.value = true;
     const term = searchTerm.value.toLowerCase()
     filteredFournisseurs.value = fournisseurs.value.filter(fournisseur => 
         fournisseur.nom?.toLowerCase().includes(term)
     )
-    
+    loading.value = false;
 }
 
 // Gérer la modification

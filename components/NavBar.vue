@@ -37,11 +37,11 @@
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/suivi">Suivi</NuxtLink>
                 </li>
-                <!--
+                
                 <li v-if="userStore.type_compte === 1" class="nav-item">
-                    <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Utilisateurs</NuxtLink>
+                    <NuxtLink class="nav-link btn btn-light" to="/utilisateur">Utilisateurs</NuxtLink>
                 </li>
-                -->
+                
                 <li v-if="userStore.type_compte === 1" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/historique">Actions</NuxtLink>
                 </li>
@@ -104,7 +104,7 @@ const resultats = {};
 const solos = ref([])
 const sups = ref([])
 const others = ref([])
-
+const dataItems = ref([]);
 //METHODS
 const afficher_notif = async () => {
     notif.value = !notif.value;
@@ -225,21 +225,51 @@ const close_notif = async () =>{
     }
     
 }
-
+const getdataItems = async () => {
+    try{
+        const { data, error } = await supabase
+        .from('ses_demItems')
+        .select('*')
+        
+        if (error) throw error;
+        
+        dataItems.value = data;
+        
+    }catch(error){
+        console.log(error);
+    }
+}
+watch(
+    () => dataItems.value,
+    async (newRows) => {
+        
+        get_notif();
+    },
+    { deep: true }
+)
 // LIFECYCLE HOOKS
-onMounted(() => {
+onMounted(async () => {
     
     get_notif();
     
-    // Puis rappel toutes les 5 secondes (5000 ms)
-    
-    const intervalId = setInterval(() => {
-        get_notif()
-    }, 500)
-
-    // On nettoie quand le composant est démonté
-    onUnmounted(() => {
-        clearInterval(intervalId)
-    })
+    try {
+        await getdataItems()
+        
+        await nextTick()
+        if (realtimeStore && typeof realtimeStore.subscribeToTable === 'function') {
+            realtimeStore.subscribeToTable('ses_demItems', 'dataItems', dataItems, 'id', 'asc')
+        } else {
+            console.error('Store realtime non disponible')
+        }
+    } catch (error) {
+        console.error('Erreur lors de l\'initialisation:', error)
+        showAlert('Erreur lors de l\'initialisation de la page', 'Erreur', 'danger')
+    }
 });
+
+onBeforeUnmount(() => {
+    if (realtimeStore && typeof realtimeStore.unsubscribeFromTable === 'function') {
+        realtimeStore.unsubscribeFromTable('ses_demItems', 'dataItems')
+    }
+})
 </script>

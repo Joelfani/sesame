@@ -88,8 +88,11 @@ const filtered_demandes = ref([]); // Liste filtrée pour l'affichage
 const alertNoSup = () => {
     showAlert('Veuillez choisir un supérieur avant de faire une demande', 'Oups!', 'danger');
 }
+
+//data for realtime
+const dataForRealtime = ref([]);
+const activeRealtime = ref(true);
 const getDemande = async () => {
-    loading.value = true;
     try {
         const { data: dataObj, error: errorObj } = await supabase
         .from('ses_demandeObj')
@@ -102,12 +105,16 @@ const getDemande = async () => {
         for (let i = 0; i < dataObj.length; i++) {
             const { data: itemsObj, error: itemsError } = await supabase
             .from('ses_demItems')
-            .select('min:niv_val')
+            .select('niv_val')
             .eq('id_obj', dataObj[i].id)
-            .limit(1);
+            
             
             if (itemsError) throw itemsError;
-            dataObj[i].niv_val = itemsObj[0]?.min;
+            // Convertir en nombres et chercher le min
+            const minValue = Math.min(...itemsObj.map(i => Number(i.niv_val)))
+            dataObj[i].niv_val = minValue
+            console.log('niv min',  dataObj[i].niv_val, 'id obj', dataObj[i].id);
+            
         }
         
         const allDataView = dataObj.map(item => {
@@ -128,11 +135,14 @@ const getDemande = async () => {
         });
         
         liste_demande.value = allDataView;
+        
         filtered_demandes.value = [...allDataView]; // Initialiser la liste filtrée
-
         loading.value = false;
-
-        console.log('liste', liste_demande.value); 
+        if(activeRealtime.value){
+            dataForRealtime.value = [...dataObj];
+            activeRealtime.value = false;
+        }
+        
         
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
@@ -200,13 +210,38 @@ const formatDate = (dateString) => {
     const year = d.getFullYear();
     
     const formattedDate = `${day}/${month}/${year}`;
-    console.log('formatted date:', `${day}/${month}/${year}`);
     
     return formattedDate;
 };
 
+watch(
+    () => dataForRealtime.value,
+    async (newRows) => {
+        await getDemande();
+        console.log('je passe dans watch');
+        
+    },
+    { deep: true }
+)
 // LIFECYCLE HOOKS //
 onMounted(async () => {
     getDemande();
+
+    try {
+        await nextTick()
+        if (realtimeStore && typeof realtimeStore.subscribeToTable === 'function') {
+            realtimeStore.subscribeToTable('ses_demItems', 'dataForRealtime', dataForRealtime, 'id', 'asc')
+        } else {
+            console.error('Store realtime non disponible')
+        }
+    } catch (error) {
+        console.error('Erreur lors de l\'initialisation:', error)
+        showAlert('Erreur lors de l\'initialisation de la page', 'Erreur', 'danger')
+    }
 });
+onBeforeUnmount(() => {
+    if (realtimeStore && typeof realtimeStore.unsubscribeFromTable === 'function') {
+        realtimeStore.unsubscribeFromTable('ses_demItems', 'dataForRealtime')
+    }
+})
 </script>
