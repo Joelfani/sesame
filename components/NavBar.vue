@@ -70,7 +70,7 @@
                     <!-- NOTIF OTHERS -->
                     <div v-for="other in others" :key="other.id" class="one_notif">
                         <div class="en_tete" style="color: rgb(44, 94, 138);">Demande numéros {{ other.id_obj }}</div>
-                        <div class="detail" style="font-size: 14px;">Demande en attente de validation {{ other.niv_val === 2 ? 'au niveau de l\'achat' : other.niv_val === 3 ? 'au niveau de la finance' : other.niv_val === 4 ? 'au niveau du DPR' : other.niv_val === 5 ? 'pour emission de chèque' : 'pour livraison'  }}</div>
+                        <div class="detail" style="font-size: 14px;">Demande en attente de validation {{ other.niv_val === niveau.achat ? 'au niveau de l\'achat' : other.niv_val === niveau.afe ? 'au niveau de l\'administration d\'achat' : other.niv_val === niveau.finance ? 'au niveau de la finance' : other.niv_val === niveau.dpr ? 'au niveau du DPR' : other.niv_val === niveau.cheque ? 'pour emission de chèque' : 'pour livraison'  }}</div>
                         <div class="date_notif" style="font-size: 14px;color: #7d7b7bb7;">{{ other.created_at }}</div>
                     </div>
                 </div>                
@@ -90,12 +90,15 @@
 import '~/assets/css/navbar.css'
 
 import { ref } from 'vue';
+
+import { niveau } from '~/assets/js/CommonVariable';
 //IMPORT
 // Utilisation du module @nuxtjs/supabase
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
-
+// Store
+const realtimeStore = useSubscribeStore()
 
 //DATA
 const notif = ref(false);
@@ -146,11 +149,12 @@ const get_notif = async () => {
         
         //AUTRE NOTIF
         const niveaux = [
-            { key: 'achat', niv: 2},
-            { key: 'finance', niv: 3},
-            { key: 'dpr', niv: 4},
-            { key: 'cheque', niv: 5},
-            { key: 'livraison', niv: 6},
+            { key: 'achat', niv: niveau.achat},
+            { key: 'responsable administratif', niv: niveau.afe},
+            { key: 'finance', niv: niveau.finance},
+            { key: 'dpr', niv: niveau.dpr},
+            { key: 'cheque', niv: niveau.cheque},
+            { key: 'livraison', niv: niveau.livraison},
         ];
 
         for (const { key, niv } of niveaux) {
@@ -234,6 +238,7 @@ const getdataItems = async () => {
         if (error) throw error;
         
         dataItems.value = data;
+        console.log('liste dans navbar', dataItems.value);
         
     }catch(error){
         console.log(error);
@@ -242,6 +247,7 @@ const getdataItems = async () => {
 watch(
     () => dataItems.value,
     async (newRows) => {
+        console.log('je passe ici ');
         
         get_notif();
     },

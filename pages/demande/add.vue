@@ -118,8 +118,6 @@
     };
     const clickbutsend = ref(false);
     const sendTableData = async () => {
-    if(clickbutsend.value) return;
-    clickbutsend.value = true;
     // Validation des champs
     if (demObj.value === '') {
         showAlert('Veuillez remplir le champ objet', 'Oups!', 'danger');
@@ -145,6 +143,8 @@
         showAlert('Veuillez remplir tous les champs fournisseurs (sélectionnez "Autre..." si votre fournisseur n\'est pas défini)', 'Oups!', 'danger');
         return;
     }
+    if(clickbutsend.value) return;
+    clickbutsend.value = true;
     try {
         // 1. Insertion de l'objet et récupération de l'id
         const { data: insertedObj, error: insertObjError } = await supabase
@@ -196,6 +196,7 @@
         navigateTo('/demande')
     } catch (error) {
         showAlert('Erreur lors de l\'envoi', 'Oups!', 'danger');
+        clickbutsend.value = false;
         console.error('Error sending table data:', error);
     }
 };

@@ -146,7 +146,7 @@
                         @input.native="handleCleaveInputAdd($event, rowIndex, col.key)"
                     />
                     <p v-if="col.key === 'delai'" style="font-size: 12px; color: gray;">
-                    (Idealement 15 jours après la demande)</p>
+                    (Idealement 10 jours après la demande)</p>
                 </td>
                 <td v-if="showActions">
                     <button class="btn btn-danger" @click="removeRow(rowIndex)">Supprimer</button>
