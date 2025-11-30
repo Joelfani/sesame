@@ -93,61 +93,64 @@ const alertNoSup = () => {
 const dataForRealtime = ref([]);
 const activeRealtime = ref(true);
 const getDemande = async () => {
+    
     try {
-        const { data: dataObj, error: errorObj } = await supabase
-        .from('ses_demandeObj')
-        .select('*')
-        .eq('id_user', userStore.id)
-        .order('id', { ascending: false });
-        
-        if (errorObj) throw errorObj;
-        
-        for (let i = 0; i < dataObj.length; i++) {
-            const { data: itemsObj, error: itemsError } = await supabase
-            .from('ses_demItems')
-            .select('niv_val')
-            .eq('id_obj', dataObj[i].id)
-            
-            
-            if (itemsError) throw itemsError;
-            // Convertir en nombres et chercher le min
-            const minValue = Math.min(...itemsObj.map(i => Number(i.niv_val)))
-            dataObj[i].niv_val = minValue
-            console.log('niv min',  dataObj[i].niv_val, 'id obj', dataObj[i].id);
-            
-        }
-        
-        const allDataView = dataObj.map(item => {
+        // Requête optimisée avec jointure
+        const { data, error } = await supabase
+            .from('ses_demandeObj')
+            .select(`
+                *,
+                ses_demItems ( niv_val )
+            `)
+            .eq('id_user', userStore.id)
+            .order('id', { ascending: false });
+
+        if (error) throw error;
+
+        // Traitement rapide côté JS
+        const result = data.map(item => {
+            // calcul du minimum niv_val
+            const minVal = Math.min(...item.ses_demItems.map(i => Number(i.niv_val)));
+
             return {
                 ...item,
-                niv_val: item.niv_val === niveau.superieur ? 'En attente de validation chez votre superieur' :
-                        item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
-                        item.niv_val === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
-                        item.niv_val === niveau.finance ? 'En attente de validation chez le responsable financier' :
-                        item.niv_val === niveau.dpr ? 'En attente de validation du DPR' : 
-                        item.niv_val === niveau.cheque ? 'En attente d\'émission de chèque' :
-                        item.niv_val === niveau.livraison ? 'En attente de livraison' :
-                        item.niv_val === niveau.valide ? 'Validée' :
-                        item.niv_val === niveau.refuse ? 'Votre demande a été refusée' : 'Erreur',
-                date: formatDate(item.date),
-                date_original: item.date // Garder la date originale pour les comparaisons
+                niv_val: 
+                    minVal === niveau.superieur ? 'En attente de validation chez votre superieur' :
+                    minVal === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
+                    minVal === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
+                    minVal === niveau.finance ? 'En attente de validation chez le responsable financier' :
+                    minVal === niveau.dpr ? 'En attente de validation du DPR' :
+                    minVal === niveau.cheque ? 'En attente d\'émission de chèque' :
+                    minVal === niveau.livraison ? 'En attente de livraison' :
+                    minVal === niveau.valide ? 'Validée' :
+                    minVal === niveau.refuse ? 'Votre demande a été refusée' :
+                    'Erreur',
+                
+                niv_val_raw: minVal, // si tu veux garder la valeur brute
+                
+                date_original: item.date,
+                date_formatted: formatDate(item.date),
+                date: formatDate(item.date)
             };
         });
+
+        // Assignation
         
-        liste_demande.value = allDataView;
         
-        filtered_demandes.value = [...allDataView]; // Initialiser la liste filtrée
+        liste_demande.value = result;
+        
+        filtered_demandes.value = [...result];
         loading.value = false;
-        if(activeRealtime.value){
-            dataForRealtime.value = [...dataObj];
+        //  Realtime si nécessaire
+        if (activeRealtime.value) {
+            dataForRealtime.value = [...data];
             activeRealtime.value = false;
         }
-        
-        
+
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
     }
-}
+};
 
 // Fonction de filtrage des données
 const filterData = () => {
@@ -225,6 +228,7 @@ watch(
 )
 // LIFECYCLE HOOKS //
 onMounted(async () => {
+    loading.value = true;
     getDemande();
 
     try {

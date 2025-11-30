@@ -67,58 +67,54 @@ const date_debut = ref('');
 const date_fin = ref('');
 
 /* METHODS */
+
 const getValidation = async () => {
     loading.value = true;
+
     try {
-        const { data: dataObj, error: errorObj } = await supabase
+        // 1️⃣ Une seule requête SQL optimisée
+        const { data, error } = await supabase
             .from('ses_demandeObj')
-            .select('*')
+            .select(`
+                *,
+                users: id_user ( full_name ),
+                ses_demItems!inner ( id, niv_val )
+            `)
             .eq('id_sup', userStore.id)
+            .eq('ses_demItems.niv_val', niveau.superieur) 
             .order('id', { ascending: false });
-        
-        console.log('dataObj', dataObj);
-       
-        if (errorObj) throw errorObj;
-       
-        for (let i = 0; i < dataObj.length; i++) {
-            const { count, error: itemsError } = await supabase
-                .from('ses_demItems')
-                .select('id', { count: 'exact', head: true })
-                .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', niveau.superieur);
-           
-            if (itemsError) throw itemsError;
-            
-            dataObj[i].nbrnv = count || 0; // S'assurer que c'est un nombre
-            
-            // Formater la date pour l'affichage
-            dataObj[i].date_formatted = formatDate(dataObj[i].date);
-            dataObj[i].date_original = dataObj[i].date; // Garder la date originale
-            dataObj[i].date = dataObj[i].date_formatted; // Pour l'affichage
 
-            //recuperer le nom du demandeur
-            const {data:nameDemandeur, error:nameDemandeurError} = await supabase
-            .from('users')
-            .select('full_name')
-            .eq('id', dataObj[i].id_user)
+        if (error) throw error;
 
-            if (nameDemandeurError) throw nameDemandeurError;
+        // 2️⃣ Traitement rapide
+        const result = data.map(item => ({
+            ...item,
 
-            dataObj[i].id_user = nameDemandeur[0].full_name || ''
-        }
-        
-        // Filtrer seulement les demandes qui ont des articles à valider
-        const demandesAvecArticlesAValider = dataObj.filter(item => item.nbrnv > 0);
-        
-        liste_demandes_a_valider.value = demandesAvecArticlesAValider;
-        filtered_demandes.value = [...demandesAvecArticlesAValider]; // Initialiser la liste filtrée pour la recherche
-        loading.value = false;
-        console.log('liste', liste_demandes_a_valider.value);
-       
+            // Nombre d’items niveau supérieur
+            nbrnv: item.ses_demItems?.length ?? 0,
+
+            // Dates formatées
+            date_original: item.date,
+            date_formatted: formatDate(item.date),
+            date: formatDate(item.date),
+
+            // Nom du demandeur directement depuis la jointure
+            id_user: item.users?.full_name || "Nom non trouvé"
+        }));
+
+        // 3️⃣ On garde uniquement les demandes qui ont réellement des items à valider
+        const filtered = result.filter(r => r.nbrnv > 0);
+
+        // 4️⃣ Affectation
+        liste_demandes_a_valider.value = filtered;
+        filtered_demandes.value = [...filtered];
+
     } catch (error) {
-        console.error('Erreur lors de la récupération des demandes:', error);
+        console.error("Erreur lors de la récupération des demandes:", error);
+    } finally {
+        loading.value = false;
     }
-}
+};
 
 // Fonction de filtrage des données
 const filterData = () => {

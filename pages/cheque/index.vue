@@ -67,60 +67,44 @@ const date_fin = ref('');
 /* METHODS */
 const getDemandesAttenteCheque = async () => {
     loading.value = true;
+
     try {
-        const { data: dataObj, error: errorObj } = await supabase
+        // 1️⃣ Requête unique avec jointures
+        const { data, error } = await supabase
             .from('ses_demandeObj')
-            .select('*')
+            .select(`
+                *,
+                users: id_user ( full_name ),
+                ses_demItems!inner ( id, niv_val )
+            `)
+            .eq('ses_demItems.niv_val', niveau.cheque)
             .order('id', { ascending: false });
-        
-        console.log('dataObj', dataObj);
-       
-        if (errorObj) throw errorObj;
-        
-        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 5
-        const demandesAvecArticlesNiveau5 = [];
-       
-        for (let i = 0; i < dataObj.length; i++) {
-            const { count, error: itemsError } = await supabase
-                .from('ses_demItems')
-                .select('id', { count: 'exact', head: true })
-                .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', niveau.cheque); 
-           
-            if (itemsError) throw itemsError;
-            
-            // Si cette demande a des articles avec niv_val = 6
-            if (count > 0) {
-                dataObj[i].nbrnv = count;
-                
-                // Formater la date pour l'affichage
-                dataObj[i].date_formatted = formatDate(dataObj[i].date);
-                dataObj[i].date_original = dataObj[i].date; // Garder la date originale
-                dataObj[i].date = dataObj[i].date_formatted; // Pour l'affichage
 
-                // Récupérer le nom du demandeur
-                const { data: nameDemandeur, error: nameDemandeurError } = await supabase
-                    .from('users')
-                    .select('full_name')
-                    .eq('id', dataObj[i].id_user);
+        if (error) throw error;
 
-                if (nameDemandeurError) throw nameDemandeurError;
+        // 2️⃣ Transformation rapide des données
+        const result = data.map(row => ({
+            ...row,
+            nbrnv: row.ses_demItems?.length ?? 0,   // nombre d'items niveau cheque
+            date_original: row.date,
+            date_formatted: formatDate(row.date),
+            date: formatDate(row.date),
+            id_user: row.users?.full_name || "Nom non trouvé"
+        }));
 
-                dataObj[i].id_user = nameDemandeur[0]?.full_name || 'Nom non trouvé';
-                
-                demandesAvecArticlesNiveau5.push(dataObj[i]);
-            }
-        }
-        
-        liste_demandes_attente_cheque.value = demandesAvecArticlesNiveau5;
-        filtered_demandes.value = [...demandesAvecArticlesNiveau5]; // Initialiser la liste filtrée
-        loading.value = false;
-        console.log('liste demandes en attente de chèque', liste_demandes_attente_cheque.value);
+        // 3️⃣ Mise à jour des listes
+        liste_demandes_attente_cheque.value = result;
+        filtered_demandes.value = [...result];
+
+        console.log('liste demandes en attente de chèque', result);
 
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
+    } finally {
+        loading.value = false;
     }
-}
+};
+
 
 // Fonction de filtrage des données
 const filterData = () => {

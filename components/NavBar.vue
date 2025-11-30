@@ -2,10 +2,9 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-sm navbar-light fixed-top">
         <div class="container-fluid">
-            <NuxtLink to="/demande" class="navbar-brand centre" style="margin-left: 5%;">
+            <NuxtLink to="/demande" class="navbar-brand centre logo-not-activer" style="margin-left: 5%;">
                 <img class="logo_main_page" src="/logo.png">
             </NuxtLink>
-
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/demande">Mes demandes</NuxtLink>
@@ -99,7 +98,8 @@ const supabase = useSupabaseClient()
 const userStore = useUserStore()
 // Store
 const realtimeStore = useSubscribeStore()
-
+//route
+const route = useRoute();
 //DATA
 const notif = ref(false);
 const data_notif = ref([])
@@ -279,3 +279,11 @@ onBeforeUnmount(() => {
     }
 })
 </script>
+<style scoped>
+
+.router-link-exact-active:not(.logo-not-activer) {
+    background-color: #58616b72;
+    color: white;
+}
+
+</style>

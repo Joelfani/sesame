@@ -69,59 +69,37 @@ const date_fin = ref('');
 const getValidationAchat = async () => {
     loading.value = true;
     try {
-        const { data: dataObj, error: errorObj } = await supabase
+        // 1️⃣ Récupérer les demandes + nom du user + compter les items niv_val = 2
+        const { data, error } = await supabase
             .from('ses_demandeObj')
-            .select('*')
+            .select(`
+                *,
+                users: id_user ( full_name ),
+                ses_demItems!inner ( id, niv_val )
+            `)
+            .eq('ses_demItems.niv_val', niveau.achat) 
             .order('id', { ascending: false });
-        
-        console.log('dataObj', dataObj);
-       
-        if (errorObj) throw errorObj;
-        
-        // Filtrer pour ne récupérer que les demandes qui ont des items avec niv_val = 2
-        const demandesAvecArticlesNiveau2 = [];
-       
-        for (let i = 0; i < dataObj.length; i++) {
-            const { count, error: itemsError } = await supabase
-                .from('ses_demItems')
-                .select('id', { count: 'exact', head: true })
-                .eq('id_obj', dataObj[i].id)
-                .eq('niv_val', niveau.achat); 
-           
-            if (itemsError) throw itemsError;
-            
-            // Si cette demande a des articles avec niv_val = 2
-            if (count > 0) {
-                dataObj[i].nbrnv = count;
-                
-                // Formater la date pour l'affichage
-                dataObj[i].date_formatted = formatDate(dataObj[i].date);
-                dataObj[i].date_original = dataObj[i].date; // Garder la date originale
-                dataObj[i].date = dataObj[i].date_formatted; // Pour l'affichage
 
-                // Récupérer le nom du demandeur
-                const { data: nameDemandeur, error: nameDemandeurError } = await supabase
-                    .from('users')
-                    .select('full_name')
-                    .eq('id', dataObj[i].id_user);
-
-                if (nameDemandeurError) throw nameDemandeurError;
-
-                dataObj[i].id_user = nameDemandeur[0]?.full_name || 'Nom non trouvé';
-                
-                demandesAvecArticlesNiveau2.push(dataObj[i]);
-            }
-        }
+        if (error) throw error;
         
-        liste_demandes_a_valider.value = demandesAvecArticlesNiveau2;
-        filtered_demandes.value = [...demandesAvecArticlesNiveau2]; // Initialiser la liste filtrée
-        loading.value = false;
-        console.log('liste demandes niveau acheteur', liste_demandes_a_valider.value);
+        const result = data.map(row => ({
+            ...row,
+            nbrnv: row.ses_demItems?.length ?? 0,
+            date_original: row.date,
+            date_formatted: formatDate(row.date),
+            date: formatDate(row.date),
+            id_user: row.users?.full_name || "Nom non trouvé"
+        }));
+
+        liste_demandes_a_valider.value = result;
+        filtered_demandes.value = [...result];
 
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
+    } finally {
+        loading.value = false;
     }
-}
+};
 
 // Fonction de filtrage des données
 const filterData = () => {

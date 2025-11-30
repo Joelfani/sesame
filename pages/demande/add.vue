@@ -102,7 +102,8 @@
                     .from('ses_fournisseurs')
                     .select('nom,id')
                     .eq('etat_del', false)
-                    .order('id', { ascending: true });
+                    .neq('id', 5000)
+                    .order('nom', { ascending: true });
 
             if (error) throw error
             fournisseurs.value = data.map(fournisseur => ({
@@ -110,6 +111,10 @@
                 value: fournisseur.id
             }));
             
+            fournisseurs.value.push({
+                label: "Autre...(Ajouter dans le commentaire pour suggestion)",
+                value: 5000
+            });
             
         } catch (error) { 
             console.error('Erreur lors du chargement des fournisseurs:', error);
