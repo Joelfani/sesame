@@ -64,7 +64,7 @@ const loading = ref(true);
         try {
         const { data, error } = await supabase
             .from('ses_demItems')
-            .select('*,fournisseur(nom)')
+            .select('*,fournisseur(nom),fournisseur2(nom)')
             .eq('id_obj', route.params.id)
             .order('num', { ascending: true });
         if (error) throw error;
@@ -83,6 +83,7 @@ const loading = ref(true);
                         item.niv_val === niveau.refuse ? 'Votre demande a été refusée' : 'Erreur',
             delai: formatDate(item.delai),// Formatage de la date en jj/mm/aaaa
             fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
+            fournisseur2: item.fournisseur2?.nom || '', // récupérer le nom du fournisseur réel
             };
         });
 

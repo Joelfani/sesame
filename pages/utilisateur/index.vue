@@ -2,7 +2,7 @@
     <div class="utilisateurs_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>LISTE DES UTILISATEURS</h1>
+            <h1>LISTE DES UTILISATEURS</h1> 
         </div>
         
         <!-- Champ de recherche -->
@@ -24,7 +24,7 @@
                 :rows="searchTerm ? filteredUtilisateurs : utilisateurs"
                 :type_but_modal="true"
                 :actions="[
-                    { label: 'Modifier accès', color: 'primary', type_modal: 1 },
+                    { label: 'Modifier', color: 'primary', type_modal: 1 },
                     { label: 'Activer/Désactiver', color: 'outline-dark', type_modal: 5 }
                 ]"
                 title_modal_edit="cet utilisateur"
@@ -120,7 +120,7 @@ const initialValuesMod = ref({})
 const inputModifierAcces = computed(() => [
     {
         id: 'achat',
-        type: 'checkbox',
+        type: 'text',
         label: 'Accès Achat',
         initialValue: initialValuesMod.value.achat || false
     },
@@ -213,7 +213,9 @@ const filterUtilisateurs = () => {
 
 // Récupérer les données de l'utilisateur à modifier
 const recovery_data = (item) => {
-    initialValuesMod.value = { ...item }
+    initialValuesMod.value = item
+    console.log('item user', initialValuesMod.value.achat);
+    
 }
 
 // Modifier les accès de l'utilisateur
