@@ -11,8 +11,9 @@
         <div class="d-flex align-items-center">
             <select name="choix" class="form-select mb-3" style="width: 250px; margin-right: 10px;" v-model="choix_filtre">
                 <option value="num">N° d'enregistrement</option>
+                <option value="nom">Nom du demandeur</option>
                 <option value="date">Date</option>
-                <option value="nom">Objet de la demande</option>
+                <option value="nomObj">Objet de la demande</option>
             </select>
             
             <template v-if="choix_filtre === 'date'">
@@ -52,7 +53,8 @@ const date_fin = ref('');
 
 const columns = [
     { key: 'id', label: 'N° d\'enregistrement' },
-    { key: 'date', label: 'Date de la demande' }, 
+    { key: 'date', label: 'Date de la demande' },
+    { key: 'nom_user', label: 'Demandeur' },
     { key: 'nom', label: 'Objet de la demande'},
     { key: 'niv_val', label: 'Status de la demande' },
 ]
@@ -89,147 +91,98 @@ const alertNoSup = () => {
 }
 const getDemande = async () => {
     loading.value = true;
+
     try {
-        let dataObj = []; // Déclaration correcte en let au lieu de const
-        if(userStore.type_compte == 1){
-            console.log('admin');
-            
-            // CAS ADMIN: Récupérer toutes les demandes
-            const { data: fetchedDataObj, error: errorObj } = await supabase
-                .from('ses_demandeObj')
-                .select('*')
-                .order('id', { ascending: false })
-            
-            if (errorObj) throw errorObj;
-            
-            dataObj = fetchedDataObj;
+        let query = supabase
+            .from('ses_demandeObj')
+            .select(`
+                *,
+                users: id_user ( full_name ),
+                items: ses_demItems ( niv_val )
+            `)
+            .order('id', { ascending: false });
 
-            // Récupérer le niveau de validation minimum pour chaque demande
-            for (let i = 0; i < dataObj.length; i++) {
-                const { data: itemsObj, error: itemsError } = await supabase
-                    .from('ses_demItems')
-                    .select('niv_val')
-                    .eq('id_obj', dataObj[i].id);
-                
-                if (itemsError) throw itemsError;
-                
-                // Trouver le niveau minimum parmi tous les items
-                if (itemsObj && itemsObj.length > 0) {
-                    const minNivVal = Math.min(...itemsObj.map(item => item.niv_val));
-                    dataObj[i].niv_val = minNivVal;
-                } else {
-                    dataObj[i].niv_val = null;
-                }
-            }
-
-        } else if (userStore.achat || userStore.afe || userStore.finance || userStore.dpr) {
-            log('user with special rights');
-            // CAS 1: Utilisateurs avec droits spéciaux (achat, afe, finance, dpr)
-            const { data: fetchedDataObj, error: errorObj } = await supabase
-                .from('ses_demandeObj')
-                .select('*')
-                .order('id', { ascending: false })
-                .limit(20);
-            
-            if (errorObj) throw errorObj;
-            
-            dataObj = fetchedDataObj;
-
-            // Récupérer le niveau de validation minimum pour chaque demande
-            for (let i = 0; i < dataObj.length; i++) {
-                const { data: itemsObj, error: itemsError } = await supabase
-                    .from('ses_demItems')
-                    .select('niv_val')
-                    .eq('id_obj', dataObj[i].id);
-                
-                if (itemsError) throw itemsError;
-                
-                // Trouver le niveau minimum parmi tous les items
-                if (itemsObj && itemsObj.length > 0) {
-                    const minNivVal = Math.min(...itemsObj.map(item => item.niv_val));
-                    dataObj[i].niv_val = minNivVal;
-                } else {
-                    dataObj[i].niv_val = null;
-                }
-            }
-
-            // Filtrer selon le rôle de l'utilisateur
-            if (userStore.achat) {
-                dataObj = dataObj.filter(item => item.niv_val !== null && item.niv_val > niveau.achat);
-            } else if (userStore.afe) {
-                dataObj = dataObj.filter(item => item.niv_val !== null && item.niv_val > niveau.afe);
-            } else if (userStore.finance) {
-                dataObj = dataObj.filter(item => item.niv_val !== null && item.niv_val > niveau.finance);
-            } else if (userStore.dpr) {
-                dataObj = dataObj.filter(item => item.niv_val !== null && item.niv_val > niveau.dpr);
-            }
-            
-        } else {
-            console.log('normal user');
-            // CAS 2: Utilisateurs normaux (supérieurs)
-            const { data: fetchedDataObj, error: errorObj } = await supabase
-                .from('ses_demandeObj')
-                .select('*')
-                .eq('id_sup', userStore.id)
-                .order('id', { ascending: false })
-                .limit(20);
-            
-            console.log('dataObj', fetchedDataObj);
-            
-            if (errorObj) throw errorObj;
-            
-            dataObj = fetchedDataObj;
-
-            // Récupérer le niveau de validation minimum pour chaque demande
-            for (let i = 0; i < dataObj.length; i++) {
-                const { data: itemsObj, error: itemsError } = await supabase
-                    .from('ses_demItems')
-                    .select('niv_val')
-                    .eq('id_obj', dataObj[i].id);
-                
-                if (itemsError) throw itemsError;
-                
-                // Trouver le niveau minimum parmi tous les items
-                if (itemsObj && itemsObj.length > 0) {
-                    const minNivVal = Math.min(...itemsObj.map(item => item.niv_val));
-                    dataObj[i].niv_val = minNivVal;
-                } else {
-                    dataObj[i].niv_val = null;
-                }
-            }
+        // user avec droits spéciaux ADMIN / achat/afe/finance/dpr
+        if (userStore.type_compte == 1 || userStore.achat || userStore.afe || userStore.finance || userStore.dpr) {
+            console.log("user with special rights");
         }
-        
-        // Mapper les données pour l'affichage
-        allDataView.value = dataObj.map(item => {
+
+        // utilisateur normal (supérieur)
+        else {
+            console.log("normal user");
+            query = query.eq('id_sup', userStore.id).limit(20);
+        }
+
+        // Exécuter la requête optimisée
+        const { data, error } = await query;
+        if (error) throw error;
+
+        // ⭐ Calcul du niveau de validation minimal + mapping final
+        let dataObj = data.map(item => {
+            const nivMin = item.items?.length
+                ? Math.min(...item.items.map(it => it.niv_val))
+                : null;
+
             return {
                 ...item,
-                niv_val: item.niv_val === niveau.superieur ? 'En attente de validation chez votre superieur' :
-                        item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
-                        item.niv_val === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
-                        item.niv_val === niveau.finance ? 'En attente de validation chez le responsable financier' :
-                        item.niv_val === niveau.dpr ? 'En attente de validation du DPR' : 
-                        item.niv_val === niveau.cheque ? 'En attente d\'émission de chèque' :
-                        item.niv_val === niveau.livraison ? 'En attente de livraison' :
-                        item.niv_val === niveau.valide ? 'Validée' :
-                        item.niv_val === niveau.refuse ? 'Votre demande a été refusée' : 'Statut inconnu',
+                nom_user:item.users.full_name,
+                niv_val_min: nivMin,
+                date_original: item.date,
                 date: formatDate(item.date),
-                date_original: item.date // Garder la date originale pour les comparaisons
+                date_formatted: formatDate(item.date),
+                id_user: item.users?.full_name || item.id_user
             };
         });
-        
-        liste_demande.value = allDataView.value;
-        filtered_demandes.value = [...allDataView.value]; // Initialiser la liste filtrée
 
-        loading.value = false;
+        // 🔥 Filtrage par rôle (optimisé)
+        if (userStore.type_compte != 1) {
+            if (userStore.achat) {
+            dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.achat);
+            console.log('achat');
+            
+            } else if (userStore.afe) {
+                dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.afe);
+                console.log('afe');
+            } else if (userStore.finance) {
+                dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.finance);
+                console.log('finance');
+            } else if (userStore.dpr) {
+                dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.dpr);
+                console.log('dpr');
+            }
+        }
 
-        console.log('liste', liste_demande.value); 
-        
+        // Traduction du niveau en texte
+        const finalResult = dataObj.map(item => ({
+            ...item,
+            niv_val:
+                item.niv_val_min === niveau.superieur ? 'En attente de validation chez votre superieur' :
+                item.niv_val_min === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
+                item.niv_val_min === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
+                item.niv_val_min === niveau.finance ? 'En attente de validation chez le responsable financier' :
+                item.niv_val_min === niveau.dpr ? 'En attente de validation du DPR' :
+                item.niv_val_min === niveau.cheque ? 'En attente d\'émission de chèque' :
+                item.niv_val_min === niveau.livraison ? 'En attente de livraison' :
+                item.niv_val_min === niveau.valide ? 'Validée' :
+                item.niv_val_min === niveau.refuse ? 'Votre demande a été refusée' :
+                'Statut inconnu'
+        }));
+
+        // Mise à jour des listes
+        allDataView.value = finalResult;
+        liste_demande.value = finalResult;
+        filtered_demandes.value = [...finalResult];
+
+        console.log("liste optimisée", finalResult);
+
     } catch (error) {
-        loading.value = false;
-        console.error('Erreur lors de la récupération des demandes:', error);
+        console.error("Erreur lors de la récupération des demandes:", error);
         showAlert('Erreur lors de la récupération des demandes', 'Erreur', 'danger');
+    } finally {
+        loading.value = false;
     }
-}
+};
+
 
 // Fonction de filtrage des données
 const filterData = () => {
@@ -244,8 +197,10 @@ const filterData = () => {
         switch (choix_filtre.value) {
             case 'num':
                 return item.id.toString().includes(term);
-            case 'nom':
+            case 'nomObj':
                 return item.nom.toLowerCase().includes(term);
+            case 'nom':
+                return item.nom_user.toLowerCase().includes(term);
             default:
                 return true;
         }
