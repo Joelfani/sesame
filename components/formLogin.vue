@@ -47,12 +47,12 @@
         <button class="btn con" type="submit" :disabled="loading">
           {{ loading ? "Connexion..." : label_button }}
         </button>
-        <!-- 🔹 Mot de passe oublié -->
+        <!-- 🔹 Mot de passe oublié 
         <p>
           <a href="#" @click.prevent="resetPassword" class="forgot-link">
             Mot de passe oublié ?
           </a>
-        </p>
+        </p>-->
         <NuxtLink to="/register" class="btn ins">S'inscrire</NuxtLink>
       </div>
       <!-- 🔹 Zone REGISTER -->
