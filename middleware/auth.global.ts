@@ -8,7 +8,7 @@ import { useUserStore } from "~/stores/user"
             const user = useSupabaseUser()
             const supabase = useSupabaseClient()
             // Pages publiques
-            const publicPages = ['index', 'register']
+            const publicPages = ['index', 'register', 'resetmdp']
 
             
             if (!user.value && !publicPages.includes(to.name as string)) {

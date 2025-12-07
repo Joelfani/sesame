@@ -62,53 +62,49 @@ const date_fin = ref('');
 /* METHODS */
 const getHistoriques = async () => {
     loading.value = true;
+
     try {
+        // Construction de la requête avec LEFT JOIN
         let query = supabase
         .from('ses_histo')
-        .select('*')
+        .select(`
+            *,
+            user:users(full_name, email)
+        `)
         .order('created_at', { ascending: false })
+        .limit(200);
 
+        // Filtrer si l'utilisateur est type_compte = 3
         if (userStore.type_compte === 3) {
-        query = query.eq('id_user', userStore.id)
+        query = query.eq('id_user', userStore.id);
         }
 
-        const { data: dataHisto, error: errorHisto } = await query
-        console.log('dataHisto', userStore.id);
-        if (errorHisto) throw errorHisto;
-        
-        // Pour chaque historique, récupérer les informations de l'utilisateur
-        for (let i = 0; i < dataHisto.length; i++) {
-            // Formater la date pour l'affichage
-            dataHisto[i].date_formatted = formatDateTime(dataHisto[i].created_at);
-            dataHisto[i].date_original = dataHisto[i].created_at; // Garder la date originale
-            dataHisto[i].date = dataHisto[i].date_formatted; // Pour l'affichage
+        // Exécution de la requête
+        const { data: dataHisto, error } = await query;
 
-            // Récupérer les informations de l'utilisateur
-            const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select('full_name, email')
-                .eq('id', dataHisto[i].id_user)
-                .single();
+        if (error) throw error;
 
-            if (userError) {
-                console.error('Erreur lors de la récupération de l\'utilisateur:', userError);
-                dataHisto[i].nom_utilisateur = 'Utilisateur inconnu';
-                dataHisto[i].email_utilisateur = 'Email non disponible';
-            } else {
-                dataHisto[i].nom_utilisateur = userData?.full_name || 'Nom non trouvé';
-                dataHisto[i].email_utilisateur = userData?.email || 'Email non trouvé';
-            }
-        }
-        
-        liste_historiques.value = dataHisto;
-        filtered_historiques.value = [...dataHisto]; // Initialiser la liste filtrée
-        loading.value = false;
-        console.log('liste historiques', liste_historiques.value);
+        // Formatage des données
+        const mapped = dataHisto.map((item) => ({
+        ...item,
+        date_original: item.created_at,
+        date: formatDateTime(item.created_at),
+        date_formatted: formatDateTime(item.created_at),
+        nom_utilisateur: item.user?.full_name || 'Utilisateur inconnu',
+        email_utilisateur: item.user?.email || 'Email non disponible',
+        }));
+
+        liste_historiques.value = mapped;
+        filtered_historiques.value = [...mapped];
 
     } catch (error) {
         console.error('Erreur lors de la récupération des historiques:', error);
+        showAlert('Erreur lors de la récupération des historiques', 'Erreur', 'danger');
+    } finally {
+        loading.value = false;
     }
-}
+};
+
 
 // Fonction de filtrage par date
 const filterByDate = () => {

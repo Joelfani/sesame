@@ -111,4 +111,13 @@ const send_connexion = async (formData) => {
         alertPop(errorMessage,'danger','Oups!')
     }
 }
+
+onMounted(() => {
+    setInterval(() => {
+        if (!navigator.onLine) {
+            window.alert('Vous êtes hors ligne ! Veuillez vous connecter à Internet et rafraîchir la page')
+        }
+    }, 1000)
+})
+
 </script>
