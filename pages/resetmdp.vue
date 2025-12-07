@@ -1,6 +1,6 @@
 <template>
   <div class="reset-container">
-    <h2>Réinitialisation <br> du mot de passe TEST2</h2>
+    <h2>Réinitialisation <br> du mot de passe TEST3</h2>
     <form @submit.prevent="submitNewPassword">
       <div class="form-group">
         <label>Nouveau mot de passe</label>
@@ -95,12 +95,13 @@ onMounted(async () => {
     //recupération du code dans l'url
     const route = useRoute();
     const code = route.query.code;
-
+    log("Code de réinitialisation :", code);
     if (code) {
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (error) {
         alert("Lien invalide ou expiré.");
+        console.error("Erreur d'échange de code :", error);
         return;
       }
 
