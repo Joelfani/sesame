@@ -1,7 +1,22 @@
 <template>
   <div class="reset-container">
-    <h2>Réinitialisation <br> du mot de passe TEST3</h2>
-    <form @submit.prevent="submitNewPassword">
+    <h2>Réinitialisation <br> du mot de passe</h2>
+    
+    <!-- Message de chargement -->
+    <div v-if="isInitializing" class="loading-message">
+      <p>Vérification du lien de réinitialisation...</p>
+    </div>
+
+    <!-- Message d'erreur si le lien est invalide -->
+    <div v-else-if="linkError" class="error-message">
+      <p>❌ {{ linkError }}</p>
+      <button @click="redirectToLogin" class="btn btn-secondary">
+        Retour à la connexion
+      </button>
+    </div>
+
+    <!-- Formulaire de réinitialisation -->
+    <form v-else @submit.prevent="submitNewPassword">
       <div class="form-group">
         <label>Nouveau mot de passe</label>
         <div class="input-wrapper">
@@ -11,6 +26,7 @@
             required
             placeholder="Entrez votre nouveau mot de passe"
             class="form-control"
+            minlength="6"
           />
           <img
             :src="showPassword ? '/icon/fermer.png' : '/icon/voir.png'"
@@ -29,6 +45,7 @@
             required
             placeholder="Confirmez votre mot de passe"
             class="form-control"
+            minlength="6"
           />
           <img
             :src="showConfirmPassword ? '/icon/fermer.png' : '/icon/voir.png'"
@@ -50,10 +67,13 @@ import { ref } from "vue";
 
 // Services
 const supabase = useSupabaseClient();
+const route = useRoute();
 
 const password = ref("");
 const confirmPassword = ref("");
 const loading = ref(false);
+const isInitializing = ref(true);
+const linkError = ref(null);
 
 // États pour afficher/masquer les mots de passe
 const showPassword = ref(false);
@@ -68,8 +88,12 @@ const toggleConfirmPassword = () => {
   showConfirmPassword.value = !showConfirmPassword.value;
 };
 
+const redirectToLogin = () => {
+  window.location.href = "https://achat-sesame.vercel.app";
+};
+
 definePageMeta({
-  layout: false // No layout for this page
+  layout: false
 });
 
 const submitNewPassword = async () => {
@@ -77,43 +101,101 @@ const submitNewPassword = async () => {
     alert("Les mots de passe ne correspondent pas.");
     return;
   }
-  loading.value = true;
-  const { data, error } = await supabase.auth.updateUser({
-    password: password.value
-  });
-  loading.value = false;
-  if (error) {
-    alert("Erreur : " + error.message);
-    console.error('Erreur', error)
+
+  if (password.value.length < 6) {
+    alert("Le mot de passe doit contenir au moins 6 caractères.");
     return;
   }
-  alert("Mot de passe mis à jour avec succès !");
-  // 🔹 Redirection vers ton site
-  window.location.href = "https://achat-sesame.vercel.app";
+
+  loading.value = true;
+  
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      password: password.value
+    });
+
+    if (error) {
+      console.error('Erreur de mise à jour:', error);
+      alert("Erreur : " + error.message);
+      return;
+    }
+
+    alert("Mot de passe mis à jour avec succès !");
+    window.location.href = "https://achat-sesame.vercel.app";
+  } catch (err) {
+    console.error('Erreur inattendue:', err);
+    alert("Une erreur est survenue. Veuillez réessayer.");
+  } finally {
+    loading.value = false;
+  }
 };
+
 onMounted(async () => {
-    //recupération du code dans l'url
-    const route = useRoute();
+  try {
+    // 1️⃣ Vérifier le format ?code= (PKCE flow - recommandé)
     const code = route.query.code;
-    console.log("Code de réinitialisation :", code);
+    
     if (code) {
+      console.log("Code PKCE détecté :", code);
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (error) {
-        alert("Lien invalide ou expiré.");
         console.error("Erreur d'échange de code :", error);
+        linkError.value = "Lien invalide ou expiré. Veuillez demander un nouveau lien.";
+        isInitializing.value = false;
         return;
       }
 
-      console.log("Session créée :", data.session);
+      console.log("Session créée avec succès :", data.session);
+      isInitializing.value = false;
+      return;
     }
-    setInterval(() => {
-        if (!navigator.onLine) {
-            window.alert('Vous êtes hors ligne ! Veuillez vous connecter à Internet et rafraîchir la page')
-        }
-    }, 1000)
-})
 
+    // 2️⃣ Vérifier le format #access_token= (ancien flow)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+    const type = hashParams.get('type');
+
+    if (accessToken && type === 'recovery') {
+      console.log("Token de récupération détecté dans le hash");
+      
+      // Établir la session avec les tokens
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+
+      if (error) {
+        console.error("Erreur de session :", error);
+        linkError.value = "Lien invalide ou expiré. Veuillez demander un nouveau lien.";
+        isInitializing.value = false;
+        return;
+      }
+
+      console.log("Session créée avec succès :", data.session);
+      isInitializing.value = false;
+      return;
+    }
+
+    // 3️⃣ Aucun paramètre valide trouvé
+    console.error("Aucun code ou token trouvé dans l'URL");
+    linkError.value = "Lien de réinitialisation invalide. Veuillez demander un nouveau lien.";
+    isInitializing.value = false;
+
+  } catch (err) {
+    console.error("Erreur lors de l'initialisation :", err);
+    linkError.value = "Une erreur est survenue. Veuillez réessayer.";
+    isInitializing.value = false;
+  }
+
+  // Vérification de la connexion Internet
+  setInterval(() => {
+    if (!navigator.onLine) {
+      window.alert('Vous êtes hors ligne ! Veuillez vous connecter à Internet et rafraîchir la page');
+    }
+  }, 5000); // Changé à 5 secondes pour éviter trop d'alertes
+});
 </script>
 
 <style scoped>
@@ -129,10 +211,34 @@ onMounted(async () => {
 h2 {
   text-align: center;
   margin-bottom: 20px;
+  color: #333;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.error-message {
+  text-align: center;
+  padding: 20px;
+  color: #d32f2f;
+}
+
+.error-message p {
+  margin-bottom: 15px;
 }
 
 .form-group {
   margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: 500;
 }
 
 .input-wrapper {
@@ -147,6 +253,12 @@ h2 {
   padding-right: 45px;
   border-radius: 8px;
   border: 1px solid #999;
+  font-size: 14px;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4CAF50;
 }
 
 .password-toggle-icon {
@@ -169,5 +281,32 @@ h2 {
   height: 3rem;
   border-radius: 8px;
   margin-top: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.btn-secondary {
+  background-color: #757575;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #616161;
 }
 </style>
