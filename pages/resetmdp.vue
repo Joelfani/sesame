@@ -95,7 +95,7 @@ onMounted(async () => {
     //recupération du code dans l'url
     const route = useRoute();
     const code = route.query.code;
-    log("Code de réinitialisation :", code);
+    console.log("Code de réinitialisation :", code);
     if (code) {
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
