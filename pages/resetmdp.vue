@@ -1,6 +1,6 @@
 <template>
   <div class="reset-container">
-    <h2>Réinitialisation <br> du mot de passe</h2>
+    <h2>Réinitialisation <br> du mot de passe TEST2</h2>
     <form @submit.prevent="submitNewPassword">
       <div class="form-group">
         <label>Nouveau mot de passe</label>
@@ -91,7 +91,21 @@ const submitNewPassword = async () => {
   // 🔹 Redirection vers ton site
   window.location.href = "https://achat-sesame.vercel.app";
 };
-onMounted(() => {
+onMounted(async () => {
+    //recupération du code dans l'url
+    const route = useRoute();
+    const code = route.query.code;
+
+    if (code) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+      if (error) {
+        alert("Lien invalide ou expiré.");
+        return;
+      }
+
+      console.log("Session créée :", data.session);
+    }
     setInterval(() => {
         if (!navigator.onLine) {
             window.alert('Vous êtes hors ligne ! Veuillez vous connecter à Internet et rafraîchir la page')
