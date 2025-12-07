@@ -119,7 +119,7 @@ const resetPassword = async () => {
     return;
   }
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: "http://localhost:3000/reset-password",
+    redirectTo: "https://achat-sesame.vercel.app/resetmdp",
   });
   if (error) {
     alert("Erreur : " + error.message);
