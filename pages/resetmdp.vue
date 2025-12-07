@@ -84,6 +84,7 @@ const submitNewPassword = async () => {
   loading.value = false;
   if (error) {
     alert("Erreur : " + error.message);
+    console.error('Erreur', error)
     return;
   }
   alert("Mot de passe mis à jour avec succès !");
