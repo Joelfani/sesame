@@ -644,6 +644,10 @@ const columns = [
                 "label": "SASEMGAT"
             },
             {
+                "value": "SASEMNOE",
+                "label": "SASEMNOE"
+            },
+            {
                 "value": "SASEMPER",
                 "label": "SASEMPER"
             },
