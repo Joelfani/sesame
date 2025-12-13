@@ -109,7 +109,7 @@ const getDemande = async () => {
 
         // utilisateur normal (supérieur)
         else {
-            console.log("normal user");
+            
             query = query.eq('id_sup', userStore.id).limit(20);
         }
 
@@ -138,17 +138,17 @@ const getDemande = async () => {
         if (userStore.type_compte != 1) {
             if (userStore.achat) {
             dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.achat);
-            console.log('achat');
+            
             
             } else if (userStore.afe) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.afe);
-                console.log('afe');
+                
             } else if (userStore.finance) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.finance);
-                console.log('finance');
+                
             } else if (userStore.dpr) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.dpr);
-                console.log('dpr');
+                
             }
         }
 
@@ -173,7 +173,7 @@ const getDemande = async () => {
         liste_demande.value = finalResult;
         filtered_demandes.value = [...finalResult];
 
-        console.log("liste optimisée", finalResult);
+        
 
     } catch (error) {
         console.error("Erreur lors de la récupération des demandes:", error);
@@ -247,7 +247,7 @@ const formatDate = (dateString) => {
     const year = d.getFullYear();
     
     const formattedDate = `${day}/${month}/${year}`;
-    console.log('formatted date:', `${day}/${month}/${year}`);
+    
     
     return formattedDate;
 };

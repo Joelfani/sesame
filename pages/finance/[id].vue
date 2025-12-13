@@ -4,6 +4,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>DÉTAILS DE LA DEMANDE</h1>
             <div class="">
+                <button class="btn btn-outline-secondary" @click="devTab">{{ dev ? 'Réduire le tableau': 'Développer le tableau' }}</button>
                 <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
                 <client-only>
                     <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modDoc" @click="doc_recovery({id:route.params.id})">Liste document</button>
@@ -26,7 +27,7 @@
         <div class="table_block_list">
             <Table
                 ref="tableRef"
-                :columns="columns"
+                :columns="dev ? columns : columns2"
                 :rows="demande_details"
                 :type_but_modal="true"
                 :but_Validation="true"
@@ -91,6 +92,16 @@ const columns = [
     { key: 'totalR', label: 'Montant Réel' }, 
 ];
 
+//column reduit
+const columns2 = [
+    { key: 'num', label: 'N°'},
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'spec' && col.key !== 'fournisseur' && col.key !== 'prix' && col.key !== 'delai' && col.key !== 'total' ), // Exclure la colonne
+    { key: 'imputation', label: 'Imputation analytique' },
+    { key: 'fournisseur2', label: 'Fournisseur Réel' },
+    { key: 'prixR', label: 'Prix Réel' },
+    { key: 'totalR', label: 'Montant Réel' }, 
+];
+
 // DATA
 const dataObj = ref([]);
 const demande_details = ref([]);
@@ -108,7 +119,7 @@ const pdfDetailTotal = computed(() => {
 const refBc = ref('')
 const paimentMode = ref('')
 const auNomDe = ref('') 
-
+const dev = ref(false)
 
 //data for pdf
 const pdf = ref(true)
@@ -153,6 +164,10 @@ const showAlert = (message, title, type) => {
     setTimeout(() => {
         alert.value.show = false
     }, 5000)
+}
+// Gestion du tableau
+const devTab = () => {
+    dev.value = !dev.value    
 }
 // Récupération des données
 const getDemandeDetails = async () => {
@@ -242,7 +257,12 @@ const handleValidationAction = async (validationPayload) => {
     if (action === 'Valider') {
         await handleValidation(item, editableData);
     } else if (action === 'Rejeter') {
-        await handleRejection(item, editableData);
+        if(editableData.fields.motif === undefined || editableData.fields.motif === null || editableData.fields.motif === ''){
+            showAlert('Veuillez fournir un motif de rejet avant de rejeter l\'article.', 'Oops', 'danger');
+            return;
+        }else{
+            await handleRejection(item, editableData);
+        }
     } else if (action === 'Retour vers Achat') {
         await handleReturnToPurchase(item, editableData);
     }

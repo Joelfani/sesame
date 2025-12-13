@@ -40,7 +40,9 @@
                 <li v-if="userStore.type_compte === 1" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/utilisateur">Utilisateurs</NuxtLink>
                 </li>
-                
+                <li v-if="userStore.type_compte === 1" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/imputation">Imputation</NuxtLink>
+                </li>
                 <li v-if="userStore.type_compte === 1" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/historique">Actions</NuxtLink>
                 </li>

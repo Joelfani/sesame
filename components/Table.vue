@@ -118,6 +118,7 @@
         <tbody v-if="tableinputadd">
             <tr v-for="(item, rowIndex) in rowsInput" :key="item.id">
                 <td v-for="col in columns" :key="col.key">
+                    
                     <select v-if="col.type == 'select'" class="form-control" v-model="rowsInput[rowIndex][col.key]" @change="updateData">
                         <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
                         <option v-if="col.autre" value="autre">Autre ...</option>

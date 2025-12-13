@@ -204,7 +204,7 @@ const listFournisseurs = async() => {
                     .select('*')
                     .eq('etat_del', false)
                     .neq('id', 5000)
-                    .order('id', { ascending: true });
+                    .order('nom', { ascending: true }); 
 
             if (error) throw error
             fournisseursAllData.value = data
@@ -300,7 +300,12 @@ const handleValidationAction = async (validationPayload) => {
         }*/
         
     } else if (action === 'Rejeter') {
-        await handleRejection(item, editableData);
+        if(editableData.fields.motif === undefined || editableData.fields.motif === null || editableData.fields.motif === ''){
+            showAlert('Veuillez fournir un motif de rejet avant de rejeter l\'article.', 'Oops', 'danger');
+            return;
+        }else{
+            await handleRejection(item, editableData);
+        }
     }
 };
 

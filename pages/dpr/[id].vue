@@ -3,6 +3,7 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>DÉTAILS DE LA DEMANDE - VALIDATION DPR</h1>
+            <button class="btn btn-outline-secondary" @click="devTab">{{ dev ? 'Réduire le tableau': 'Développer le tableau' }}</button>
             <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
             <div class="link_demande">
             </div>
@@ -22,7 +23,7 @@
         <div class="table_block_list">
             <Table
                 ref="tableRef"
-                :columns="columns"
+                :columns="dev ? columns : columns2"
                 :rows="demande_details"
                 :type_but_modal="true"
                 :but_Validation="true"
@@ -69,11 +70,26 @@ const columns = [
     }
 ];
 
+//column reduit
+const columns2 = [
+    { key: 'num', label: 'N°'},
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'spec' && col.key !== 'fournisseur' && col.key !== 'prix' && col.key !== 'delai' && col.key !== 'total' && col.key !== 'com' ), // Exclure la colonne
+    { key: 'imputation', label: 'Imputation analytique' },
+    { key: 'prixR', label: 'Prix Réel' },
+    { key: 'totalR', label: 'Montant Réel' },
+    { 
+        key: 'observation_dpr', 
+        label: 'Observation DPR', 
+        editable: true, 
+        type: 'textarea'
+    }
+];
+
 // DATA
 const dataObj = ref([]);
 const demande_details = ref([]);
 const validationData = ref(null); // Pour stocker les données de validation pour debug
-
+const dev = ref(false)
 // Alert system
 const alert = ref({
     show: false,
@@ -83,7 +99,10 @@ const alert = ref({
 })
 
 // METHODES
-
+// Gestion du tableau
+const devTab = () => {
+    dev.value = !dev.value    
+}
 // Afficher une alerte
 const showAlert = (message, title, type) => {
     alert.value = {
@@ -141,18 +160,13 @@ const getDemandeDetails = async () => {
         };
         
     } catch (error) {
-        console.log(error);
+        console.error(error);
     }
 };
 
 // Gestionnaire principal pour les actions de validation
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
-    
-    console.log('Action de validation DPR:', action);
-    console.log('Item original:', item);
-    console.log('Données éditables:', editableData);
-    
     // Stocker pour affichage (debug)
     validationData.value = {
         action: action,
@@ -165,16 +179,18 @@ const handleValidationAction = async (validationPayload) => {
     if (action === 'Valider') {
         await handleValidation(item, editableData);
     } else if (action === 'Rejeter') {
-        await handleRejection(item, editableData);
+        if(editableData.fields.motif === undefined || editableData.fields.motif === null || editableData.fields.motif === ''){
+            showAlert('Veuillez fournir un motif de rejet avant de rejeter l\'article.', 'Oops', 'danger');
+            return;
+        }else{
+            await handleRejection(item, editableData);
+        }
     }
 };
 
 // Gestion de la validation
 const handleValidation = async (item, editableData) => {
-    try {
-        console.log('Validation DPR de l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
-        
+    try {        
         // Préparer les données à mettre à jour
         const updateData = {
             niv_val: niveau.dpr +1, // Passer au niveau suivant de validation (niveau 5)
@@ -206,7 +222,7 @@ const handleValidation = async (item, editableData) => {
 
         if (insertHistError) throw insertHistError;
         
-        console.log('Validation DPR réussie pour l\'item:', item.id);
+        
         showAlert('Item validé avec succès!', 'Succès', 'success')
     } catch (error) {
         console.error('Erreur lors de la validation DPR:', error);
@@ -217,8 +233,6 @@ const handleValidation = async (item, editableData) => {
 // Gestion du rejet
 const handleRejection = async (item, editableData) => {
     try {
-        console.log('Rejet DPR de l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
         
         // Préparer les données à mettre à jour
         const updateData = {
@@ -252,8 +266,6 @@ const handleRejection = async (item, editableData) => {
             });
 
         if (insertHistError) throw insertHistError;
-        
-        console.log('Rejet DPR réussi pour l\'item:', item.id);
         showAlert('Item rejeté par le DPR !', 'Succès', 'success')
         
     } catch (error) {
@@ -264,7 +276,7 @@ const handleRejection = async (item, editableData) => {
 
 // Gestionnaire pour les changements de champs éditables (optionnel)
 const handleEditableFieldChange = (changeData) => {
-    console.log('Changement détecté:', changeData);
+    //console.log('Changement détecté:', changeData);
     // Vous pouvez faire quelque chose ici si nécessaire (auto-save, validation, etc.)
 };
 
@@ -288,7 +300,6 @@ const formatDate = (dateString) => {
 const exportToExcel = async () => {
     try {
         const data = demande_details.value
-        console.log(data)
         // Préparer les données pour l'exportation
         const exportData = data.map(item => ({
             'Num': item.num,

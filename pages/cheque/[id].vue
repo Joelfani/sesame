@@ -3,16 +3,80 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>DÉTAILS DE LA DEMANDE - GESTION DU CHÈQUE</h1>
-            <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
+            <div>
+                <button class="btn btn-outline-secondary" @click="devTab">{{ dev ? 'Réduire le tableau': 'Développer le tableau' }}</button>
+                <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#cheque" @click="initialiseFournisseur()">Émettre chèque par fournisseur</button>
+            </div>
             <div class="link_demande">
             </div>
         </div>
-        
+
+        <!-- Modal Émission Chèque -->
+        <Modal id="cheque" title="Émission de chèque">
+            <div class="pdf-content">
+                <label>Sélectionnez un fournisseur</label>
+                <select
+                    class="form-control mb-3"
+                    v-model="fournisseurSelected"
+                >
+                    <option value="">-- Sélectionnez un fournisseur --</option>
+                    <option v-for="option in fournisseurList" :key="option.id" :value="option.nom">
+                        {{ option.nom }}
+                    </option>
+                </select>
+
+                <label>N° de Chèque</label>
+                <input 
+                    type="text" 
+                    class="form-control mb-3" 
+                    v-model="numCheque"
+                    placeholder="Entrez le numéro de chèque"
+                    pattern="\d*"
+                    @input="validateNumCheque"
+                >
+
+                <label>Date d'émission</label>
+                <input 
+                    type="date" 
+                    class="form-control mb-3" 
+                    v-model="dateEmission"
+                >
+
+                <label>Observation (optionnel)</label>
+                <textarea 
+                    class="form-control mb-3" 
+                    v-model="observationCheque"
+                    rows="3"
+                    placeholder="Ajoutez une observation si nécessaire"
+                ></textarea>
+
+                <div class="alert alert-info" v-if="fournisseurSelected && articlesAffiches.length > 0">
+                    <strong>Articles concernés :</strong> {{ articlesAffiches.length }} article(s)
+                    <ul class="mt-2 mb-0">
+                        <li v-for="article in articlesAffiches" :key="article.id">
+                            {{ article.num }} - {{ article.designation }} ({{ article.totalR }} Ar)
+                        </li>
+                    </ul>
+                </div>
+
+                <hr>
+                <span v-if="chequeButtonLoading">Traitement en cours...</span>
+                <button 
+                    class="btn btn-outline-dark" 
+                    @click="emettreCheque" 
+                    :disabled="chequeButtonLoading || !fournisseurSelected || !numCheque || !dateEmission"
+                >
+                    Émettre le chèque
+                </button>            
+                <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </Modal>
+
         <!-- Informations générales de la demande -->
         <div>
             <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
             <h6>Date: <span>{{ dataObj.date }}</span></h6>
-            <h6></h6>
             <div class="d-flex align-items-center gap-3">
                 <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
             </div>
@@ -22,7 +86,7 @@
         <div class="table_block_list">
             <Table
                 ref="tableRef"
-                :columns="columns"
+                :columns="dev ? columns : columns2"
                 :rows="demande_details"
                 :type_but_modal="true"
                 :but_Validation="true"
@@ -35,21 +99,25 @@
                 :loading="loading"
             />
         </div>
+        
         <!-- Alert pour les notifications -->
         <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
 </template>
 
 <script setup>
-import { tableTete,niveau } from '~/assets/js/CommonVariable.js';
-import {exportExcel} from '~/assets/js/export.js';
+import { tableTete, niveau } from '~/assets/js/CommonVariable.js';
+import { exportExcel } from '~/assets/js/export.js';
+
 // Services
 const supabase = useSupabaseClient()
 // Store
 const userStore = useUserStore()
 const route = useRoute();
-//loading
+
+// Loading
 const loading = ref(true);
+const chequeButtonLoading = ref(false);
 
 // Référence vers le composant Table
 const tableRef = ref(null);
@@ -57,7 +125,36 @@ const tableRef = ref(null);
 // Définition des colonnes du tableau
 const columns = [
     { key: 'num', label: 'N°'},
-    ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
+    ...tableTete.filter(col => col.key !== 'id'),
+    { key: 'imputation', label: 'Imputation analytique' },
+    { key: 'fournisseur2', label: 'Fournisseur Réel' },
+    { key: 'prixR', label: 'Prix Réel' },
+    { key: 'totalR', label: 'Montant Réel' },
+    { key: 'observation_dpr', label: 'Observation DPR'},
+    { 
+        key: 'num_cheque', 
+        label: 'N° Chèque', 
+        editable: true, 
+        type: 'text'
+    },
+    { 
+        key: 'date_emission_cheque', 
+        label: 'Date d\'émission', 
+        editable: true, 
+        type: 'date'
+    },
+    { 
+        key: 'observation_cheque', 
+        label: 'Observation sur le Chèque', 
+        editable: true, 
+        type: 'textarea'
+    }
+];
+
+//column reduit
+const columns2 = [
+    { key: 'num', label: 'N°'},
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'spec' && col.key !== 'fournisseur' && col.key !== 'prix' && col.key !== 'delai' && col.key !== 'total' && col.key !== 'com' ), // Exclure la colonne
     { key: 'imputation', label: 'Imputation analytique' },
     { key: 'fournisseur2', label: 'Fournisseur Réel' },
     { key: 'prixR', label: 'Prix Réel' },
@@ -86,18 +183,38 @@ const columns = [
 // DATA
 const dataObj = ref([]);
 const demande_details = ref([]);
-const validationData = ref(null); // Pour stocker les données de validation pour debug
+const validationData = ref(null);
+const dev = ref(false)
+// Données du modal
+const fournisseurSelected = ref('');
+const fournisseurList = ref([]);
+const numCheque = ref('');
+const dateEmission = ref('');
+const observationCheque = ref('');
 
 // Alert system
 const alert = ref({
     show: false,
     message: '',
     title: '',
-    type: '' // success, error, warning, info
-})
+    type: ''
+});
+
+// Articles affichés pour le fournisseur sélectionné
+const articlesAffiches = computed(() => {
+    if (!fournisseurSelected.value) return [];
+    return demande_details.value.filter(item => 
+        item.fournisseur2 === fournisseurSelected.value && 
+        item.niv_val !== niveau.refuse && 
+        item.niv_val >= niveau.cheque
+    );
+});
 
 // METHODES
-
+// Gestion du tableau
+const devTab = () => {
+    dev.value = !dev.value    
+}
 // Afficher une alerte
 const showAlert = (message, title, type) => {
     alert.value = {
@@ -107,19 +224,118 @@ const showAlert = (message, title, type) => {
         type
     }
 
-    // Auto-hide après 5 secondes
     setTimeout(() => {
         alert.value.show = false
     }, 5000)
 }
 
-//recuperation des données
+// Valider que le numéro de chèque ne contient que des chiffres
+const validateNumCheque = (event) => {
+    numCheque.value = event.target.value.replace(/\D/g, '');
+}
+
+// Initialiser le modal
+const initialiseFournisseur = () => {
+    fournisseurSelected.value = '';
+    numCheque.value = '';
+    dateEmission.value = '';
+    observationCheque.value = '';
+}
+
+// Émettre le chèque pour tous les articles du fournisseur
+const emettreCheque = async () => {
+    if (!fournisseurSelected.value) {
+        showAlert('Veuillez sélectionner un fournisseur !', 'Oops', 'danger');
+        return;
+    }
+
+    if (!numCheque.value || numCheque.value.trim() === '') {
+        showAlert('Veuillez renseigner le numéro de chèque !', 'Oops', 'danger');
+        return;
+    }
+
+    if (!/^\d+$/.test(numCheque.value)) {
+        showAlert('Le numéro de chèque ne doit contenir que des chiffres !', 'Erreur de saisie', 'danger');
+        return;
+    }
+
+    if (!dateEmission.value) {
+        showAlert('Veuillez renseigner la date d\'émission de chèque !', 'Oops', 'danger');
+        return;
+    }
+
+    chequeButtonLoading.value = true;
+
+    try {
+        // Récupérer tous les articles du fournisseur sélectionné
+        const articlesATraiter = articlesAffiches.value;
+
+        if (articlesATraiter.length === 0) {
+            showAlert('Aucun article trouvé pour ce fournisseur !', 'Oops', 'warning');
+            chequeButtonLoading.value = false;
+            return;
+        }
+
+        // Préparer les données de mise à jour
+        const updateData = {
+            niv_val: niveau.cheque + 1,
+            num_cheque: numCheque.value,
+            date_emission_cheque: dateEmission.value,
+            observation_cheque: observationCheque.value || null
+        };
+
+        // Mettre à jour tous les articles en une seule requête
+        const articlesIds = articlesATraiter.map(article => article.id);
+        
+        const { error: updateError } = await supabase
+            .from('ses_demItems')
+            .update(updateData)
+            .in('id', articlesIds);
+
+        if (updateError) throw updateError;
+
+        // Enregistrer dans l'historique pour chaque article
+        const histoInserts = articlesATraiter.map(article => ({
+            id_user: userStore.id,
+            id_obj: route.params.id,
+            id_item: article.id,
+            action: `Émission de chèque n°${numCheque.value} pour l'article ${article.num} - Fournisseur: ${fournisseurSelected.value}`,
+            niv_val: niveau.cheque + 1
+        }));
+
+        const { error: histoError } = await supabase
+            .from('ses_histo')
+            .insert(histoInserts);
+
+        if (histoError) throw histoError;
+
+        // Actualiser les données
+        await getDemandeDetails();
+
+        showAlert(
+            `Chèque n°${numCheque.value} émis avec succès pour ${articlesATraiter.length} article(s) !`, 
+            'Succès', 
+            'success'
+        );
+
+        // Réinitialiser le formulaire
+        initialiseFournisseur();
+
+    } catch (error) {
+        console.error('Erreur lors de l\'émission du chèque:', error);
+        showAlert('Erreur lors de l\'émission du chèque !', 'Oops', 'danger');
+    } finally {
+        chequeButtonLoading.value = false;
+    }
+}
+
+// Récupération des données
 const getDemandeDetails = async () => {
     loading.value = true;
     try {
         const { data, error } = await supabase
             .from('ses_demItems')
-            .select('*, fournisseur(nom),fournisseur2(nom,id)')
+            .select('*, fournisseur(nom), fournisseur2(nom,id)')
             .eq('id_obj', route.params.id)
             .order('num', { ascending: true });
         
@@ -128,21 +344,38 @@ const getDemandeDetails = async () => {
         const allDataView = data.map(item => {
             return {
                 ...item,
-                fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
+                fournisseur: item.fournisseur?.nom || '',
                 etat: item.niv_val == niveau.cheque ? 0 : item.niv_val == niveau.refuse ? 2 : item.niv_val < niveau.cheque ? 4 : 1,
-                delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
-                // Mapper les champs pour l'affichage
+                delai: formatDate(item.delai),
                 fournisseur2: item.fournisseur2?.nom || '',
                 prix2: item.prixR || item.prix || 0,
                 total2: item.totalR || item.total || 0,
-                // Formater la date d'émission si elle existe
                 date_emission_cheque: item.date_emission_cheque
             };
         });
         
         demande_details.value = allDataView;
         loading.value = false;
-        console.log(demande_details.value);
+
+        // Récupérer la liste unique des fournisseurs pour le modal
+        const filteredDataForFournisseur = data.filter(item => 
+            item.niv_val !== niveau.refuse && 
+            item.niv_val >= niveau.cheque
+        );
+
+        const fournisseurForModal = Array.from(
+            new Map(
+                filteredDataForFournisseur.map(item => [
+                    item.fournisseur2?.id,
+                    {
+                        nom: item.fournisseur2?.nom || '',
+                        id: item.fournisseur2?.id || null
+                    }
+                ])
+            ).values()
+        );
+
+        fournisseurList.value = fournisseurForModal;
         
         // Récupération des informations de l'objet
         const { data: demandeObj, error: demandeObjError } = await supabase
@@ -159,19 +392,14 @@ const getDemandeDetails = async () => {
         };
         
     } catch (error) {
-        console.log(error);
+        console.error(error);
     }
 };
 
-// Gestionnaire principal pour les actions de validation
+// Gestionnaire principal pour les actions de validation (validation individuelle)
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
     
-    console.log('Action de gestion chèque:', action);
-    console.log('Item original:', item);
-    console.log('Données éditables:', editableData);
-    
-    // Stocker pour affichage (debug)
     validationData.value = {
         action: action,
         itemId: item.id,
@@ -183,42 +411,40 @@ const handleValidationAction = async (validationPayload) => {
     if (action === 'Chèque émis') {
         await handleChequeEmis(item, editableData);
     } else if (action === 'Rejeter') {
-        await handleRejection(item, editableData);
+        if(editableData.fields.motif === undefined || editableData.fields.motif === null || editableData.fields.motif === ''){
+            showAlert('Veuillez fournir un motif de rejet avant de rejeter l\'article.', 'Oops', 'danger');
+            return;
+        }else{
+            await handleRejection(item, editableData);
+        }
     }
 };
 
-// Gestion de l'émission du chèque
+// Gestion de l'émission du chèque individuel
 const handleChequeEmis = async (item, editableData) => {
     try {
-        console.log('Émission de chèque pour l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
         
-        // Vérifier que le numéro de chèque est renseigné
         if (!editableData.fields.num_cheque || editableData.fields.num_cheque.trim() === '') {
             showAlert('Veuillez renseigner le numéro de chèque !', 'Oops', 'danger');
             return;
         }
 
-        // ✅ Vérifier que le numéro de chèque contient uniquement des chiffres
         if (!/^\d+$/.test(editableData.fields.num_cheque)) {
             showAlert('Le numéro de chèque ne doit contenir que des chiffres !', 'Erreur de saisie', 'danger');
             return;
         }
 
-        // Vérifier que la date d'emision de chèque est renseigné
         if (!editableData.fields.date_emission_cheque) {
-            showAlert('Veuillez renseigner la date d\'emission de chèque !', 'Oops', 'danger');
+            showAlert('Veuillez renseigner la date d\'émission de chèque !', 'Oops', 'danger');
             return;
         }
         
-        // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: niveau.cheque + 1, // Passer au niveau suivant (chèque émis)
+            niv_val: niveau.cheque + 1,
             date_emission_cheque: editableData.fields.date_emission_cheque || new Date().toISOString().split('T')[0],
-            ...editableData.fields // Inclure toutes les données éditables modifiées
+            ...editableData.fields
         };
         
-        // Mettre à jour dans la base de données
         const { error } = await supabase
             .from('ses_demItems')
             .update(updateData)
@@ -226,10 +452,7 @@ const handleChequeEmis = async (item, editableData) => {
         
         if (error) throw error;
         
-        // Actualiser les données
         await getDemandeDetails();
-
-        // Enregistrement dans historique
 
         const { error: insertHistError } = await supabase
             .from('ses_histo')
@@ -237,8 +460,8 @@ const handleChequeEmis = async (item, editableData) => {
                 id_user: userStore.id,
                 id_obj: route.params.id,
                 id_item: item.id,
-                action: 'Emission de chèque de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
-                niv_val:7
+                action: 'Émission de chèque de l\'article '+ item.num + ' dans la demande d\'achat numéro ' + route.params.id,
+                niv_val: niveau.cheque + 1
             });
 
         if (insertHistError) throw insertHistError;
@@ -253,13 +476,11 @@ const handleChequeEmis = async (item, editableData) => {
 // Gestion du rejet
 const handleRejection = async (item, editableData) => {
     try {
-        // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: niveau.refuse, // Statut rejeté
-            ...editableData.fields // Inclure les données éditables (commentaires par exemple)
+            niv_val: niveau.refuse,
+            ...editableData.fields
         };
         
-        // Mettre à jour dans la base de données
         const { error } = await supabase
             .from('ses_demItems')
             .update(updateData)
@@ -267,25 +488,21 @@ const handleRejection = async (item, editableData) => {
         
         if (error) throw error;
         
-        // Actualiser les données
         await getDemandeDetails();
         
-        // Enregistrement dans historique
-
         const { error: insertHistError } = await supabase
             .from('ses_histo')
             .insert({
                 id_user: userStore.id,
                 id_obj: route.params.id,
                 id_item: item.id,
-                action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                action: 'Rejet de l\'article '+ item.num + ' dans la demande d\'achat numéro ' + route.params.id,
                 type: 'rejeter',
-                niv_val:niveau.refuse
+                niv_val: niveau.refuse
             });
 
         if (insertHistError) throw insertHistError;
         
-        console.log('Rejet réussi pour l\'item:', item.id);
         showAlert('Item rejeté !', 'Succès', 'success');
     } catch (error) {
         console.error('Erreur lors du rejet:', error);
@@ -293,13 +510,10 @@ const handleRejection = async (item, editableData) => {
     }
 };
 
-// Gestionnaire pour les changements de champs éditables (optionnel)
 const handleEditableFieldChange = (changeData) => {
-    console.log('Changement détecté:', changeData);
-    // Vous pouvez faire quelque chose ici si nécessaire (auto-save, validation, etc.)
+    //console.log('Changement détecté:', changeData);
 };
 
-// Méthode pour récupérer toutes les données éditables modifiées (utile pour validation en lot)
 const getAllEditableChanges = () => {
     if (tableRef.value) {
         return tableRef.value.getAllEditableData();
@@ -307,11 +521,10 @@ const getAllEditableChanges = () => {
     return {};
 };
 
-// Méthode pour utilisation dans les methods
 const formatDate = (dateString) => {
     const d = new Date(dateString);
     const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0'); // les mois commencent à 0
+    const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
     const formattedDate = `${day}/${month}/${year}`;
     return formattedDate;
@@ -320,25 +533,23 @@ const formatDate = (dateString) => {
 const exportToExcel = async () => {
     try {
         const data = demande_details.value
-        console.log(data)
-        // Préparer les données pour l'exportation
         const exportData = data.map(item => ({
             'Num': item.num,
             'Désignation': item.designation,
             'Spécificités techniques': item.spec,
             'Quantité': item.qte,
             'Prix Unitaire': item.prix,
-            'Fournisseur': item.fournisseur|| '',
+            'Fournisseur': item.fournisseur || '',
             'Délai': item.delai,
             'Imputation Analytique': item.imputation || '',
-            'Fournisseur Réel':item.fournisseur|| '',
+            'Fournisseur Réel': item.fournisseur2 || '',
             'Prix Réel': item.prixR || '',
             'Montant Réel': item.totalR || '',
             'Observation DPR': item.observation_dpr || '',
             'N° Chèque': item.num_cheque || '',
-            'Date d\'émission':item.date_emission_cheque? formatDate(item.date_emission_cheque):'',
+            'Date d\'émission': item.date_emission_cheque ? formatDate(item.date_emission_cheque) : '',
             'Observation Chèque': item.observation_cheque || '',
-            'Statut': item.niv_val == niveau.cheque ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.cheque ? 'Validation pas encore a votre niveau' : 'Validé',
+            'Statut': item.niv_val == niveau.cheque ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.cheque ? 'Validation pas encore à votre niveau' : 'Validé',
         }));
 
         const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`
@@ -350,8 +561,30 @@ const exportToExcel = async () => {
         showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
     }
 };
+
 // LIFECYCLE HOOKS
 onMounted(() => {
     getDemandeDetails();
 });
 </script>
+
+<style scoped>
+.pdf-content {
+    padding: 20px;
+}
+
+.pdf-content label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.alert-info ul {
+    font-size: 0.9em;
+    padding-left: 20px;
+}
+
+.alert-info li {
+    margin-bottom: 5px;
+}
+</style>

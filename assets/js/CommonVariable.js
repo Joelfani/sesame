@@ -7,7 +7,8 @@ export const tableTete = [
             { key: 'prix', label: 'Prix unitaire (en Ar)' },
             { key: 'delai', label: 'Date de livraison prévue' },
             { key: 'total', label: 'Montant (en Ar)' },
-            { key: 'com', label: 'Commentaire ou Motif de rejet',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
+            { key: 'com', label: 'Commentaire',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
+            { key: 'motif', label: 'Motif de rejet ',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
         ]
 export const niveau = {
     superieur: 1,

@@ -35,6 +35,7 @@
                 :actions="[
                     { label: 'Valider', color: 'success' },
                     { label: 'Rejeter', color: 'danger' },
+                    { label: 'Retour vers Achat', color: 'primary'},
                 ]"
                 title_modal_neutre="Liste des documents associés"
                 @validation_action="handleValidationAction"
@@ -131,34 +132,14 @@
                     <div class="d-flex justify-content-around align-items-center">
                         <h4 style="font-weight: bold;">Autorisation formelle d'engagement</h4>
                     </div>
-                    <div class="d-flex justify-content-around align-items-center">
-                        <h5><span style="font-weight: bold;">Objet : </span> {{ dataObj.nom }}</h5>
-                    </div>
+                    
                     <div class="d-flex justify-content-around align-items-center m-3">
                         <h5><span style="font-weight: bold;">Date : </span> {{ date }}</h5>
                         <h5><span style="font-weight: bold;">Fournisseur : </span> {{ pdffournisseurSelected }}</h5>
                     </div>
                     <div class="container mt-4">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-custom">
-                                <thead>
-                                    <tr>
-                                        <th width="40%">Designation</th>
-                                        <th width="15%">Montant</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="detail in fournisseurPdfDetails" :key="detail.id">
-                                        <td>{{ detail.designation }}</td>
-                                        <td class="amount-column">{{ detail.totalR }}</td>
-                                    </tr>
-                                    <tr class="total-section">
-                                        <td colspan="1" class="text-end fw-bold">Total</td>
-                                        <td class="amount-column">{{ pdfDetailTotal }}</td>
-                                    </tr>
-                                    <tr v-for="N in 5"></tr>
-                                </tbody>
-                            </table>
+                        <div class="d-flex justify-content-around align-items-center">
+                            <h5><span style="font-weight: bold;">Objet : </span> {{ dataObj.nom }}</h5>
                         </div>
                     </div>
                     <div class="m-3">
@@ -470,8 +451,6 @@ const getDemandeDetails = async () => {
                 )
 
         fournisseurAfe.value = fournisseurForAfe
-
-        console.log('afe', fournisseurAfe.value);
         
         
         // Récupération des informations de l'objet
@@ -489,17 +468,13 @@ const getDemandeDetails = async () => {
         };
         
     } catch (error) {
-        console.log(error);
+        console.error(error);
     }
 };
 
 // Gestionnaire principal pour les actions de validation
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
-    
-    console.log('Action de validation admin achat:', action);
-    console.log('Item original:', item);
-    console.log('Données éditables:', editableData);
     
     // Stocker pour affichage (debug)
     validationData.value = {
@@ -513,15 +488,20 @@ const handleValidationAction = async (validationPayload) => {
     if (action === 'Valider') {
         await handleValidation(item, editableData);
     } else if (action === 'Rejeter') {
-        await handleRejection(item, editableData);
+        if(editableData.fields.motif === undefined || editableData.fields.motif === null || editableData.fields.motif === ''){
+            showAlert('Veuillez fournir un motif de rejet avant de rejeter l\'article.', 'Oops', 'danger');
+            return;
+        }else{
+            await handleRejection(item, editableData);
+        }
+    }else if (action === 'Retour vers Achat') {
+        await handleReturnToPurchase(item, editableData);
     }
 };
 
 // Gestion de la validation
 const handleValidation = async (item, editableData) => {
     try {
-        console.log('Validation de l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
         
         // Préparer les données à mettre à jour
         const updateData = {
@@ -554,7 +534,7 @@ const handleValidation = async (item, editableData) => {
 
         if (insertHistError) throw insertHistError;
         
-        console.log('Validation réussie pour l\'item:', item.id);
+        
         showAlert('Validation réussie !', 'Succès', 'success');
     } catch (error) {
         console.error('Erreur lors de la validation:', error);
@@ -606,10 +586,52 @@ const handleRejection = async (item, editableData) => {
 
 // Gestionnaire pour les changements de champs éditables (optionnel)
 const handleEditableFieldChange = (changeData) => {
-    console.log('Changement détecté:', changeData);
+    
     // Vous pouvez faire quelque chose ici si nécessaire (auto-save, validation, etc.)
 };
 
+// Gestion du retour vers achat
+const handleReturnToPurchase = async (item, editableData) => {
+    try {
+        // Préparer les données à mettre à jour
+        const updateData = {
+            niv_val: niveau.achat, // Statut rejeté (rejet général)
+            ...editableData.fields // Inclure les données éditables (commentaires par exemple)
+        };
+        
+        // Mettre à jour dans la base de données
+        const { error } = await supabase
+            .from('ses_demItems')
+            .update(updateData)
+            .eq('id', item.id);
+        
+        if (error) throw error;
+        
+        // Actualiser les données
+        await getDemandeDetails();
+        
+        // Enregistrement dans historique
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: route.params.id,
+                id_item: item.id,
+                action: 'Retour de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                type: 'retour',
+                niv_val:niveau.achat,
+            });
+
+        if (insertHistError) throw insertHistError;
+        
+        
+        showAlert('Renvoi vers responsable d\'achat réussi !', 'Succès', 'success');
+    } catch (error) {
+        console.error('Erreur lors du retour financier:', error);
+        showAlert('Erreur lors du renvoi financier !', 'Oups!', 'danger');
+    }
+}
 // Méthode pour récupérer toutes les données éditables modifiées (utile pour validation en lot)
 const getAllEditableChanges = () => {
     if (tableRef.value) {
@@ -640,7 +662,7 @@ const doc_recovery = async (item) =>{
 
         doc_achat.value = data
     }catch(error){
-        console.log('Erreur lors de la recuperation de la liste des documents', error)
+        console.error('Erreur lors de la recuperation de la liste des documents', error)
     }
     
 }
@@ -869,7 +891,7 @@ const generatePDF = async (domname, namepdf) => {
 const exportToExcel = async () => {
     try {
         const data = demande_details.value
-        console.log(data)
+        
         // Préparer les données pour l'exportation
         const exportData = data.map(item => ({
             'Num': item.num,

@@ -3,6 +3,7 @@
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>DÉTAILS DE LA DEMANDE - GESTION DU LIVRAISON</h1>
+            <button class="btn btn-outline-secondary" @click="devTab">{{ dev ? 'Réduire le tableau': 'Développer le tableau' }}</button>
             <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
             <div class="link_demande">
             </div>
@@ -22,7 +23,7 @@
         <div class="table_block_list">
             <Table
                 ref="tableRef"
-                :columns="columns"
+                :columns="dev ? columns : columns2"
                 :rows="demande_details"
                 :type_but_modal="true"
                 :but_Validation="true"
@@ -79,11 +80,32 @@ const columns = [
     }
 ];
 
+// Définition des colonnes du tableau
+const columns2 = [
+    { key: 'num', label: 'N°'},
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'spec' && col.key !== 'fournisseur' && col.key !== 'prix' && col.key !== 'delai' && col.key !== 'total' && col.key !== 'com' ), // Exclure la colonne
+    { key: 'fournisseur2', label: 'Fournisseur Réel' },
+    { key: 'prixR', label: 'Prix Réel' },
+    { key: 'totalR', label: 'Montant Réel' },
+    { key: 'observation_dpr', label: 'Observation DPR'},
+    { 
+        key: 'date_livraison', 
+        label: 'Date de livraison', 
+        editable: true, 
+        type: 'date'
+    },
+    { 
+        key: 'observation_livraison', 
+        label: 'Observation sur la livraison', 
+        editable: true, 
+        type: 'textarea'
+    }
+];
 // DATA
 const dataObj = ref([]);
 const demande_details = ref([]);
 const validationData = ref(null); // Pour stocker les données de validation pour debug
-
+const dev = ref(false)
 // Alert system
 const alert = ref({
     show: false,
@@ -94,6 +116,9 @@ const alert = ref({
 
 // METHODES
 
+const devTab = () => {
+    dev.value = !dev.value    
+}
 // Afficher une alerte
 const showAlert = (message, title, type) => {
     alert.value = {
@@ -138,7 +163,6 @@ const getDemandeDetails = async () => {
         });
         
         demande_details.value = allDataView;
-        console.log(demande_details.value);
         loading.value = false;
         // Récupération des informations de l'objet
         const { data: demandeObj, error: demandeObjError } = await supabase
@@ -155,17 +179,13 @@ const getDemandeDetails = async () => {
         };
         
     } catch (error) {
-        console.log(error);
+        console.error(error);
     }
 };
 
 // Gestionnaire principal pour les actions de validation
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
-    
-    console.log('Action de gestion livraison:', action);
-    console.log('Item original:', item);
-    console.log('Données éditables:', editableData);
     
     // Stocker pour affichage (debug)
     validationData.value = {
@@ -179,15 +199,18 @@ const handleValidationAction = async (validationPayload) => {
     if (action === 'Livré') {
         await handleLivraison(item, editableData);
     } else if (action === 'Rejeter') {
-        await handleRejection(item, editableData);
+        if(editableData.fields.motif === undefined || editableData.fields.motif === null || editableData.fields.motif === ''){
+            showAlert('Veuillez fournir un motif de rejet avant de rejeter l\'article.', 'Oops', 'danger');
+            return;
+        }else{
+            await handleRejection(item, editableData);
+        }
     }
 };
 
 // Gestion de la livraison
 const handleLivraison = async (item, editableData) => {
     try {
-        console.log('Livraison pour l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
         
         // Vérifier que la date de livraison est renseignée
         if (!editableData.fields.date_livraison) {
@@ -278,7 +301,7 @@ const handleRejection = async (item, editableData) => {
 
 // Gestionnaire pour les changements de champs éditables (optionnel)
 const handleEditableFieldChange = (changeData) => {
-    console.log('Changement détecté:', changeData);
+    //console.log('Changement détecté:', changeData);
     // Vous pouvez faire quelque chose ici si nécessaire (auto-save, validation, etc.)
 };
 
@@ -303,7 +326,6 @@ const formatDate = (dateString) => {
 const exportToExcel = async () => {
     try {
         const data = demande_details.value
-        console.log(data)
         // Préparer les données pour l'exportation
         const exportData = data.map(item => ({
             'Num': item.num,
