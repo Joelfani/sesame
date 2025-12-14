@@ -121,99 +121,190 @@
         </Modal>
         <!-- Contenu PDF caché  AFE-->
         <div v-if="pdf">
-            <div id="pdfafe" style="width: 794px; padding: 40px; background: white;">
+            <div id="pdfafe" style="width: 794px; padding: 30px; background: white; font-size: 10pt;">
                 
-                <!-- ========== PAGE 1 ========== -->
-                <div>
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <img src="/logo.png" style="width: 110px; height: 100px;">
-                        <p style="font-weight: bold;">Association PROMotion Economique et Sociale (PROMES)</p>
+                <!-- En-tête avec logo et titre association -->
+                <div class="d-flex justify-content-between align-items-start" style="margin-bottom: 15px;">
+                    <img src="/logo.png" style="width: 80px; height: 75px;">
+                    <div style="text-align: right; flex: 1; margin-left: 20px;">
+                        <p style=" font-size: 11pt; margin: 0;">Association PROMotion Economique et Sociale (PROMES)</p>
                     </div>
-                    <div class="d-flex justify-content-around align-items-center">
-                        <h4 style="font-weight: bold;">Autorisation formelle d'engagement</h4>
-                    </div>
-                    
-                    <div class="d-flex justify-content-around align-items-center m-3">
-                        <h5><span style="font-weight: bold;">Date : </span> {{ date }}</h5>
-                        <h5><span style="font-weight: bold;">Fournisseur : </span> {{ pdffournisseurSelected }}</h5>
-                    </div>
-                    <div class="container mt-4">
-                        <div class="d-flex justify-content-around align-items-center">
-                            <h5><span style="font-weight: bold;">Objet : </span> {{ dataObj.nom }}</h5>
-                        </div>
-                    </div>
-                    <div class="m-3">
-                        <h6><span style="font-weight: bold;">Affectation </span></h6>
-                        <p><span v-for="detail in fournisseurPdfDetails" :key="detail.id">{{ detail.imputation }} - </span></p>
-                    </div>
-                    <div>
-                        <div>
-                            <h6><span style="font-weight: bold;">Le Responsable du programme</span></h6>
-                        </div>
-                        <br><br><br>
-                        <div>
-                            <h6><span style="font-weight: bold;">Nom et Date</span></h6>
-                        </div>
-                    </div>
-                    <span style="font-size:xx-small; float: right;">Demande numéro {{ route.params.id }}</span>
                 </div>
 
-                <!-- ========== SAUT DE PAGE========== -->
-                <div class="page-break"></div>
+                <!-- Titre du document -->
+                <div style="text-align: center; margin: 15px 0;">
+                    <h4 style="font-weight: bold; font-size: 14pt; margin: 0;">AUTORISATION FORMELLE D'ENGAGEMENT (AFE)</h4>
+                </div>
 
-                <!-- ========== PAGE 2 ========== -->
-                <div>
-                    <div class="d-flex justify-content-around align-items-center">
-                        <h5>PIECE D'ECRITURES</h5>
+                <!-- Informations Date et Fournisseur -->
+                <div style="display: flex; justify-content: space-between; margin: 12px 0; padding: 0 10px;">
+                    <div style="flex: 1;">
+                        <span style="font-weight: normal;">Date :</span>
+                        <span style="border-bottom: 1px solid #000; display: inline-block; min-width: 150px; padding: 2px 5px;">{{ date }}</span>
                     </div>
-                    <div class="container mt-4">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-custom">
-                                <thead>
-                                    <tr>
-                                        <th width="50%">Journal:</th>
-                                        <th width="50%">N° de Pièce:</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <th width="50%">Date:</th>
-                                        <th width="50%">Emetteur:</th>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <div style="flex: 1; text-align: right;">
+                        <span style="font-weight: normal;">Fournisseur :
+                        <span style="border-bottom: 1px solid #000; display: inline-block; min-width: 200px; padding: 2px 5px;">{{ pdffournisseurSelected }}</span></span>
+                    </div>
+                </div>
+
+                <!-- Objet -->
+                <div style="margin: 15px 0; padding: 0 10px;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="font-weight: normal;">Objet :</span>
+                        <span style="border-bottom: 1px solid #000; display: inline-block; width: calc(100% - 60px); padding: 2px 5px;">{{ dataObj.nom }}</span>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div style="margin: 15px 0; padding: 0 10px;">
+                    <div style="display: flex; justify-content: flex-end; align-items: center;">
+                        <span style="font-weight: bold; margin-right: 20px;">Total :</span>
+                        <span style="border: 1px solid #000; padding: 5px 15px; min-width: 150px; text-align: right; font-weight: bold;">{{ pdfDetailTotal.toLocaleString() }} Ar</span>
+                    </div>
+                </div>
+
+                <!-- Affectation -->
+                <div style="margin: 15px 0; padding: 0 10px;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">Affectation</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <template v-for="(detail, index) in fournisseurPdfDetails" :key="detail.id">
+                            <div class="d-flex align-content-between justify-content-between">
+                                <input type="checkbox" style="margin-right: 5px; width: 12px; height: 12px;" :checked="true" disabled>
+                                <span style="font-size: 9pt;">{{ detail.imputation }}</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Tableau des montants par affectation -->
+                <div style="margin: 20px 0;">
+                    <p style=" font-size: 9pt; margin-bottom: 5px; padding: 0 10px;">
+                        0Ar à 100 000Ar (Facture, BC, BL, DA) <br>
+                        100 001Ar à 1 000 000Ar (Facture, BC, BL, DA, 1Devis ou proforma) <br>
+                        1 000 001Ar à 5 000 000Ar (Facture, BC, BL, DA, 3Devis ou proforma, Tableau comparatif) <br>
+                        5 000 001Ar à 16 000 000 Ar (Facture, BC, BL, DA, 4Devis ou proforma, Tableau comparatif) <br>
+                        > 16 000 000Ar (Appel d'offre national ou international, 3 Devis, Facture, BC, BL, DA, Tableau comparatif)
+                    </p>
+                    <div class="table-responsive" style="margin-top: 10px;">
+                        <table class="table table-bordered" style="width: 100%; font-size: 9pt; border: 1px solid #000;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center;"></th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center;">Fournisseur</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center;">Analyse de l'offre</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center;">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px;">Devis 1</td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px;">Devis 2</td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px;">Devis 3</td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Signature Responsable du Programme -->
+                <div style="margin: 20px 0 15px 10px;">
+                    <p style="font-weight: bold; margin-bottom: 30px;">Le Responsable du Programme</p>
+                    <p style="margin-top: 40px;">Nom et Date</p>
+                </div>
+
+                <!-- Séparateur visuel -->
+                <div style="border-top: 2px solid #000; margin: 15px 0;"></div>
+
+                <!-- Association et Programme -->
+                <div style="text-align: right; margin: 10px 10px 15px 0; font-size: 8pt;">
+                    <p style="margin: 0;">Association PROMES / Programme SESAME</p>
+                </div>
+
+                <!-- PIECE D'ECRITURES -->
+                <div style="margin-top: 15px;">
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <h5 style="font-weight: bold; font-size: 12pt; margin: 0;">PIECE D'ECRITURES</h5>
+                    </div>
+                    
+                    <!-- Tableau Journal et Pièce -->
+                    <div class="table-responsive" style="margin: 10px 0;">
+                        <table class="table table-bordered" style="width: 100%; font-size: 9pt; border: 1px solid #000;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #000; padding: 5px; width: 50%;">Journal:</th>
+                                    <th style="border: 1px solid #000; padding: 5px; width: 50%;">N° de Pièce:</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px; width: 50%;">Date:</td>
+                                    <td style="border: 1px solid #000; padding: 5px; width: 50%;">Emetteur:</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Informations comptables -->
+                    <div style="margin: 10px 0; padding: 0 10px; font-size: 9pt;">
+                        <p class="d-flex align-content-between gap-1" style="margin: 3px 0;">
+                            <span style="font-weight: bold;">COMPTE GENERAL DEBIT:</span> 
+                            <span style="border: 1px solid #000; display: inline-block; width: calc(100% - 222px); height: 30px;"></span>
+                        </p>
+                        <p class="d-flex align-content-between gap-1" style="margin: 3px 0;">
+                            <span style="font-weight: bold;">SECTION ANALYTIQUE:</span> 
+                            <span style="border: 1px solid #000; display: inline-block; width: calc(100% - 200px); height: 30px;"></span>
+                        </p>
+                        <p class="d-flex align-content-between gap-1" style="margin: 3px 0;">
+                            <span style="font-weight: bold;">COMPTE GENERAL CREDIT:</span> 
+                            <span style="border: 1px solid #000; display: inline-block; width: calc(100% - 233px); height: 30px;"></span>
+                        </p>
+                        <p class="d-flex align-content-between gap-1" style="margin: 3px 0;">
+                            <span style="font-weight: bold;">SECTION ANALYTIQUE:</span> 
+                            <span style="border: 1px solid #000; display: inline-block; width: calc(100% - 200px); height: 30px;"></span>
+                        </p>
+                        <p class="d-flex align-content-between gap-1" style="margin: 3px 0;">
+                            <span style="font-weight: bold;">MONTANT (Ar):</span> 
+                            <span style="border: 1px solid #000; display: inline-block; width: calc(100% - 138px); height: 30px;"></span>
+                        </p>
+                        <p class="d-flex align-content-between gap-1" style="margin: 3px 0;">
+                            <span style="font-weight: bold;">LIBELLE:</span> 
+                            <span style="border: 1px solid #000; display: inline-block; width: calc(100% - 83px); height: 30px;"></span>
+                        </p>
+                        <p class="d-flex align-content-between gap-1" style="margin: 3px 0;">
+                            <span style="font-weight: bold;">REFERENCE:</span> 
+                            <span style="border: 1px solid #000; display: inline-block; width: calc(100% - 116px); height: 30px;"></span>
+                        </p>
+                    </div>
+
+                    <!-- Signatures finales -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 15px; padding: 0 10px;">
+                        <div style="flex: 1;">
+                            <p style="font-weight: bold; margin-bottom: 30px; font-size: 9pt;">Le Comptable</p>
+                            <p style="margin-top: 40px; font-size: 9pt;">Nom et Date</p>
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            <p style="font-weight: bold; margin-bottom: 30px; font-size: 9pt;">Le Responsable Administratif et Financier</p>
+                            <p style="margin-top: 40px; font-size: 9pt;">Nom et Date</p>
                         </div>
                     </div>
-                    <div class="m-1">
-                        <p><span style="font-weight: bold;">COMPTE GENERAL DEBIT: ...... </span></p>
-                        <p><span style="font-weight: bold;">SECTION ANALYTIQUE: ....... </span></p>
-                        <p><span style="font-weight: bold;">COMPTE GENERAL CREDIT: ....... </span></p>
-                        <p><span style="font-weight: bold;">SECTION ANALYTIQUE: ....... </span></p>
-                        <p><span style="font-weight: bold;">MONTANT (Ar): ....... </span></p>
-                        <p><span style="font-weight: bold;">LIBELLE: ....... </span></p>
-                        <p><span style="font-weight: bold;">REFERENCE: ....... </span></p>
-                    </div>
-                    <div class="d-flex justify-content-around align-items-center m-3">
-                        <div>
-                            <div>
-                                <h6><span style="font-weight: bold;">Le Comptable</span></h6>
-                            </div>
-                            <br><br><br>
-                            <div>
-                                <h6><span style="font-weight: bold;">Nom et Date</span></h6>
-                            </div>
-                        </div>
-                        <div>
-                            <div>
-                                <h6><span style="font-weight: bold;">Le Responsable Administratif et Financier </span></h6>
-                            </div>
-                            <br><br><br>
-                            <div>
-                                <h6><span style="font-weight: bold;">Nom et Date</span></h6>
-                            </div>
-                        </div>
-                    </div>
-                    <span style="font-size:xx-small; float: right;">Demande numéro {{ route.params.id }}</span>
+                </div>
+
+                <!-- Footer -->
+                <div class="d-flex align-content-between justify-content-between" style="margin-top: 10px; font-size: 7pt; color: #666;">
+                    <span>Formulaire PROMES-SESAME</span>
+                    <span style="margin-left: 20px;">Autorisation Formelle d'Engagement Pièce Comptable</span>
+                    <span style=" font-size: 7pt; color: #666;">Demande numéro {{ route.params.id }}</span>
                 </div>
                 
             </div>
