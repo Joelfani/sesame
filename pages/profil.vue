@@ -114,8 +114,46 @@
                         <button class="btn btn-danger" @click="logout">Déconnexion</button>
                     </div>
                 </div>
-                <div class="row">
-                    
+                
+                <!-- Section Signature -->
+                <div class="row mt-4">
+                    <div class="col">
+                        <h4>Ma Signature</h4>
+                        <label class="label">Importer une signature (PNG, JPG, JPEG)</label>
+                        <input 
+                            class="form-control" 
+                            ref="signatureInput" 
+                            type="file" 
+                            accept="image/png, image/jpeg, image/jpg"
+                            @change="handleSignatureFile"
+                        >
+                        <p v-if="uploadingSignature" class="text-info mt-2">Enregistrement de la signature en cours...</p>
+                        <button 
+                            v-if="signatureFile" 
+                            class="btn btn-success mt-2" 
+                            @click="uploadSignature"
+                            :disabled="uploadingSignature"
+                        >
+                            Enregistrer la signature
+                        </button>
+                        
+                        <!-- Affichage de la signature existante -->
+                        <div v-if="signatureUrl" class="mt-3">
+                            <h5>Signature actuelle :</h5>
+                            <div class="signature-container">
+                                <img :src="signatureUrl" alt="Signature" class="signature-image">
+                                <button 
+                                    class="btn btn-outline-danger btn-sm mt-2" 
+                                    @click="deleteSignature"
+                                >
+                                    Supprimer la signature
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="mt-3">
+                            <p class="text-muted">Aucune signature enregistrée</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-5">
@@ -227,6 +265,14 @@ const selectedAvatar = ref()
 const type_avatar = ref()
 const superieursList = ref([])
 
+// Données pour la signature
+const signatureInput = ref(null)
+const signatureFile = ref(null)
+const signatureFileName = ref('')
+const uploadingSignature = ref(false)
+const signatureUrl = ref(null)
+const signatureStorageName = ref('')
+
 const alert = ref({
     show: false,
     message: '',
@@ -265,6 +311,7 @@ const currentAvatar = computed(() => {
     const avatarType = formData.value.genre || 'h' // Par défaut homme
     return `${avatarType}${selectedAvatar.value}`
 })
+
 // Initialisation des données depuis le store
 const initializeData = () => {
     formData.value = {
@@ -289,7 +336,6 @@ const initializeData = () => {
         }
     }
 
-    
     // Définir le type d'avatar selon le genre
     type_avatar.value = formData.value.genre || 'h'
 
@@ -298,8 +344,26 @@ const initializeData = () => {
     
     // Copie pour l'annulation
     originalData.value = JSON.parse(JSON.stringify(formData.value))
+}
 
-    
+// Charger la signature existante
+const loadSignature = async () => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('signature_url, signature_storage')
+            .eq('id', userStore.id)
+            .single()
+        
+        if (error) throw error
+        
+        if (data && data.signature_url) {
+            signatureUrl.value = data.signature_url
+            signatureStorageName.value = data.signature_storage || ''
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement de la signature:', error)
+    }
 }
 
 // Charger la liste des supérieurs
@@ -315,6 +379,127 @@ const loadSuperieurs = async () => {
         }
     } catch (error) {
         console.error('Erreur lors du chargement des supérieurs:', error)
+    }
+}
+
+// Gestion du fichier de signature
+const handleSignatureFile = (event) => {
+    signatureFile.value = event.target.files[0]
+    if (signatureFile.value) {
+        uploadingSignature.value = false
+        signatureFileName.value = signatureFile.value.name
+        console.log('Fichier de signature sélectionné:', signatureFile.value)
+    } else {
+        signatureFileName.value = ''
+    }
+}
+
+// Upload de la signature
+const uploadSignature = async () => {
+    if (!signatureFile.value) {
+        return alertPop("Veuillez sélectionner un fichier", 'danger', 'Oups!')
+    }
+
+    uploadingSignature.value = true
+    
+    try {
+        // Supprimer l'ancienne signature si elle existe
+        if (signatureStorageName.value) {
+            await deleteSignatureFromStorage(signatureStorageName.value)
+        }
+
+        // Créer un chemin unique pour le fichier
+        const fileStorageName = `${Date.now()}_${signatureFile.value.name}`
+        const filePath = `signatures/${fileStorageName}`
+
+        // Upload dans le bucket
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('sesame_doc')
+            .upload(filePath, signatureFile.value, {
+                upsert: false,
+            })
+
+        if (uploadError) throw uploadError
+
+        // Récupérer l'URL publique du fichier
+        const { data: publicUrlData } = supabase.storage
+            .from('sesame_doc')
+            .getPublicUrl(filePath)
+
+        const newSignatureUrl = publicUrlData.publicUrl
+
+        // Mettre à jour dans la base de données
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({
+                signature_url: newSignatureUrl,
+                signature_storage: fileStorageName
+            })
+            .eq('id', userStore.id)
+
+        if (updateError) throw updateError
+
+        // Mettre à jour les variables locales
+        signatureUrl.value = newSignatureUrl
+        signatureStorageName.value = fileStorageName
+
+        // Réinitialiser l'input
+        signatureInput.value.value = null
+        signatureFile.value = null
+        signatureFileName.value = ''
+
+        alertPop('Signature enregistrée avec succès', 'success', 'Succès')
+    } catch (error) {
+        console.error('Erreur lors de l\'upload de la signature:', error)
+        alertPop("Erreur lors de l'enregistrement de la signature", 'danger', 'Oups!')
+    } finally {
+        uploadingSignature.value = false
+    }
+}
+
+// Supprimer la signature du storage
+const deleteSignatureFromStorage = async (storageName) => {
+    if (!storageName) return
+
+    const path = `signatures/${storageName}`
+    try {
+        const { error } = await supabase.storage
+            .from('sesame_doc')
+            .remove([path])
+
+        if (error) throw error
+    } catch (error) {
+        console.error('Erreur lors de la suppression de la signature du storage:', error)
+    }
+}
+
+// Supprimer la signature
+const deleteSignature = async () => {
+    try {
+        // Supprimer du storage
+        if (signatureStorageName.value) {
+            await deleteSignatureFromStorage(signatureStorageName.value)
+        }
+
+        // Mettre à jour dans la base de données
+        const { error } = await supabase
+            .from('users')
+            .update({
+                signature_url: null,
+                signature_storage: null
+            })
+            .eq('id', userStore.id)
+
+        if (error) throw error
+
+        // Réinitialiser les variables locales
+        signatureUrl.value = null
+        signatureStorageName.value = ''
+
+        alertPop('Signature supprimée avec succès', 'success', 'Succès')
+    } catch (error) {
+        console.error('Erreur lors de la suppression de la signature:', error)
+        alertPop('Erreur lors de la suppression de la signature', 'danger', 'Oups!')
     }
 }
 
@@ -378,13 +563,11 @@ const saveChanges = async () => {
         btn_modifier.value = "Modifier"
         
         // Notification de succès
-
         alertPop('Profil mis à jour avec succès!','success','Succès')
         
     } catch (error) {
         alertPop('Erreur lors de la sauvegarde.','danger','Oups!')
         console.error('Erreur lors de la sauvegarde:', error)
-        // Gérer l'erreur (notification, etc.)
     }
 }
 
@@ -408,6 +591,7 @@ const getTypeCompteLabel = (type) => {
     }
     return types[type] || 'Inconnu'
 }
+
 // Alert function
 const alertPop = (message,type,title) =>{
     alert.value = {
@@ -430,6 +614,7 @@ watch(() => formData.value.genre, (newGenre) => {
 onMounted(async () => {
     initializeData()
     await loadSuperieurs()
+    await loadSignature()
 })
 
 // Réinitialiser si le store change
@@ -439,3 +624,21 @@ watch(() => userStore, (newStore) => {
     }
 }, { deep: true })
 </script>
+
+<style scoped>
+.signature-container {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.signature-image {
+    max-width: 300px;
+    max-height: 150px;
+    border: 1px solid #ccc;
+    padding: 5px;
+    background-color: white;
+    display: block;
+}
+</style>
