@@ -104,7 +104,7 @@
                             
                             <!-- Demandeur -->
                             <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">DEMANDEUR</p>
+                                <p style="font-weight: bold; margin: 0 0 3px 0;">Le demandeur</p>
                                 <p style="margin: 0; font-size: 7pt;">{{ dataObj.demandeur }}</p>
                                 
                                 <div v-if="!dataObj.signatureDemandeur" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
@@ -115,7 +115,7 @@
 
                             <!-- Supérieur Hiérarchique - niv_val 2 -->
                             <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">SUPÉRIEUR HIÉRARCHIQUE</p>
+                                <p style="font-weight: bold; margin: 0 0 3px 0;">Le Responsable du Service demandeur</p>
                                 <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.superieur?.userValide || 'En attente' }}</p>
                                 
                                 <div v-if="!validateurs.superieur?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
@@ -124,31 +124,9 @@
                                 <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.superieur?.dateVal">Le {{ validateurs.superieur.dateVal }}</p>
                             </div>
 
-                            <!-- Responsable Achat - niv_val 3 -->
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">RESPONSABLE ACHAT</p>
-                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.achat?.userValide || 'En attente' }}</p>
-                                
-                                <div v-if="!validateurs.achat?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
-                                <img v-else :src="validateurs.achat.signatureValide" alt="Signature Achat" style="max-width: 130px; height: 60px;">
-                                
-                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.achat?.dateVal">Le {{ validateurs.achat.dateVal }}</p>
-                            </div>
-
-                            <!-- Responsable Administratif - niv_val 4 -->
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">RESPONSABLE ADMIN.</p>
-                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.admin?.userValide || 'En attente' }}</p>
-                                
-                                <div v-if="!validateurs.admin?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
-                                <img v-else :src="validateurs.admin.signatureValide" alt="Signature Admin" style="max-width: 130px; height: 60px;">
-                                
-                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.admin?.dateVal">Le {{ validateurs.admin.dateVal }}</p>
-                            </div>
-
                             <!-- Responsable Finance - niv_val 5 -->
                             <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">RESPONSABLE FINANCE</p>
+                                <p style="font-weight: bold; margin: 0 0 3px 0;">Validation budgétaire par le Département Finance</p>
                                 <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.finance?.userValide || 'En attente' }}</p>
                                 
                                 <div v-if="!validateurs.finance?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
@@ -157,7 +135,31 @@
                                 <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.finance?.dateVal">Le {{ validateurs.finance.dateVal }}</p>
                             </div>
 
-                            <!-- Directeur du Programme - niv_val 6 -->
+                            <!-- Responsable Achat - niv_val 3 -->
+                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
+                                <p style="font-weight: bold; margin: 0 0 3px 0;">Réception par le Service Achat</p>
+                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.achat?.userValide || 'En attente' }}</p>
+                                
+                                <div v-if="!validateurs.achat?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
+                                <img v-else :src="validateurs.achat.signatureValide" alt="Signature Achat" style="max-width: 130px; height: 60px;">
+                                
+                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.achat?.dateVal">Le {{ validateurs.achat.dateVal }}</p>
+                            </div>
+
+                            <!-- Responsable Administratif - niv_val 4 
+                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
+                                <p style="font-weight: bold; margin: 0 0 3px 0;">RESPONSABLE ADMIN.</p>
+                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.admin?.userValide || 'En attente' }}</p>
+                                
+                                <div v-if="!validateurs.admin?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
+                                <img v-else :src="validateurs.admin.signatureValide" alt="Signature Admin" style="max-width: 130px; height: 60px;">
+                                
+                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.admin?.dateVal">Le {{ validateurs.admin.dateVal }}</p>
+                            </div>-->
+
+                            
+
+                            <!-- Directeur du Programme - niv_val 6 
                             <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
                                 <p style="font-weight: bold; margin: 0 0 3px 0;">DIRECTEUR PROGRAMME</p>
                                 <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.dpr?.userValide || 'En attente' }}</p>
@@ -166,9 +168,9 @@
                                 <img v-else :src="validateurs.dpr.signatureValide" alt="Signature DPR" style="max-width: 130px; height: 60px;">
                                 
                                 <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.dpr?.dateVal">Le {{ validateurs.dpr.dateVal }}</p>
-                            </div>
+                            </div>-->
 
-                            <!-- Émetteur du chèque - niv_val 7 (pleine largeur) -->
+                            <!-- Émetteur du chèque - niv_val 7 (pleine largeur) 
                             <div style="border: 1px solid #999; padding: 8px; min-height: 70px; grid-column: 1 / -1;">
                                 <p style="font-weight: bold; margin: 0 0 3px 0;">ÉMETTEUR DU CHÈQUE</p>
                                 <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.cheque?.userValide || 'En attente' }}</p>
@@ -177,7 +179,7 @@
                                 <img v-else :src="validateurs.cheque.signatureValide" alt="Signature Chèque" style="max-width: 200px; height: 60px;">
                                 
                                 <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.cheque?.dateVal">Le {{ validateurs.cheque.dateVal }}</p>
-                            </div>
+                            </div>-->
 
                         </div>
                     </div>
