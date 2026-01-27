@@ -68,12 +68,9 @@
 <script setup>
 import { ref, onMounted } from "vue";
 
-definePageMeta({
-  layout: false
-});
+definePageMeta({ layout: false });
 
 const supabase = useSupabaseClient();
-const route = useRoute();
 
 const password = ref("");
 const confirmPassword = ref("");
@@ -82,24 +79,13 @@ const loading = ref(false);
 const isInitializing = ref(true);
 const linkError = ref(null);
 
-const showPassword = ref(false);
-const showConfirmPassword = ref(false);
-
 const redirectToLogin = () => {
   window.location.href = "https://achat-sesame.vercel.app";
 };
 
-/**
- * 🔐 Soumission du nouveau mot de passe
- */
 const submitNewPassword = async () => {
   if (password.value !== confirmPassword.value) {
     alert("Les mots de passe ne correspondent pas.");
-    return;
-  }
-
-  if (password.value.length < 6) {
-    alert("Le mot de passe doit contenir au moins 6 caractères.");
     return;
   }
 
@@ -119,37 +105,44 @@ const submitNewPassword = async () => {
     redirectToLogin();
   } catch (err) {
     console.error(err);
-    alert("Une erreur est survenue.");
+    alert("Erreur inattendue");
   } finally {
     loading.value = false;
   }
 };
 
-/**
- * 🔑 Initialisation via PKCE (?code=)
- */
 onMounted(async () => {
   try {
-    const code = route.query.code;
+    // 🔑 Lecture du hash (#access_token=...)
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
 
-    if (!code) {
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const type = params.get("type");
+
+    if (!accessToken || type !== "recovery") {
       linkError.value =
-        "Lien de réinitialisation invalide ou expiré. Veuillez demander un nouveau lien.";
+        "Lien de réinitialisation invalide ou expiré.";
       isInitializing.value = false;
       return;
     }
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    // ✅ Création de la session
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    });
 
     if (error) {
-      console.error("Erreur PKCE :", error);
+      console.error(error);
       linkError.value =
-        "Lien de réinitialisation invalide ou expiré. Veuillez demander un nouveau lien.";
+        "Lien de réinitialisation invalide ou expiré.";
       isInitializing.value = false;
       return;
     }
 
-    // ✅ Session valide
+    // ✅ OK
     isInitializing.value = false;
   } catch (err) {
     console.error(err);
@@ -158,6 +151,7 @@ onMounted(async () => {
   }
 });
 </script>
+
 
 <style scoped>
 .reset-container {
