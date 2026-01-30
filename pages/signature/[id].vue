@@ -22,172 +22,157 @@
 
         <!-- Contenu PDF -->
         <div v-if="pdf">
-            <div id="pdfContent" style="width: 794px; padding: 40px; background: white; display: flex; flex-direction: column;">
-                <!-- Contenu principal qui prend l'espace disponible -->
-                <div style="flex: 1;">
+            <div id="pdfContent">
+                <!-- Boucle sur les pages -->
+                <div v-for="(page, pageIndex) in paginatedItems" :key="pageIndex" 
+                     class="pdf-page" 
+                     :style="{ pageBreakAfter: pageIndex < paginatedItems.length - 1 ? 'always' : 'auto' }">
                     
                     <!-- En-tête avec logo -->
                     <div class="d-flex justify-content-between align-items-start" style="margin-bottom: 15px;">
                         <img src="/logo.png" style="width: 90px; height: 85px;">
-                        <div style="text-align: right; flex: 1; margin-left: 20px;">
-                            <p style="font-size: 11pt; margin: 0; font-weight: bold;">Association PROMotion Economique et Sociale (PROMES)</p>
-                            <p style="font-size: 9pt; margin: 5px 0 0 0;">Programme SESAME</p>
+                        <div style="text-align: left; flex: 1; margin-left: 20px;">
+                            <div class="">
+                                
+                            </div>
+                            <!-- Titre du document -->
+                            <div style="text-align: center; margin: 15px 0;">
+                                <h3 style="font-weight: bold; font-size: 14pt; margin: 0; text-decoration: underline;">DEMANDE D'ACHAT</h3>
+                            </div>
+
+                            <!-- Informations générales -->
+                            <div style="margin: 15px 170px; font-size: 9pt;">
+                                <table>
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; background-color: #f0f0f0; ">Demandeur :</td>
+                                        <td style="border: 1px solid #000; padding: 6px;min-width: 77%;">{{ dataObj.demandeur }}</td>
+                                        
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; background-color: #f0f0f0; ">Date :</td>
+                                        <td style="border: 1px solid #000; padding: 6px; ">{{ dataObj.date }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; background-color: #f0f0f0;">N° d'enregistrement :</td>
+                                        <td colspan="3" style="border: 1px solid #000; padding: 6px;">{{ route.params.id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; background-color: #f0f0f0;">Objet :</td>
+                                        <td colspan="3" style="border: 1px solid #000; padding: 6px;">{{ dataObj.nom }}</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Titre du document -->
-                    <div style="text-align: center; margin: 15px 0;">
-                        <h3 style="font-weight: bold; font-size: 14pt; margin: 0; text-decoration: underline;">DEMANDE D'ACHAT</h3>
-                    </div>
-
-                    <!-- Informations générales -->
-                    <div style="margin: 15px 0; font-size: 10pt;">
-                        <div style="margin-bottom: 8px;">
-                            <span style="font-weight: bold;">N° d'enregistrement :</span>
-                            <span style="border-bottom: 1px solid #000; display: inline-block; min-width: 180px; padding: 2px 5px;">{{ route.params.id }}</span>
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <span style="font-weight: bold;">Date de la demande :</span>
-                            <span style="border-bottom: 1px solid #000; display: inline-block; min-width: 180px; padding: 2px 5px;">{{ dataObj.date }}</span>
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <span style="font-weight: bold;">Demandeur :</span>
-                            <span style="border-bottom: 1px solid #000; display: inline-block; min-width: 380px; padding: 2px 5px;">{{ dataObj.demandeur }}</span>
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <span style="font-weight: bold;">Objet :</span>
-                            <span style="border-bottom: 1px solid #000; display: inline-block; min-width: 480px; padding: 2px 5px;">{{ dataObj.nom }}</span>
-                        </div>
-                    </div>
+                    
 
                     <!-- Tableau des articles -->
                     <div style="margin: 15px 0;">
-                        <h5 style="font-weight: bold; font-size: 11pt; margin-bottom: 8px;">DÉTAILS DES ARTICLES</h5>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
                             <thead>
                                 <tr style="background-color: #f0f0f0;">
-                                    <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 5%;">N°</th>
-                                    <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 30%;">Désignation</th>
-                                    <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 7%;">Qté</th>
-                                    <th style="border: 1px solid #000; padding: 5px; text-align: right; width: 12%;">Prix Unit.</th>
-                                    <th style="border: 1px solid #000; padding: 5px; text-align: right; width: 12%;">Montant</th>
-                                    <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 17%;">Fournisseur</th>
-                                    <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 17%;">Imputation</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 4%;">N°</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 20%;">Désignations</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 6%;">Nombre</th>
+                                    
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 13%;">Imputation Analytique</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: left; width: 13%;">Fournisseur possible</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: right; width: 10%;">PU budgété</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: right; width: 10%;">Montant total du budget alloué</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="item in demande_details" :key="item.id">
+                                <tr v-for="item in page.items" :key="item.id">
                                     <td style="border: 1px solid #000; padding: 4px; text-align: center;">{{ item.num }}</td>
                                     <td style="border: 1px solid #000; padding: 4px;">{{ item.designation }}</td>
                                     <td style="border: 1px solid #000; padding: 4px; text-align: center;">{{ item.qte }}</td>
+                                    
+                                    <td style="border: 1px solid #000; padding: 4px;">{{ item.imputation }}</td>
+                                    <td style="border: 1px solid #000; padding: 4px;">{{ item.fournisseur2 }}</td>
                                     <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ formatNumber(item.prixR) }}</td>
                                     <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">{{ formatNumber(item.totalR) }}</td>
-                                    <td style="border: 1px solid #000; padding: 4px;">{{ item.fournisseur2 }}</td>
-                                    <td style="border: 1px solid #000; padding: 4px;">{{ item.imputation }}</td>
                                 </tr>
-                                <!-- Ligne Total -->
-                                <tr style="background-color: #f8f8f8; font-weight: bold;">
-                                    <td colspan="4" style="border: 1px solid #000; padding: 6px; text-align: right;">MONTANT TOTAL :</td>
-                                    <td style="border: 1px solid #000; padding: 6px; text-align: right; font-size: 10pt;">{{ formatNumber(totalMontant) }} Ar</td>
-                                    <td colspan="2" style="border: 1px solid #000; padding: 6px;"></td>
+                                
+                                <!-- Ligne Total (seulement sur la dernière page) -->
+                                <tr v-if="pageIndex === paginatedItems.length - 1">
+                                    <td colspan="6" style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold;">TOTAL</td>
+                                    <td style="border: 1px solid #000; padding: 6px; text-align: right; font-weight: bold; font-size: 9pt;">{{ formatNumber(totalMontant) }}</td>
+                                    
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Section Signatures -->
-                    <div style="margin-top: 20px;">
-                        <h5 style="font-weight: bold; font-size: 10pt; margin-bottom: 12px; text-align: center;">SIGNATURES ET VALIDATIONS</h5>
+                    <!-- Section Signatures (seulement sur la dernière page) -->
+                    <div v-if="pageIndex === paginatedItems.length - 1" style="margin-top: 20px;">
                         
-                        <!-- Grille de signatures 3 colonnes -->
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 7.5pt;">
+                        <!-- Grille de signatures 4 colonnes -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 7.5pt;">
                             
-                            <!-- Demandeur -->
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">Le demandeur</p>
-                                <p style="margin: 0; font-size: 7pt;">{{ dataObj.demandeur }}</p>
+                            <!-- Le demandeur -->
+                            <div style="border: 1px solid #999; padding: 8px; min-height: 90px;">
+                                <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center;">Le demandeur</p>
                                 
-                                <div v-if="!dataObj.signatureDemandeur" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
-                                <img v-else :src="dataObj.signatureDemandeur" alt="Signature Demandeur" style="max-width: 130px; height: 60px;">
+                                <div v-if="!dataObj.signatureDemandeur" style="margin-top: 35px;"></div>
+                                <img v-else :src="dataObj.signatureDemandeur" alt="Signature Demandeur" style="max-width: 100%; height: 50px; display: block; margin: 10px auto;">
                                 
-                                <p style="margin: 0; font-size: 6.5pt;">Le {{ dataObj.date }}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 7pt; text-align: center;">{{ dataObj.demandeur }}</p>
+                                <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;">{{ dataObj.date }}</p>
                             </div>
 
-                            <!-- Supérieur Hiérarchique - niv_val 2 -->
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">Le Responsable du Service demandeur</p>
-                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.superieur?.userValide || 'En attente' }}</p>
+                            <!-- Le Responsable du Service demandeur -->
+                            <div style="border: 1px solid #999; padding: 8px; min-height: 90px;">
+                                <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center; font-size: 7pt;">Le Responsable du Service demandeur</p>
                                 
-                                <div v-if="!validateurs.superieur?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
-                                <img v-else :src="validateurs.superieur.signatureValide" alt="Signature Supérieur" style="max-width: 130px; height: 60px;">
+                                <div v-if="!validateurs.superieur?.signatureValide" style="margin-top: 35px;"></div>
+                                <img v-else :src="validateurs.superieur.signatureValide" alt="Signature Supérieur" style="max-width: 100%; height: 50px; display: block; margin: 10px auto;">
                                 
-                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.superieur?.dateVal">Le {{ validateurs.superieur.dateVal }}</p>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.superieur?.userValide || 'En attente' }}</p>
+                                <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;" v-if="validateurs.superieur?.dateVal">{{ validateurs.superieur.dateVal }}</p>
                             </div>
 
-                            <!-- Responsable Finance - niv_val 5 -->
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">Validation budgétaire par le Département Finance</p>
-                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.finance?.userValide || 'En attente' }}</p>
+                            <!-- Validation budgétaire par le Département Finance -->
+                            <div style="border: 1px solid #999; padding: 8px; min-height: 90px;">
+                                <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center; font-size: 7pt;">Validation budgétaire par le Département Finance</p>
                                 
-                                <div v-if="!validateurs.finance?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
-                                <img v-else :src="validateurs.finance.signatureValide" alt="Signature Finance" style="max-width: 130px; height: 60px;">
+                                <div v-if="!validateurs.finance?.signatureValide" style="margin-top: 35px;"></div>
+                                <img v-else :src="validateurs.finance.signatureValide" alt="Signature Finance" style="max-width: 100%; height: 50px; display: block; margin: 10px auto;">
                                 
-                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.finance?.dateVal">Le {{ validateurs.finance.dateVal }}</p>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.finance?.userValide || 'En attente' }}</p>
+                                <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;" v-if="validateurs.finance?.dateVal">{{ validateurs.finance.dateVal }}</p>
                             </div>
 
-                            <!-- Responsable Achat - niv_val 3 -->
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">Réception par le Service Achat</p>
-                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.achat?.userValide || 'En attente' }}</p>
+                            <!-- Réception par le Service Achat -->
+                            <div style="border: 1px solid #999; padding: 8px; min-height: 90px;">
+                                <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center; font-size: 7pt;">Réception par le Service Achat</p>
                                 
-                                <div v-if="!validateurs.achat?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
-                                <img v-else :src="validateurs.achat.signatureValide" alt="Signature Achat" style="max-width: 130px; height: 60px;">
+                                <div v-if="!validateurs.achat?.signatureValide" style="margin-top: 35px;"></div>
+                                <img v-else :src="validateurs.achat.signatureValide" alt="Signature Achat" style="max-width: 100%; height: 50px; display: block; margin: 10px auto;">
                                 
-                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.achat?.dateVal">Le {{ validateurs.achat.dateVal }}</p>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.achat?.userValide || 'En attente' }}</p>
+                                <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;" v-if="validateurs.achat?.dateVal">{{ validateurs.achat.dateVal }}</p>
                             </div>
-
-                            <!-- Responsable Administratif - niv_val 4 
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">RESPONSABLE ADMIN.</p>
-                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.admin?.userValide || 'En attente' }}</p>
-                                
-                                <div v-if="!validateurs.admin?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
-                                <img v-else :src="validateurs.admin.signatureValide" alt="Signature Admin" style="max-width: 130px; height: 60px;">
-                                
-                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.admin?.dateVal">Le {{ validateurs.admin.dateVal }}</p>
-                            </div>-->
-
-                            
-
-                            <!-- Directeur du Programme - niv_val 6 
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">DIRECTEUR PROGRAMME</p>
-                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.dpr?.userValide || 'En attente' }}</p>
-                                
-                                <div v-if="!validateurs.dpr?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px;"></div>
-                                <img v-else :src="validateurs.dpr.signatureValide" alt="Signature DPR" style="max-width: 130px; height: 60px;">
-                                
-                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.dpr?.dateVal">Le {{ validateurs.dpr.dateVal }}</p>
-                            </div>-->
-
-                            <!-- Émetteur du chèque - niv_val 7 (pleine largeur) 
-                            <div style="border: 1px solid #999; padding: 8px; min-height: 70px; grid-column: 1 / -1;">
-                                <p style="font-weight: bold; margin: 0 0 3px 0;">ÉMETTEUR DU CHÈQUE</p>
-                                <p style="margin: 0; color: #666; font-size: 7pt;">{{ validateurs.cheque?.userValide || 'En attente' }}</p>
-                                
-                                <div v-if="!validateurs.cheque?.signatureValide" style="margin-top: 25px; border-top: 1px solid #000; padding-top: 3px; max-width: 280px;"></div>
-                                <img v-else :src="validateurs.cheque.signatureValide" alt="Signature Chèque" style="max-width: 200px; height: 60px;">
-                                
-                                <p style="margin: 0; font-size: 6.5pt;" v-if="validateurs.cheque?.dateVal">Le {{ validateurs.cheque.dateVal }}</p>
-                            </div>-->
 
                         </div>
                     </div>
 
-                    <!-- Footer -->
-                    <div style="margin-top: 15px; font-size: 7pt; color: #666; text-align: center;">
-                        <p style="margin: 0;">Association PROMES / Programme SESAME</p>
-                        <p style="margin: 3px 0 0 0;">Document généré le {{ new Date().toLocaleDateString('fr-FR') }} - Demande N° {{ route.params.id }}</p>
+                    <!-- Footer avec numérotation -->
+                    <div style="margin-top: 15px; font-size: 7pt; color: #666;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="text-align: left;">
+                                
+                                <p style="margin: 3px 0 0 0;">Document généré le {{ new Date().toLocaleDateString('fr-FR') }} - Demande N° {{ route.params.id }}</p>
+                                
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="margin: 0; float: right;">Association PROMES / Programme SESAME</p>
+                            </div>
+                            
+                            <div v-if="paginatedItems.length > 1" style="text-align: right; font-weight: bold;">
+                                Page {{ pageIndex + 1 }} / {{ paginatedItems.length }}
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -215,6 +200,9 @@ const dataObj = ref({
 });
 const demande_details = ref([]);
 
+// Nombre d'articles par page
+const ITEMS_PER_PAGE = 15;
+
 // Stocker les validateurs par niveau
 const validateurs = ref({
     superieur: null,  // niv_val 2
@@ -233,7 +221,18 @@ const alert = ref({
     type: ''
 });
 
-// Computed
+// Computed - Pagination des articles
+const paginatedItems = computed(() => {
+    const pages = [];
+    for (let i = 0; i < demande_details.value.length; i += ITEMS_PER_PAGE) {
+        pages.push({
+            items: demande_details.value.slice(i, i + ITEMS_PER_PAGE)
+        });
+    }
+    return pages;
+});
+
+// Computed - Total
 const totalMontant = computed(() => {
     return demande_details.value.reduce((sum, item) => sum + (item.totalR || 0), 0);
 });
@@ -312,11 +311,11 @@ const getDemandeValidee = async () => {
                 .select('id, niv_val, created_at, userValide:id_user(full_name), signatureValide:id_user(signature_url)')
                 .eq('id_item', items[0].id)
                 .order('niv_val', { ascending: true })
-                .order('id', { ascending: false }); // Trier par id décroissant pour avoir le plus récent en premier
+                .order('id', { ascending: false });
             
             if (itemsHistoError) throw itemsHistoError;
 
-            // Grouper par niv_val et garder seulement le plus récent (premier dans la liste triée)
+            // Grouper par niv_val et garder seulement le plus récent
             const validateursMap = {};
             itemsHisto.forEach(item => {
                 if (!validateursMap[item.niv_val]) {
@@ -338,8 +337,6 @@ const getDemandeValidee = async () => {
                 dpr: validateursMap[6] || null,
                 cheque: validateursMap[7] || null
             };
-
-            console.log('Validateurs par niveau:', validateurs.value);
         }
         
     } catch (error) {
@@ -350,12 +347,11 @@ const getDemandeValidee = async () => {
     }
 };
 
-// Génération du PDF avec auto-fit comme dans le bon de commande
+// Génération du PDF en format paysage
 const generatePDF = async () => {
     pdfButtonLoading.value = true
     
     try {
-        // Import dynamique
         const html2canvas = (await import('html2canvas')).default
         const { jsPDF } = await import('jspdf')
 
@@ -366,57 +362,60 @@ const generatePDF = async () => {
             return
         }
 
-        // Créer le PDF
-        const pdf = new jsPDF('p', 'mm', 'a4')
+        // Créer le PDF en format PAYSAGE
+        const pdf = new jsPDF('l', 'mm', 'a4') // 'l' pour landscape (paysage)
         const pdfWidth = pdf.internal.pageSize.getWidth()
         const pdfHeight = pdf.internal.pageSize.getHeight()
 
-        // Mesurer la hauteur réelle du contenu
-        const contentHeight = element.scrollHeight
+        // Traiter chaque page
+        const pages = element.querySelectorAll('.pdf-page')
         
-        // Capturer l'élément
-        const canvas = await html2canvas(element, { 
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            windowWidth: 794,
-            windowHeight: contentHeight,
-            letterRendering: true,
-            dpi: 96,
-            y: 0,
-            scrollY: 0
-        })
-        
-        const imgData = canvas.toDataURL('image/png')
-        const imgProps = pdf.getImageProperties(imgData)
-        
-        // Calculer les dimensions
-        let imgWidth = pdfWidth
-        let imgHeight = (imgProps.height * pdfWidth) / imgProps.width
-        
-        // Hauteur maximale autorisée (95% de la page)
-        const maxAllowedHeight = pdfHeight * 0.95
-        
-        let xOffset = 0
-        let yOffset = 0
-        
-        if (imgHeight > maxAllowedHeight) {
-            // Contenu trop grand : réduire pour faire rentrer dans 95% de la page
-            const scaleFactor = maxAllowedHeight / imgHeight
-            imgHeight = maxAllowedHeight
-            imgWidth = pdfWidth * scaleFactor
+        for (let i = 0; i < pages.length; i++) {
+            if (i > 0) {
+                pdf.addPage()
+            }
+
+            const pageElement = pages[i]
+            const contentHeight = pageElement.scrollHeight
             
-            // Centrer horizontalement
-            xOffset = (pdfWidth - imgWidth) / 2
+            const canvas = await html2canvas(pageElement, { 
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                windowWidth: 1123, // Largeur pour format paysage (A4 = 297mm = ~1123px)
+                windowHeight: contentHeight,
+                letterRendering: true,
+                dpi: 96,
+                y: 0,
+                scrollY: -window.scrollY
+            })
             
-            // Petit offset du haut
-            yOffset = (pdfHeight - imgHeight) / 10
-        } else {
-            // Taille OK : léger offset du haut
-            yOffset = (pdfHeight - imgHeight) / 8
+            const imgData = canvas.toDataURL('image/png')
+            const imgProps = pdf.getImageProperties(imgData)
+            
+            // Calculer les dimensions
+            let imgWidth = pdfWidth
+            let imgHeight = (imgProps.height * pdfWidth) / imgProps.width
+            
+            // Hauteur maximale autorisée (95% de la page)
+            const maxAllowedHeight = pdfHeight * 0.95
+            
+            let xOffset = 0
+            let yOffset = 0
+            
+            if (imgHeight > maxAllowedHeight) {
+                // Contenu trop grand : réduire
+                const scaleFactor = maxAllowedHeight / imgHeight
+                imgHeight = maxAllowedHeight
+                imgWidth = pdfWidth * scaleFactor
+                xOffset = (pdfWidth - imgWidth) / 2
+                yOffset = (pdfHeight - imgHeight) / 10
+            } else {
+                yOffset = (pdfHeight - imgHeight) / 8
+            }
+            
+            pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight)
         }
-        
-        pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight)
         
         // Sauvegarder le PDF
         const fileName = `Demande_Validee_${route.params.id}.pdf`
@@ -444,9 +443,17 @@ onMounted(() => {
     min-height: 100vh;
 }
 
+.pdf-page {
+    width: 1123px; /* Format A4 paysage */
+    padding: 40px;
+    background: white;
+    margin: 0 auto 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    min-height: 794px; /* Hauteur A4 */
+}
+
 #pdfContent {
     margin: 0 auto;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 /* Styles pour l'impression */
@@ -455,13 +462,18 @@ onMounted(() => {
         display: none;
     }
     
-    #pdfContent {
+    .pdf-page {
         box-shadow: none;
         margin: 0;
+        page-break-after: always;
+    }
+    
+    .pdf-page:last-child {
+        page-break-after: auto;
     }
     
     @page {
-        size: A4;
+        size: A4 landscape;
         margin: 0;
     }
 }
