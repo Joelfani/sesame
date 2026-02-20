@@ -13,9 +13,9 @@ export const tableTete = [
 export const niveau = {
     superieur: 1,
     achat: 2,
-    afe:3,
-    finance:4,
-    dpr:5,
+    finance:3,
+    dpr:4,
+    afe:5,
     cheque:6,
     livraison:7,
     valide:8,

@@ -15,14 +15,14 @@
                 <li v-if="userStore.achat" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/achat">Achats</NuxtLink>
                 </li>
-                <li v-if="userStore.afe" class="nav-item">
-                    <NuxtLink class="nav-link btn btn-light" to="/AFE">AFE-BC</NuxtLink>
-                </li>
                 <li v-if="userStore.finance" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/finance">Finances</NuxtLink>
                 </li>
                 <li v-if="userStore.dpr" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/dpr">DPR</NuxtLink>
+                </li>
+                <li v-if="userStore.afe" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/AFE">AFE-BC</NuxtLink>
                 </li>
                 <li v-if="userStore.cheque" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/cheque">Chèques</NuxtLink>
