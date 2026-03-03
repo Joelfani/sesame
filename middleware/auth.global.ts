@@ -20,7 +20,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
             'cheque': 'cheque',
             'livraison': 'livraison',
             'fournisseur': 'fournisseur',
-            'signature': 'finance',
+            'signature': 'finance|achat',
         }
         
         // Vérifier si l'utilisateur est connecté
@@ -56,8 +56,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
                 const requiredPermission = protectedRoutes[routeName as keyof typeof protectedRoutes] 
                     || protectedRoutes[mainSegment as keyof typeof protectedRoutes]
                 
+                    
                 // Vérifier si l'utilisateur a la permission requise
-                if (!userStore[requiredPermission as keyof typeof userStore]) {
+                const permissions = requiredPermission.split('|') // split permet de separer une chaine de caractère en plusieur element dans un tableau par exemple "finance|achat" devient ["finance", "achat"]
+
+                // Vérifier si l'utilisateur a au moins une des permissions requises
+                const hasPermission = permissions.some(permission => userStore[permission as keyof typeof userStore])
+
+                if (!hasPermission) {
                     console.warn(`Accès refusé à ${routePath}. Permission requise: ${requiredPermission}`)
                     return navigateTo('/demande')
                 }
