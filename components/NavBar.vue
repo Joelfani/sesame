@@ -18,6 +18,9 @@
                 <li v-if="userStore.finance" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/finance">Finances</NuxtLink>
                 </li>
+                <li v-if="userStore.finance" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/controlleur">CG</NuxtLink>
+                </li>
                 <li v-if="userStore.dpr" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/dpr">DPR</NuxtLink>
                 </li>

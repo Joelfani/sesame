@@ -6,7 +6,7 @@
                 
             </div>
         </div>
-        
+        <button class="btn btn-primary" @click="foncNivRefu">Nivrefus</button>
         <!-- Champ de recherche -->
         <div class="d-flex align-items-center">
             <select name="choix" class="form-select mb-3" style="width: 250px; margin-right: 10px;" v-model="choix_filtre">
@@ -98,13 +98,13 @@ const getDemande = async () => {
             .select(`
                 *,
                 users: id_user ( full_name ),
-                items: ses_demItems ( niv_val )
+                items: ses_demItems ( niv_val,nivrefus )
             `)
             .order('id', { ascending: false });
 
         // user avec droits spéciaux ADMIN / achat/afe/finance/dpr
-        if (userStore.type_compte == 1 || userStore.achat || userStore.afe || userStore.finance || userStore.dpr) {
-            console.log("user with special rights");
+        if (userStore.type_compte == 1 || userStore.achat || userStore.afe || userStore.finance || userStore.dpr || userStore.cheque) {
+            console.log("user with special rights"); 
         }
 
         // utilisateur normal (supérieur)
@@ -117,7 +117,7 @@ const getDemande = async () => {
         const { data, error } = await query;
         if (error) throw error;
 
-        // ⭐ Calcul du niveau de validation minimal + mapping final
+        // Calcul du niveau de validation minimal + mapping final
         let dataObj = data.map(item => {
             const nivMin = item.items?.length
                 ? Math.min(...item.items.map(it => it.niv_val))
@@ -130,16 +130,16 @@ const getDemande = async () => {
                 date_original: item.date,
                 date: formatDate(item.date),
                 date_formatted: formatDate(item.date),
-                id_user: item.users?.full_name || item.id_user
+                id_user: item.users?.full_name || item.id_user,
+                nivrefus2: item.items?.[0]?.nivrefus || null
             };
         });
 
-        // 🔥 Filtrage par rôle (optimisé)
+        // Filtrage par rôle (optimisé)
         if (userStore.type_compte != 1) {
             if (userStore.achat) {
-            dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.achat);
-            
-            
+                dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.achat);
+
             } else if (userStore.afe) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.afe);
                 
@@ -149,22 +149,25 @@ const getDemande = async () => {
             } else if (userStore.dpr) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.dpr);
                 
+            } else if (userStore.cheque) {
+                dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.cheque);
+                console.log("Données après filtrage par rôle:", dataObj);
             }
         }
-
+        
         // Traduction du niveau en texte
         const finalResult = dataObj.map(item => ({
             ...item,
             niv_val:
                 item.niv_val_min === niveau.superieur ? 'En attente de validation chez votre superieur' :
                 item.niv_val_min === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
-                item.niv_val_min === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
+                item.niv_val_min === niveau.afe ? 'En attente d\' AFE-BC' :
                 item.niv_val_min === niveau.finance ? 'En attente de validation chez le responsable financier' :
                 item.niv_val_min === niveau.dpr ? 'En attente de validation du DPR' :
                 item.niv_val_min === niveau.cheque ? 'En attente d\'émission de chèque' :
                 item.niv_val_min === niveau.livraison ? 'En attente de livraison' :
                 item.niv_val_min === niveau.valide ? 'Validée' :
-                item.niv_val_min === niveau.refuse ? 'Votre demande a été refusée' :
+                item.niv_val_min === niveau.refuse ? 'La demande a été refusée' :
                 'Statut inconnu'
         }));
 
@@ -256,4 +259,23 @@ const formatDate = (dateString) => {
 onMounted(async () => {
     getDemande();
 });
+
+    const foncNivRefu = async () => {
+        try{
+            const { error } = await supabase
+                .from('ses_demItems')
+                .update({ nivrefus: niveau.livraison })
+                .eq('niv_val', niveau.refuse)
+                .is('nivrefus', null)
+                .not('imputation', 'is', null)
+                .not('fournisseur2', 'is', null)
+                .not('num_cheque', 'is', null)
+                .is('date_livraison', null);
+                if (error) throw error;
+                showAlert('Mise à jour des demandes refusées réussie', 'Succès', 'success');
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour des demandes refusées:", error);
+            showAlert('Erreur lors de la mise à jour des demandes refusées', 'Erreur', 'danger');
+        }
+    }
 </script>

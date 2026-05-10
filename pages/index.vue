@@ -64,6 +64,8 @@ const alertPop = (message,type,title,time = 5000) =>{
 }
 
 const send_connexion = async (formData) => {
+    alertPop('L\'application est actuellement en maintenance. Elle sera de nouveau disponible très bientôt. Merci de votre patience.','danger','Alert!')
+    /*
     try {
         const { data: existingUser, error: userError } = await supabase
             .from('users')
@@ -110,6 +112,7 @@ const send_connexion = async (formData) => {
 
         alertPop(errorMessage,'danger','Oups!')
     }
+        */
 }
 
 onMounted(() => {

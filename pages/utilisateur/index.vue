@@ -64,7 +64,7 @@
                                 </div>
                                 <div class="col-4">
                                     <div class="checkbox-wrapper">
-                                        <label class="checkbox-label" for="afe">Accès Admin Achat</label>
+                                        <label class="checkbox-label" for="afe">Accès AFE-BC</label>
                                         <input 
                                             class="form-check-input checkbox-large" 
                                             type="checkbox" 

@@ -75,7 +75,7 @@ const loading = ref(true);
             ...item,
             etat: item.niv_val === niveau.superieur ? 'En attente de validation chez votre superieur' :
                     item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
-                    item.niv_val === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
+                    item.niv_val === niveau.afe ? 'En attente d\' AFE-BC' :
                         item.niv_val === niveau.finance ? 'En attente de validation chez le responsable financier' :
                         item.niv_val === niveau.dpr ? 'En attente de validation du DPR' : 
                         item.niv_val === niveau.cheque ? 'En attente d\'émission de chèque' :

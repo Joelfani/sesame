@@ -117,7 +117,7 @@ const getDemande = async () => {
                 niv_val: 
                     minVal === niveau.superieur ? 'En attente de validation chez votre superieur' :
                     minVal === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
-                    minVal === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
+                    minVal === niveau.afe ? 'En attente d\' AFE-BC' :
                     minVal === niveau.finance ? 'En attente de validation chez le responsable financier' :
                     minVal === niveau.dpr ? 'En attente de validation du DPR' :
                     minVal === niveau.cheque ? 'En attente d\'émission de chèque' :
