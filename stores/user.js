@@ -12,10 +12,12 @@ state: () => ({
     type_compte:null, 
     avatar:null,
     sup:'',
+    service:'',
     niv:null,
     achat:false,
     afe:false,
     finance:false,
+    cg:false,
     dpr:false,
     cheque:false,
     livraison:false,
@@ -36,6 +38,7 @@ actions: {
     this.type_compte = user.type_compte
     this.avatar = user.avatar
     this.sup = user.sup
+    this.service = user.service
     this.niv = user.niv
     this.achat = user.achat
     this.afe = user.afe
@@ -44,6 +47,7 @@ actions: {
     this.cheque = user.cheque
     this.livraison = user.livraison
     this.fournisseur = user.fournisseur
+    this.cg = user.cg
     this.add = user.add
     this.edit = user.edit
     this.delet = user.delet
@@ -58,10 +62,12 @@ actions: {
     this.type_compte = newData.type_compte || this.type_compte
     this.avatar = newData.avatar || this.avatar
     this.sup = newData.sup || this.sup
+    this.service = newData.service || this.service
     this.niv = newData.niv || this.niv
     this.achat = newData.achat || this.achat
     this.afe = newData.afe || this.afe
     this.finance = newData.finance || this.finance
+    this.cg = newData.cg || this.cg
     this.dpr = newData.dpr || this.dpr
     this.cheque = newData.cheque || this.cheque
     this.livraison = newData.livraison || this.livraison

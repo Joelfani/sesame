@@ -18,7 +18,7 @@
                 <li v-if="userStore.finance" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/finance">Finances</NuxtLink>
                 </li>
-                <li v-if="userStore.finance" class="nav-item">
+                <li v-if="userStore.cg" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/controlleur">CG</NuxtLink>
                 </li>
                 <li v-if="userStore.dpr" class="nav-item">
@@ -32,6 +32,9 @@
                 </li>
                 <li v-if="userStore.livraison" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/livraison">Livraisons</NuxtLink>
+                </li>
+                <li v-if="userStore.type_compte === 1 || userStore.achat || userStore.livraison || userStore.cheque || userStore.finance" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/rectification">Rectifications</NuxtLink>
                 </li>
                 <li v-if="userStore.fournisseur" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/fournisseur">Fournisseur</NuxtLink>
@@ -49,7 +52,7 @@
                     <NuxtLink class="nav-link btn btn-light" to="/imputation">Imputation</NuxtLink>
                 </li>
                 <li v-if="userStore.type_compte === 1" class="nav-item">
-                    <NuxtLink class="nav-link btn btn-light" to="/historique">Actions</NuxtLink>
+                    <NuxtLink class="nav-link btn btn-light" to="/historique">Historique</NuxtLink>
                 </li>
                 <li class="nav-item">
                     <div class="notification-wrapper" data-bs-toggle="modal" data-bs-target="#notificationModal" @click="openNotificationModal">

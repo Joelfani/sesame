@@ -110,11 +110,27 @@
                         </select>
                     </div>
                     <div class="col">
+                        <label class="label">Service</label>
+                        <select 
+                            name="sup" 
+                            class="form-select"  
+                            v-model="formData.service" 
+                            :disabled="!isEditing"
+                        >
+                            <option value="Service Pédagogique">Service Pédagogique</option>
+                            <option value="Service Financier">Service Financier</option>
+                            <option value="Service Achat">Service Achat</option>
+
+                            
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
                         <br>
                         <button class="btn btn-danger" @click="logout">Déconnexion</button>
                     </div>
                 </div>
-                
                 <!-- Section Signature -->
                 <div class="row mt-4">
                     <div class="col">
@@ -186,8 +202,6 @@
                             :disabled="true"
                         >
                     </div>
-                </div>
-                <div class="row">
                     <div class="col">
                         <p>Finance</p>
                         <input 
@@ -196,7 +210,10 @@
                             v-model="formData.droits.finance" 
                             :disabled="true"
                         >
-                    </div>
+                    </div>  
+                </div>
+                <div class="row">
+                    
                     <div class="col">
                         <p>DPR</p>
                         <input 
@@ -215,8 +232,6 @@
                             :disabled="true"
                         >
                     </div>
-                </div>
-                <div class="row">
                     <div class="col">
                         <p>Livraison</p>
                         <input 
@@ -235,12 +250,23 @@
                             :disabled="true"
                         >
                     </div>
+                </div>
+                <div class="row">
                     <div class="col">
                         <p>AFE-BC</p>
                         <input 
                             class="form-control form-check-input" 
                             type="checkbox" 
                             v-model="formData.droits.afe" 
+                            :disabled="true"
+                        >
+                    </div>
+                    <div class="col">
+                        <p>C.G</p>
+                        <input 
+                            class="form-control form-check-input" 
+                            type="checkbox" 
+                            v-model="formData.droits.cg" 
                             :disabled="true"
                         >
                     </div>
@@ -289,6 +315,7 @@ const formData = ref({
     fonction: '',
     genre: '',
     sup: '',
+    service: '',
     droits: {
         add: false,
         edit: false,
@@ -299,7 +326,8 @@ const formData = ref({
         cheque: false,
         livraison: false,
         fournisseur: false,
-        afe:false
+        afe:false,
+        cg:false
     }
 })
 
@@ -322,6 +350,7 @@ const initializeData = () => {
         resp: userStore.resp || '',
         genre: userStore.genre || '',
         sup: userStore.sup || '',
+        service: userStore.service || '',
         droits: {
             add: userStore.add || false,
             edit: userStore.edit || false,
@@ -332,7 +361,8 @@ const initializeData = () => {
             cheque: userStore.cheque || false,
             livraison: userStore.livraison || false,
             fournisseur: userStore.fournisseur || false,
-            afe: userStore.afe || false
+            afe: userStore.afe || false,
+            cg: userStore.cg || false
         }
     }
 
@@ -540,6 +570,7 @@ const saveChanges = async () => {
             resp: formData.value.resp,
             sup: formData.value.sup,
             avatar: selectedAvatar.value,
+            service: formData.value.service
         }
         
         // Mise à jour en base de données

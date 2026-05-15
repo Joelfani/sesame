@@ -2,7 +2,7 @@
     <div class="purchase_page">
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>DÉTAILS DE LA DEMANDE - GESTION DU CHÈQUE</h1>
+            <h1>DÉTAILS DE LA DEMANDE</h1>
             <div>
                 <button class="btn btn-outline-secondary" @click="devTab">{{ dev ? 'Réduire le tableau': 'Développer le tableau' }}</button>
                 <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
@@ -58,6 +58,7 @@
                             {{ article.num }} - {{ article.designation }} ({{ article.totalR }} Ar)
                         </li>
                     </ul>
+                    <strong>Total des prix :</strong> {{ totalArticles }} Ar
                 </div>
 
                 <hr>
@@ -209,6 +210,14 @@ const articlesAffiches = computed(() => {
         item.niv_val >= niveau.cheque
     );
 });
+
+//Calcul du total des articles affichés pour le fournisseur sélectionné
+const totalArticles = computed(() => {
+    return articlesAffiches.value.reduce((total, article) => {
+        return total + (article.totalR || 0);
+    }, 0);
+}); // reduce => permet de transfomer un tableau en une seule valeur (ici la somme des totaux des articles)
+    // array.reduce((accumulateur(valeur actuel dans la boucle), valeurCourante (element traverse actuellement)) => accumulateur + valeurCourante, valeurInitiale (valeur de commencement));
 
 // METHODES
 // Gestion du tableau

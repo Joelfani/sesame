@@ -136,6 +136,17 @@
                                         >
                                     </div>
                                 </div>
+                                <div class="col-4">
+                                    <div class="checkbox-wrapper">
+                                        <label class="checkbox-label" for="cg">Accès Controlleur Gestion</label>
+                                        <input 
+                                            class="form-check-input checkbox-large" 
+                                            type="checkbox" 
+                                            id="cg"
+                                            v-model="formAcces.cg"
+                                        >
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="d-flex justify-content-end gap-2 mt-4">
@@ -220,7 +231,8 @@ const formAcces = ref({
     finance: false,
     cheque: false,
     livraison: false,
-    fournisseur: false
+    fournisseur: false,
+    cg: false
 })
 
 // Utilisateur en cours de modification
@@ -313,7 +325,8 @@ const recovery_data = (item) => {
         finance: item.finance || false,
         cheque: item.cheque || false,
         livraison: item.livraison || false,
-        fournisseur: item.fournisseur || false
+        fournisseur: item.fournisseur || false,
+        cg: item.cg || false
     }
 }
 
@@ -333,7 +346,7 @@ const modifierAcces = async () => {
         
         showAlert('Accès modifiés avec succès!', 'Succès', 'success')
         await loadUtilisateurs()
-        
+        await filterUtilisateurs()
     } catch (error) {
         console.error('Erreur lors de la modification des accès:', error)
         showAlert('Erreur lors de la modification des accès', 'Oups!', 'danger')
@@ -363,7 +376,7 @@ const toggleActivation = async (user) => {
         )
         
         await loadUtilisateurs()
-        
+        await filterUtilisateurs()
     } catch (error) {
         console.error('Erreur lors du changement de statut:', error)
         showAlert('Erreur lors du changement de statut', 'Oups!', 'danger')

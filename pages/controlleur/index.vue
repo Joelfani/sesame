@@ -31,7 +31,7 @@
                 :columns="columns"
                 :rows="filtered_demandes"
                 :type_but_link="true" 
-                but_link_path="finance/" 
+                but_link_path="controlleur/" 
                 name_but_action="Voir"
                 :loading="loading"
             />

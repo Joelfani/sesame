@@ -19,7 +19,11 @@
 
         <!-- Tableau des détails -->
         <div class="table_block_list mt-4">
-        <Table :columns="columns" :rows="demande_details" :showActions="false" :loading="loading"/>
+        <Table 
+        :columns="columns" 
+        :rows="demande_details" 
+        :showActions="true"
+        :loading="loading"/>
         </div>
     </div>
     </template>
@@ -51,7 +55,7 @@ const loading = ref(true);
     { key: 'date_emission_cheque', label: 'Date d\'émission'},
     { key: 'observation_cheque', label: 'Observation Chèque'},
     { key: 'date_livraison', label: 'Date de livraison'},
-    { key: 'observation_livraison', label: 'Observation sur la livraison', style: {minWidth: '350px'}},
+    { key: 'observation_livraison', label: 'Observation sur la livraison', style: {minWidth: '350px'}}, 
     ];
 
     //DATA //
@@ -76,6 +80,7 @@ const loading = ref(true);
                     item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
                     item.niv_val === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
                         item.niv_val === niveau.finance ? 'En attente de validation chez le responsable financier' :
+                        item.niv_val === niveau.cg ? 'En attente de validation chez le controlleur de gestion' :
                         item.niv_val === niveau.dpr ? 'En attente de validation du DPR' : 
                         item.niv_val === niveau.cheque ? 'En attente d\'émission de chèque' :
                         item.niv_val === niveau.livraison ? 'En attente de livraison' :

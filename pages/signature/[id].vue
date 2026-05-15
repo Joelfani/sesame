@@ -107,8 +107,8 @@
                     <!-- Section Signatures (seulement sur la dernière page) -->
                     <div v-if="pageIndex === paginatedItems.length - 1" style="margin-top: 20px;">
                         
-                        <!-- Grille de signatures 4 colonnes -->
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 7.5pt;">
+                        <!-- Grille de signatures 5 colonnes -->
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; font-size: 7.5pt;">
                             
                             <!-- Le demandeur -->
                             <div style="border: 1px solid #999; padding: 8px; min-height: 90px;">
@@ -128,7 +128,7 @@
                                 <div v-if="!validateurs.superieur?.signatureValide" style="margin-top: 35px;"></div>
                                 <img v-else :src="validateurs.superieur.signatureValide" alt="Signature Supérieur" style="max-width: 100%; height: 50px; display: block; margin: 10px auto;">
                                 
-                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.superieur?.userValide || 'En attente' }}</p>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.superieur?.userValide || '' }}</p>
                                 <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;" v-if="validateurs.superieur?.dateVal">{{ validateurs.superieur.dateVal }}</p>
                             </div>
 
@@ -139,7 +139,7 @@
                                 <div v-if="!validateurs.finance?.signatureValide" style="margin-top: 35px;"></div>
                                 <img v-else :src="validateurs.finance.signatureValide" alt="Signature Finance" style="max-width: 100%; height: 50px; display: block; margin: 10px auto;">
                                 
-                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.finance?.userValide || 'En attente' }}</p>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.finance?.userValide || '' }}</p>
                                 <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;" v-if="validateurs.finance?.dateVal">{{ validateurs.finance.dateVal }}</p>
                             </div>
 
@@ -150,10 +150,20 @@
                                 <div v-if="!validateurs.achat?.signatureValide" style="margin-top: 35px;"></div>
                                 <img v-else :src="validateurs.achat.signatureValide" alt="Signature Achat" style="max-width: 100%; height: 50px; display: block; margin: 10px auto;">
                                 
-                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.achat?.userValide || 'En attente' }}</p>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.achat?.userValide || '' }}</p>
                                 <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;" v-if="validateurs.achat?.dateVal">{{ validateurs.achat.dateVal }}</p>
                             </div>
 
+                            <!-- Validation du CG -->
+                            <div style="border: 1px solid #999; padding: 8px; min-height: 90px;">
+                                <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center; font-size: 7pt;">Validation du CG</p>
+                                
+                                <div v-if="!validateurs.cg?.signatureValide" style="margin-top: 35px;"></div>
+                                <img v-else :src="validateurs.cg.signatureValide" alt="Signature CG" style="max-width: 100%; height: 50px; display: block; margin: 10px auto;">
+                                
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">{{ validateurs.cg?.userValide || '' }}</p>
+                                <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;" v-if="validateurs.cg?.dateVal">{{ validateurs.cg.dateVal }}</p>
+                            </div>
                         </div>
                     </div>
 
@@ -327,16 +337,19 @@ const getDemandeValidee = async () => {
                     };
                 }
             });
+            console.log('Validateurs récupérés:', validateursMap);
 
             // Mapper aux validateurs correspondants
             validateurs.value = {
                 superieur: validateursMap[2] || null,
                 achat: validateursMap[3] || null,
-                admin: validateursMap[4] || null,
-                finance: validateursMap[5] || null,
+                finance: validateursMap[4] || null,
+                cg: validateursMap[5] || null,
                 dpr: validateursMap[6] || null,
-                cheque: validateursMap[7] || null
+                admin: validateursMap[7] || null,
+                cheque: validateursMap[8] || null
             };
+            console.log('Validateurs mappés:', validateurs.value);
         }
         
     } catch (error) {

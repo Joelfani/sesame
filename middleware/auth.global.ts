@@ -16,6 +16,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
             'achat': 'achat',
             'afe': 'afe',
             'finance': 'finance',
+            'controlleur': 'cg',
             'dpr': 'dpr',
             'cheque': 'cheque',
             'livraison': 'livraison',

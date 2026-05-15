@@ -185,7 +185,7 @@ const getDemandeDetails = async () => {
             return {
                 ...item,
                 fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
-                etat: item.niv_val == niveau.finance ? 0 : item.niv_val == niveau.refuse ? 2 : item.niv_val < niveau.finance ? 4 : 1, // Adapter pour le niveau finance
+                etat: item.niv_val == niveau.cg ? 0 : item.niv_val == niveau.refuse ? 2 : item.niv_val < niveau.cg ? 4 : 1, // Adapter pour le niveau finance
                 delai: formatDate(item.delai), // Formatage de la date en jj/mm/aaaa
                 // Mapper les champs pour l'affichage
                 fournisseur2: item.fournisseur2?.nom || '',
@@ -276,7 +276,7 @@ const handleValidation = async (item, editableData) => {
         
         // Préparer les données à mettre à jour
         const updateData = {
-            niv_val: niveau.finance + 1, // Passer au niveau suivant de validation (DPR)
+            niv_val: niveau.cg + 1, // Passer au niveau suivant de validation (DPR)
             ...editableData.fields // Inclure toutes les données éditables modifiées
         };
         
@@ -300,16 +300,16 @@ const handleValidation = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
-                niv_val:niveau.finance + 1,
+                niv_val:niveau.cg + 1,
             });
 
         if (insertHistError) throw insertHistError;
         
-        console.log('Validation financière réussie pour l\'item:', item.id);
-        showAlert('Validation financière réussie !', 'Succès', 'success');
+        console.log('Validation du controlleur réussie pour l\'item:', item.id);
+        showAlert('Validation du controlleur réussie !', 'Succès', 'success');
     } catch (error) {
-        console.error('Erreur lors de la validation financière:', error);
-        showAlert('Erreur lors de la validation financière !', 'Oups!', 'danger');
+        console.error('Erreur lors de la validation du controlleur:', error);
+        showAlert('Erreur lors de la validation du controlleur !', 'Oups!', 'danger');
     }
 };
 
@@ -541,7 +541,7 @@ const exportToExcel = async () => {
             'Fournisseur Réel':item.fournisseur|| '',
             'Prix Réel': item.prixR || '',
             'Montant Réel': item.totalR || '',
-            'Statut': item.niv_val == niveau.finance ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.finance ? 'Validation pas encore a votre niveau' : 'Validé',
+            'Statut': item.niv_val == niveau.cg ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.cg ? 'Validation pas encore a votre niveau' : 'Validé',
         }));
 
         const nameExcel = `Details_de_la_Demande_Num_${route.params.id}`

@@ -2,11 +2,12 @@
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>SUIVI DE TOUTES LES DEMANDES VALIDÉES</h1>
+            <button class="btn btn-outline-success" @click="exportToExcel" style="float: right;">Exportation des demandes</button>
             <div class="link_demande">
                 
             </div>
         </div>
-        <button class="btn btn-primary" @click="foncNivRefu">Nivrefus</button>
+        <!--<button class="btn btn-primary" @click="foncNivRefu">Nivrefus</button>-->
         <!-- Champ de recherche -->
         <div class="d-flex align-items-center">
             <select name="choix" class="form-select mb-3" style="width: 250px; margin-right: 10px;" v-model="choix_filtre">
@@ -24,6 +25,8 @@
             </template>
             
             <input v-else type="search" placeholder="Rechercher une demande" class="form-control mb-3" style="width: 250px; margin-right: 10px;" v-model="search_term" @input="filterData">
+
+            
         </div>
 
         <div class="table_block_list">
@@ -36,6 +39,7 @@
 
 <script setup>
 import { niveau } from '~/assets/js/CommonVariable.js';
+import { exportExcel } from '~/assets/js/export';
 // Services
 const supabase = useSupabaseClient()
 // Store
@@ -55,8 +59,10 @@ const columns = [
     { key: 'id', label: 'N° d\'enregistrement' },
     { key: 'date', label: 'Date de la demande' },
     { key: 'nom_user', label: 'Demandeur' },
+    { key: 'service', label: 'Service' },
     { key: 'nom', label: 'Objet de la demande'},
     { key: 'niv_val', label: 'Status de la demande' },
+    { key: 'nb_rectifications', label: 'Nbrs rectifications' }
 ]
 
 const liste_demande = ref([]); // Liste originale
@@ -97,13 +103,15 @@ const getDemande = async () => {
             .from('ses_demandeObj')
             .select(`
                 *,
-                users: id_user ( full_name ),
-                items: ses_demItems ( niv_val,nivrefus )
+                users: id_user ( full_name, service ),
+                items: ses_demItems ( niv_val,nivrefus ),
+                rectifications: ses_rectification ( obj_id )
             `)
             .order('id', { ascending: false });
-
+            
+            
         // user avec droits spéciaux ADMIN / achat/afe/finance/dpr
-        if (userStore.type_compte == 1 || userStore.achat || userStore.afe || userStore.finance || userStore.dpr || userStore.cheque) {
+        if (userStore.type_compte == 1 || userStore.achat || userStore.afe || userStore.finance || userStore.dpr || userStore.cheque || userStore.cg) {
             console.log("user with special rights"); 
         }
 
@@ -115,6 +123,7 @@ const getDemande = async () => {
 
         // Exécuter la requête optimisée
         const { data, error } = await query;
+        console.log('data:', data);
         if (error) throw error;
 
         // Calcul du niveau de validation minimal + mapping final
@@ -126,43 +135,51 @@ const getDemande = async () => {
             return {
                 ...item,
                 nom_user:item.users.full_name,
+                service: item.users?.service || '-',
                 niv_val_min: nivMin,
                 date_original: item.date,
                 date: formatDate(item.date),
                 date_formatted: formatDate(item.date),
                 id_user: item.users?.full_name || item.id_user,
-                nivrefus2: item.items?.[0]?.nivrefus || null
+                nivrefus2: item.items?.[0]?.nivrefus || null,
+                nb_rectifications:  item.rectifications?.length ? item.rectifications.length : '-' // Affichage du nombre de rectifications ou '-' si aucune rectification (0)
             };
         });
 
         // Filtrage par rôle (optimisé)
-        if (userStore.type_compte != 1) {
+        if (userStore.type_compte != 1 || !userStore.cg || !userStore.finance) {
             if (userStore.achat) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.achat);
 
             } else if (userStore.afe) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.afe);
                 
-            } else if (userStore.finance) {
+            } 
+            /*else if (userStore.finance) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.finance);
                 
-            } else if (userStore.dpr) {
+            } */
+            else if (userStore.dpr) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.dpr);
                 
             } else if (userStore.cheque) {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.cheque);
-                console.log("Données après filtrage par rôle:", dataObj);
-            }
+                
+            } 
+            /*else if (userStore.cg) {
+                dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.cg);
+            }*/
         }
         
         // Traduction du niveau en texte
         const finalResult = dataObj.map(item => ({
             ...item,
             niv_val:
-                item.niv_val_min === niveau.superieur ? 'En attente de validation chez votre superieur' :
+                item.niv_val_min === niveau.superieur ? 'En attente de validation chez le superieur' :
                 item.niv_val_min === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
                 item.niv_val_min === niveau.afe ? 'En attente d\' AFE-BC' :
                 item.niv_val_min === niveau.finance ? 'En attente de validation chez le responsable financier' :
+                item.niv_val_min === niveau.cg ? 'En attente de validation chez le controlleur de gestion' :
                 item.niv_val_min === niveau.dpr ? 'En attente de validation du DPR' :
                 item.niv_val_min === niveau.cheque ? 'En attente d\'émission de chèque' :
                 item.niv_val_min === niveau.livraison ? 'En attente de livraison' :
@@ -254,7 +271,53 @@ const formatDate = (dateString) => {
     
     return formattedDate;
 };
+// Exportation des demandes //
+const exportToExcel = async () => {
+    try {
+        const  { data, error } = await supabase
+            .from('ses_demItems')
+            .select(`*, fournisseur2(nom), ses_demandeObj(date, nom,id_user(full_name, service))`)
 
+            if (error) throw error;
+
+            console.log('dataExport',data);
+            
+        const exportData = data.map(item => ({
+            'N° d\'Enregistrement': item.id_obj,
+            'Date': item.ses_demandeObj ? formatDate(item.ses_demandeObj.date) : '-',
+            'Demandeur': item.ses_demandeObj.id_user?.full_name || '-',
+            'Service': item.ses_demandeObj.id_user?.service || '-',
+            'Objet de la demande': item.ses_demandeObj.nom,
+            'Désignation': item.designation,
+            'Spécificités techniques': item.spec,
+            'Quantité': item.qte,
+            'Prix Réel': item.prixR || '-',
+            'Prix Total Réel': item.totalR || '-',
+            'Fournisseur Réel': item.fournisseur2?.nom || '-',
+            'Imputation Analytique': item.imputation || '-',            
+            'Statut': 
+                item.niv_val === niveau.superieur ? 'En attente de validation chez le superieur' :
+                item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
+                item.niv_val === niveau.afe ? 'En attente d\' AFE-BC' :
+                item.niv_val === niveau.finance ? 'En attente de validation chez le responsable financier' :
+                item.niv_val === niveau.cg ? 'En attente de validation chez le controlleur de gestion' :
+                item.niv_val === niveau.dpr ? 'En attente de validation du DPR' :
+                item.niv_val === niveau.cheque ? 'En attente d\'émission de chèque' :
+                item.niv_val === niveau.livraison ? 'En attente de livraison' :
+                item.niv_val === niveau.valide ? 'Validée' :
+                item.niv_val === niveau.refuse ? 'La demande a été refusée' :
+                'Statut inconnu'
+        }));
+
+        const nameExcel = 'Les_demandes_achat_';
+
+        await exportExcel(exportData, nameExcel);
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'exportation vers Excel:', error);
+        showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
+    }
+};
 // LIFECYCLE HOOKS //
 onMounted(async () => {
     getDemande();
