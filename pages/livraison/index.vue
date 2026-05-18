@@ -124,7 +124,7 @@ const filterData = () => {
                 return true;
         }
     });
-    loading.value = true;
+    loading.value = false;
 }
 
 // Fonction de filtrage par date

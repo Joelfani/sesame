@@ -103,7 +103,8 @@ const tableRef = ref(null);
 // Définition des colonnes du tableau
 const columns = computed(() => [
     { key: 'num', label: 'N°'},
-    ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com'), // Exclure la colonne 'id' et 'com' 
+    { key: 'com', label: 'Commentaire',style: {minWidth: '350px'}},
     { key: 'imputation', label: 'Imputation analytique'},
     { 
         key: "fournisseur2", 
@@ -114,6 +115,7 @@ const columns = computed(() => [
     },
     { key: 'prixR', label: 'Prix Réel', editable: true, min: 1, type: 'number' },
     { key: 'totalR', label: 'Montant Réel', editable: true, min: 1, type: 'number',disabled: true },
+    { key: 'com_achat', label: 'Commentaire de l\' acheteur',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
 ])
 
 // DATA

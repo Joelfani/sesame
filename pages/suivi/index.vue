@@ -2,7 +2,7 @@
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>SUIVI DE TOUTES LES DEMANDES VALIDÉES</h1>
-            <button class="btn btn-outline-success" @click="exportToExcel" style="float: right;">Exportation des demandes</button>
+            <button v-if="userStore.type_compte === 1 ||userStore.achat || userStore.finance || userStore.cg" class="btn btn-outline-success" @click="exportToExcel" style="float: right;">Exportation des demandes</button>
             <div class="link_demande">
                 
             </div>
@@ -277,6 +277,7 @@ const exportToExcel = async () => {
         const  { data, error } = await supabase
             .from('ses_demItems')
             .select(`*, fournisseur2(nom), ses_demandeObj(date, nom,id_user(full_name, service))`)
+            .order('id', { ascending: true })
 
             if (error) throw error;
 

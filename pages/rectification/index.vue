@@ -108,7 +108,8 @@
                 <div class="article-check" v-if="selectedArticle?.id === article.id">✓</div>
                 </div>
             </div><br> 
-            <div class="document">
+            <!-- ======= Gestion des documents ======= -->
+            <div v-if="userStore.achat" class="document">
                 <h5 class="modal-title-step">Liste des documents associés</h5>
                 
                 <div v-if="doc_achat.length > 0" class="text-center">
@@ -154,13 +155,13 @@
             <!-- Qté -->
             <div class="col-md-6">
             <label class="form-label">Quantité</label>
-            <input v-model.number="form.qte" type="number" class="form-control" min="1" @input="computeTotal" />
+            <input v-model.number="form.qte" type="number" class="form-control" min="0" :disabled="!userStore.achat" @input="computeTotal" />
             </div>
 
             <!-- Fournisseur réel -->
             <div class="col-md-6">
             <label class="form-label">Fournisseur Réel</label>
-            <select v-model="form.fournisseur2" class="form-control">
+            <select v-model="form.fournisseur2" class="form-control" :disabled="!userStore.achat">
                 <option v-for="f in fournisseurs" :key="f.value" :value="f.value">{{ f.label }}</option>
             </select>
             </div>
@@ -168,7 +169,7 @@
             <!-- Prix Réel -->
             <div class="col-md-6">
             <label class="form-label">Prix Réel (Ar)</label>
-            <input v-model.number="form.prixR" type="number" class="form-control" min="0" @input="computeTotal" />
+            <input v-model.number="form.prixR" type="number" class="form-control" min="0" :disabled="!userStore.achat" @input="computeTotal" />
             </div>
 
             <!-- Total Réel (calculé) -->
@@ -180,13 +181,13 @@
             <!-- N° Chèque -->
             <div class="col-md-6">
             <label class="form-label">N° Chèque</label>
-            <input v-model="form.num_cheque" type="text" class="form-control" placeholder="Ex: CHQ-00123" />
+            <input v-model="form.num_cheque" type="text" class="form-control" placeholder="Ex: CHQ-00123" :disabled="!userStore.cheque"/>
             </div>
 
             <!-- Date d'émission -->
             <div class="col-md-6">
             <label class="form-label">Date d'émission</label>
-            <input v-model="form.date_emission_cheque" type="date" class="form-control" />
+            <input v-model="form.date_emission_cheque" type="date" class="form-control" :disabled="!userStore.cheque"/>
             </div>
 
             <!-- Motif (obligatoire) -->
@@ -242,7 +243,7 @@ const rectifications = ref([])
 const columnsRectif = [
 { key: 'created_at_fmt', label: 'Date' },
 { key: 'obj_id', label: 'N° Objet' },
-{ key: 'item_id', label: 'N° Article' },
+{ key: 'num_item', label: 'N° Article' },
 { key: 'qte', label: 'Ancienne Qté' },
 { key: 'fournisseur2_nom', label: 'Ancien Fournisseur' },
 { key: 'prixR_fmt', label: 'Ancien Prix Réel' },
@@ -466,6 +467,7 @@ try {
     .insert({
         obj_id: parseInt(searchObjId.value),
         item_id: a.id,
+        num_item: a.num,
         qte: a.qte,
         fournisseur2: a.fournisseur2?.id ?? a.fournisseur2 ?? null,
         prixR: a.prixR,
@@ -587,7 +589,7 @@ const doc_recovery = async (item) =>{
         if (error) throw error
 
         doc_achat.value = data
-        console.log('doc',doc_achat.value);
+        
         
     }catch(error){
         console.log('Erreur lors de la recuperation de la liste des documents', error)
@@ -659,7 +661,7 @@ const fonctionFiles = (event) => {
     }
 }
 const upload_file = async (id_item) => {
-    console.log(file.value);
+    
 
     if(!file.value) return showAlert("Veuillez sélectionner un fichier", 'Oups!', 'danger')
 

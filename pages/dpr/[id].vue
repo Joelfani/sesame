@@ -57,32 +57,30 @@ const tableRef = ref(null);
 // Définition des colonnes du tableau
 const columns = [
     { key: 'num', label: 'N°'},
-    ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif'), // Exclure la colonne 'id'
+    { key: 'com', label: 'Commentaire',style: {minWidth: '350px'}},
     { key: 'imputation', label: 'Imputation analytique' },
     { key: 'fournisseur2', label: 'Fournisseur Réel' },
     { key: 'prixR', label: 'Prix Réel' },
     { key: 'totalR', label: 'Montant Réel' },
-    { 
-        key: 'observation_dpr', 
-        label: 'Observation DPR', 
-        editable: true, 
-        type: 'textarea'
-    }
+    { key: 'com_achat', label: 'Commentaire de l\' acheteur',style: {minWidth: '350px'}},
+    { key: 'com_fin', label: 'Commentaire de la finance',style: {minWidth: '350px'}},
+    { key: 'com_cg', label: 'Commentaire du contrôleur de gestion',style: {minWidth: '350px'}},
+    { key: 'motif', label: 'Motif de rejet ',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
+    { key: 'observation_dpr', label: 'Observation DPR', editable: true, type: 'textarea', style: {minWidth: '350px'}},
 ];
 
 //column reduit
 const columns2 = [
     { key: 'num', label: 'N°'},
-    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'spec' && col.key !== 'fournisseur' && col.key !== 'prix' && col.key !== 'delai' && col.key !== 'total' && col.key !== 'com' ), // Exclure la colonne
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'spec' && col.key !== 'fournisseur' && col.key !== 'prix' && col.key !== 'delai' && col.key !== 'total' && col.key !== 'com' && col.key !== 'motif'), // Exclure la colonne
     { key: 'imputation', label: 'Imputation analytique' },
     { key: 'prixR', label: 'Prix Réel' },
     { key: 'totalR', label: 'Montant Réel' },
-    { 
-        key: 'observation_dpr', 
-        label: 'Observation DPR', 
-        editable: true, 
-        type: 'textarea'
-    }
+    { key: 'com_fin', label: 'Commentaire de la finance',style: {minWidth: '350px'}},
+    { key: 'com_cg', label: 'Commentaire du contrôleur de gestion',style: {minWidth: '350px'}},
+    { key: 'motif', label: 'Motif de rejet ',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
+    { key: 'observation_dpr', label: 'Observation DPR', editable: true, type: 'textarea', style: {minWidth: '350px'}},
 ];
 
 // DATA
