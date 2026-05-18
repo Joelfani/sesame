@@ -117,11 +117,13 @@
                             v-model="formData.service" 
                             :disabled="!isEditing"
                         >
-                            <option value="Service Pédagogique">Service Pédagogique</option>
-                            <option value="Service Financier">Service Financier</option>
-                            <option value="Service Achat">Service Achat</option>
-
-                            
+                            <option value="Service ADMIN">ADMIN</option>
+                            <option value="Service FIN">FIN</option>
+                            <option value="Service PEDA">PEDA</option>
+                            <option value="Service EAD">EAD</option>
+                            <option value="Service BOE">BOE</option>
+                            <option value="Service MEAL">MEAL</option>
+                            <option value="Service PARTENARIAT">PARTENARIAT</option>
                         </select>
                     </div>
                 </div>
