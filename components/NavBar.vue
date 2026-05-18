@@ -366,9 +366,10 @@ const get_notif = async () => {
         //AUTRE NOTIF
         const niveaux = [
             { key: 'achat', niv: niveau.achat},
-            { key: 'afe', niv: niveau.afe},
+            { key: 'cg', niv: niveau.cg},
             { key: 'finance', niv: niveau.finance},
             { key: 'dpr', niv: niveau.dpr},
+            { key: 'afe', niv: niveau.afe},
             { key: 'cheque', niv: niveau.cheque},
             { key: 'livraison', niv: niveau.livraison},
         ];
@@ -383,7 +384,7 @@ const get_notif = async () => {
                 .order('id', { ascending: false })
 
                 if (error) throw error
-
+                console.log('niveau',niv);
                 resultats[key] = data || [] 
             }
         }
@@ -494,9 +495,10 @@ const goToRequestOther = (requestId,cheminNiveau,type,id) => {
     
     // Naviguer vers la page de détails
     if(cheminNiveau === niveau.achat) router.push(`/achat/${requestId}`);
-    if(cheminNiveau === niveau.afe) router.push(`/afe/${requestId}`);
+    if(cheminNiveau === niveau.cg) router.push(`/controlleur/${requestId}`);
     if(cheminNiveau === niveau.finance) router.push(`/finance/${requestId}`);
     if(cheminNiveau === niveau.dpr) router.push(`/dpr/${requestId}`);
+    if(cheminNiveau === niveau.afe) router.push(`/afe/${requestId}`);
     if(cheminNiveau === niveau.cheque) router.push(`/cheque/${requestId}`);
     if(cheminNiveau === niveau.livraison) router.push(`/livraison/${requestId}`);
 
@@ -505,9 +507,10 @@ const goToRequestOther = (requestId,cheminNiveau,type,id) => {
 
 const getValidationLevel = (niv_val) => {
     if (niv_val === niveau.achat) return 'En attente de validation au niveau de l\'achat';
-    if (niv_val === niveau.afe) return 'En attente de validation au niveau de l\'administration d\'achat';
+    if (niv_val === niveau.cg) return 'En attente de validation au niveau du CG';
     if (niv_val === niveau.finance) return 'En attente de validation au niveau de la finance';
     if (niv_val === niveau.dpr) return 'En attente de validation au niveau du DPR';
+    if (niv_val === niveau.afe) return 'En attente de validation au niveau de l\'AFE-BC';
     if (niv_val === niveau.cheque) return 'En attente d\'émission de chèque';
     return 'En attente de livraison';
 }
