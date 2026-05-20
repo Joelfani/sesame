@@ -22,7 +22,7 @@
         <Table 
         :columns="columns" 
         :rows="demande_details" 
-        :showActions="true"
+        :showActions="false"
         :loading="loading"/>
         </div>
     </div>
@@ -44,9 +44,10 @@ const loading = ref(true);
     const columns = [
     { key: 'num', label: 'N°'},
     { key: 'etat', label: 'État'}, 
-    { key: 'com', label: 'Commentaire ou Motif de rejet', style: {minWidth: '350px'}},
-    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com'), // Exclure la colonne 'id' et commentaire
+    { key: 'motif', label: 'Motif de rejet ',style: {minWidth: '350px'}},
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif'), // Exclure la colonne 'id' et commentaire
     { key: 'imputation', label: 'Imputation analytique' },
+    { key: 'com', label: 'Commentaire', style: {minWidth: '350px'}},
     { key: 'fournisseur2', label: 'Fournisseur Réel' },
     { key: 'prixR', label: 'Prix Réel' },
     { key: 'totalR', label: 'Montant Réel' },

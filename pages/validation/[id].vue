@@ -80,7 +80,10 @@ const tableRef = ref(null);
 // Définition des colonnes du tableau
 const columns = computed(() =>[
     { key: 'num', label: 'N°'},
-    ...tableTete.filter(col => col.key !== 'id'), // Exclure la colonne 'id'
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif' && col.key !== 'com_sup'), // Exclure la colonne 'id'
+    { key: 'com', label: 'Commentaire', style: {minWidth: '350px'}},
+    { key: 'motif', label: 'Motif de rejet',editable: true, type: 'textarea', style: {minWidth: '350px'}},
+    { key: 'com_sup', label: 'Commentaire du supérieur',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
     { 
         key: 'imputation', 
         label: 'Imputation analytique',  
@@ -88,6 +91,7 @@ const columns = computed(() =>[
         type: 'select', 
         options: imputation.value
     }
+    
 ]);
 // DATA
 const dataObj = ref([]);

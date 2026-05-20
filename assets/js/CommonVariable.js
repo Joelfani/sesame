@@ -8,6 +8,7 @@ export const tableTete = [
             { key: 'delai', label: 'Date de livraison prévue' },
             { key: 'total', label: 'Montant (en Ar)' },
             { key: 'com', label: 'Commentaire',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
+            { key: 'com_sup', label: 'Commentaire du supérieur', style: {minWidth: '350px'}},
             { key: 'motif', label: 'Motif de rejet ',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
         ]
 export const niveau = {

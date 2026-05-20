@@ -116,14 +116,19 @@
                         <p v-for="doc in doc_achat" :key="doc.id" style="font-weight: bold;">
                             {{ doc.name_doc }}
                             <button class="btn btn-outline-secondary" @click="downloadFile(doc.name_doc, doc.nameStorage)"><img src="/public/icon/download.png" style="width: 20px; height: 20px;"></button>
-                            <button class="btn btn-outline-light" @click="deleteFile(searchObjId,doc.id, doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
+                            <button class="btn btn-outline-light" @click="funcSupClick"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
                         </p>
+                        <div class="alert alert-danger" v-if="supprimerClick">
+                            <strong>! Attention </strong><br>
+                                Vous êtes sur le point de supprimer un document. Cette action est irréversible. <br>
+                                <button class="btn btn-outline-light" @click="deleteFile(searchObjId,doc.id, doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"> Oui</button>
+                        </div>
                 </div>
                 <p v-else style="color: #b1b1b1;">Aucun document associé </p>
                 <h5 class="modal-title-step">Ajouter un document</h5>
                 <div class="text-center">
                     
-                    <p>Séléctionner un fichier (pdf,png,jpeg,jpg):</p>
+                    <p>Séléctionner un fichier (pdf,png,jpeg,jpg):</p> 
                     
                     <input class="form-control" ref="fileInput" type="file" @change="fonctionFiles"></input>
                     
@@ -623,6 +628,13 @@ const downloadFile = async (name_doc,nameStorage) => {
         console.error('Erreur lors du télechargement du fichier :', error.message)
         showAlert('Erreur lors du télechargement du fichier', 'Oups!', 'danger')
     }
+}
+const supprimerClick = ref(false)
+const funcSupClick = () => {
+    supprimerClick.value = true
+    setTimeout(() => {
+        supprimerClick.value = false
+    }, 10000)
 }
 const deleteFile = async (id_item,id_doc, nameStorage) => {
     const path = `achats/${nameStorage}`
