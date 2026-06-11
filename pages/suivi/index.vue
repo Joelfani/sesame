@@ -2,7 +2,7 @@
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>SUIVI DE TOUTES LES DEMANDES VALIDÉES</h1>
-            <button v-if="userStore.type_compte === 1 ||userStore.achat || userStore.finance || userStore.cg" class="btn btn-outline-success" @click="exportToExcel" style="float: right;">Exportation des demandes</button>
+            <button v-if="userStore.type_compte === 1 ||userStore.achat || userStore.finance || userStore.cg || userStore.cheque" class="btn btn-outline-success" @click="exportToExcel" style="float: right;">Exportation des demandes</button>
             <div class="link_demande">
                 
             </div>
@@ -163,7 +163,7 @@ const getDemande = async () => {
                 dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.dpr);
                 
             } else if (userStore.cheque) {
-                dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.cheque);
+                dataObj = dataObj.filter(d => d.niv_val_min !== null && d.niv_val_min > niveau.cheque && d.niv_val_min !== niveau.refuse);
                 
             } 
             /*else if (userStore.cg) {
@@ -292,10 +292,27 @@ const exportToExcel = async () => {
             'Désignation': item.designation,
             'Spécificités techniques': item.spec,
             'Quantité': item.qte,
+            'fournisseur possible': item.fournisseur?.nom || '-',
+            'prix unitaire': item.prix || '-',
+            'Date de livraison souhaitée': item.delai ? formatDate(item.delai) : '-',
+            'Total': item.total || '-',
+            'Commentaire du demandeur': item.com || '-',
+            'Commentaire du supérieur': item.com_sup || '-',
             'Prix Réel': item.prixR || '-',
-            'Prix Total Réel': item.totalR || '-',
+            'Total Réel': item.totalR || '-',
             'Fournisseur Réel': item.fournisseur2?.nom || '-',
-            'Imputation Analytique': item.imputation || '-',            
+            'Imputation Analytique': item.imputation || '-',
+            'Commentaires': item.com || '-',
+            'N° de chèque': item.num_cheque || '-',
+            'Date d\'émission de chèque': item.date_emission_cheque ? formatDate(item.date_emission_cheque) : '-',
+            'Observation chèque': item.observation_cheque || '-',
+            'Observation DPR': item.observation_dpr || '-',
+            'date de livraison': item.date_livraison ? formatDate(item.date_livraison) : '-',
+            'observation livraison': item.observation_livraison || '-',
+            'Commentaire de l\' acheteur': item.com_achat || '-',
+            'commentaire de la finance': item.com_fin || '-',
+            'commentaire du du contrôleur de gestion': item.com_cg || '-',
+            'motif de refus': item.motif || '-',
             'Statut': 
                 item.niv_val === niveau.superieur ? 'En attente de validation chez le superieur' :
                 item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
