@@ -73,15 +73,17 @@ const loading = ref(true);
         const allDataView = data.map(item => {
         return {
             ...item,
-            etat: item.niv_val === niveau.superieur ? 'En attente de validation chez votre superieur' :
-                    item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
-                    item.niv_val === niveau.afe ? 'En attente d\' AFE-BC' :
+            etat:       item.niv_val === niveau.superieur ? 'En attente de validation chez votre superieur' :
+                        item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
+                        item.niv_val === niveau.afe ? 'En attente d\' AFE-BC' :
                         item.niv_val === niveau.finance ? 'En attente de validation chez le responsable financier' :
+                        item.niv_val === niveau.cg ? 'En attente de validation chez le controlleur de gestion' :
                         item.niv_val === niveau.dpr ? 'En attente de validation du DPR' : 
                         item.niv_val === niveau.cheque ? 'En attente d\'émission de chèque' :
                         item.niv_val === niveau.livraison ? 'En attente de livraison' :
                         item.niv_val === niveau.valide ? 'Validée' : 
-                        item.niv_val === niveau.refuse ? 'Votre demande a été refusée' : 'Erreur',
+                        item.niv_val === niveau.refuse ? 'Votre demande a été refusée' : 
+                        'Statut inconnu',
             delai: formatDate(item.delai),// Formatage de la date en jj/mm/aaaa
             fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
             fournisseur2: item.fournisseur2?.nom || '', // récupérer le nom du fournisseur réel

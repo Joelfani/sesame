@@ -119,12 +119,13 @@ const getDemande = async () => {
                     minVal === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
                     minVal === niveau.afe ? 'En attente d\' AFE-BC' :
                     minVal === niveau.finance ? 'En attente de validation chez le responsable financier' :
+                    minVal === niveau.cg ? 'En attente de validation chez le controlleur de gestion' :
                     minVal === niveau.dpr ? 'En attente de validation du DPR' :
                     minVal === niveau.cheque ? 'En attente d\'émission de chèque' :
                     minVal === niveau.livraison ? 'En attente de livraison' :
                     minVal === niveau.valide ? 'Validée' :
                     minVal === niveau.refuse ? 'Votre demande a été refusée' :
-                    'Erreur',
+                    'Statut inconnu',
                 
                 niv_val_raw: minVal, // si tu veux garder la valeur brute
                 
