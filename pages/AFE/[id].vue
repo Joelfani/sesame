@@ -181,11 +181,10 @@
                 <!-- Tableau des montants par affectation -->
                 <div style="margin: 20px 0;">
                     <p style=" font-size: 9pt; margin-bottom: 5px; padding: 0 10px;">
-                        0Ar à 100 000Ar (Facture, BC, BL, DA) <br>
-                        100 001Ar à 1 000 000Ar (Facture, BC, BL, DA, 1Devis ou proforma) <br>
-                        1 000 001Ar à 5 000 000Ar (Facture, BC, BL, DA, 3Devis ou proforma, Tableau comparatif) <br>
-                        5 000 001Ar à 16 000 000 Ar (Facture, BC, BL, DA, 4Devis ou proforma, Tableau comparatif) <br>
-                        > 16 000 000Ar (Appel d'offre national ou international, 3 Devis, Facture, BC, BL, DA, Tableau comparatif)
+                        0Ar à 1 000 000 Ar (Facture, BC, BL, DA, 1Devis ou proforma) <br>
+                        1 000 001 Ar à 5 000 000 Ar (Facture, BC, BL, DA, 3Devis ou proforma, Tableau comparatif) <br>
+                        5 000 001 Ar à 16 000 000 Ar (Facture, BC, BL, DA, 4Devis ou proforma, Tableau comparatif) <br>
+                        > 16 000 000 Ar (Appel d'offre national ou international, 3 Devis, Facture, BC, BL, DA, Tableau comparatif)
                     </p>
                     <div class="table-responsive" style="margin-top: 10px;">
                         <table class="table table-bordered" style="width: 100%; font-size: 9pt; border: 1px solid #000;">

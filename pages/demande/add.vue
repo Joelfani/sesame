@@ -69,9 +69,9 @@
         { key: "fournisseur", label: "Fournisseur possible",type:'select',
             options: fournisseurs.value,
         },
-        { key: "prix", type:'number',min:'1', label: "Prix unitaire", placeholder: "P.U" },
+        { key: "prix", type:'number',min:'1', label: "PU budgeté", placeholder: "P.U" },
         { key: "delai", type:'date', label: "Date de livraison",style: {width: '200px'}},
-        { key: "total", type:'number',min:'1',disabled: true, label: "Montant total (en Ar)", placeholder: "Montant" },
+        { key: "total", type:'number',min:'1',disabled: true, label: "Montant total du budget alloué", placeholder: "Montant" },
         { key: "com", label: "Commentaire", type:'textarea'},
     ])
     const numErg = ref()

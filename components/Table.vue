@@ -158,6 +158,7 @@
                     <button class="btn btn-primary" @click="addRowFunction">+ Ajouter une ligne</button>
                 </td>
             </tr>
+            <h2>Total: {{ totalAmount }}</h2>
         </tbody>
     </table>
 
@@ -251,6 +252,13 @@ const rowsInput = ref([]);
 const rowsInput2 = ref([]);
 const editableData = ref({});
 const isUpdating = ref(false); // FLAG pour éviter les boucles
+const totalAmount = computed(() => {
+    return rowsInput.value.reduce((total, row) => {
+        const qte = parseFloat(row.qte) || 0;
+        const prix = parseFloat(row.prix) || 0;
+        return total + (qte * prix);
+    }, 0);
+});
 
 // CORRECTION 1: Watch avec flush: 'post' et vérification du flag
 watch(
@@ -358,6 +366,7 @@ const updateData = () => {
         if (row.qte && row.prix) {
             row.total = row.qte * row.prix;
         }
+
     });
     console.log('data update',rowsInput.value);
     
