@@ -13,6 +13,8 @@ state: () => ({
     avatar:null,
     sup:'',
     service:'',
+    code_tiers: '',
+    abr_prenom: '',
     niv:null,
     achat:false,
     afe:false,
@@ -21,6 +23,7 @@ state: () => ({
     dpr:false,
     cheque:false,
     livraison:false,
+    rh:false,
     fournisseur:false,
     add:'',
     edit:'',
@@ -39,6 +42,8 @@ actions: {
     this.avatar = user.avatar
     this.sup = user.sup
     this.service = user.service
+    this.code_tiers = user.code_tiers
+    this.abr_prenom = user.abr_prenom
     this.niv = user.niv
     this.achat = user.achat
     this.afe = user.afe
@@ -46,6 +51,7 @@ actions: {
     this.dpr = user.dpr
     this.cheque = user.cheque
     this.livraison = user.livraison
+    this.rh = user.rh
     this.fournisseur = user.fournisseur
     this.cg = user.cg
     this.add = user.add
@@ -63,6 +69,8 @@ actions: {
     this.avatar = newData.avatar || this.avatar
     this.sup = newData.sup || this.sup
     this.service = newData.service || this.service
+    this.code_tiers = newData.code_tiers || this.code_tiers
+    this.abr_prenom = newData.abr_prenom || this.abr_prenom
     this.niv = newData.niv || this.niv
     this.achat = newData.achat || this.achat
     this.afe = newData.afe || this.afe
@@ -71,6 +79,7 @@ actions: {
     this.dpr = newData.dpr || this.dpr
     this.cheque = newData.cheque || this.cheque
     this.livraison = newData.livraison || this.livraison
+    this.rh = newData.rh || this.rh
     this.fournisseur = newData.fournisseur || this.fournisseur
     this.add = newData.add || this.add
     this.edit = newData.edit || this.edit

@@ -147,6 +147,17 @@
                                         >
                                     </div>
                                 </div>
+                                <div class="col-4">
+                                    <div class="checkbox-wrapper">
+                                        <label class="checkbox-label" for="cg">Accès RH</label>
+                                        <input 
+                                            class="form-check-input checkbox-large" 
+                                            type="checkbox" 
+                                            id="cg"
+                                            v-model="formAcces.rh"
+                                        >
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="d-flex justify-content-end gap-2 mt-4">
@@ -232,7 +243,8 @@ const formAcces = ref({
     cheque: false,
     livraison: false,
     fournisseur: false,
-    cg: false
+    cg: false,
+    rh:false
 })
 
 // Utilisateur en cours de modification
@@ -326,7 +338,8 @@ const recovery_data = (item) => {
         cheque: item.cheque || false,
         livraison: item.livraison || false,
         fournisseur: item.fournisseur || false,
-        cg: item.cg || false
+        cg: item.cg || false,
+        rh:item.rh || false
     }
 }
 

@@ -9,30 +9,50 @@
 
                 </button> 
             </client-only>
+            <client-only>
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#listeBc" @click="getListeBC()">
+                    Bons de commande
+                </button>
+            </client-only>
             <div class="link_demande">
             </div>
         </div>
         
         <!-- Informations générales de la demande -->
-        <div>
-            <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
-            <h6>Date: <span>{{ dataObj.date }}</span></h6>
-            <div class="d-flex align-items-center gap-3">
-                <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+        <div class ="row">
+            <div class="col-4">
+                <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
+                <h6>Date: <span>{{ dataObj.date }}</span></h6>
+                <div class="d-flex align-items-center gap-3">
+                    <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+                </div>
+            </div>
+            <div class="col-4 d-flex justify-content-center align-items-center gap-3" style="min-width: 200px;">
+                    <strong>Fournisseur: </strong>
+                    <select class="form-control" v-model="selectedFournisseur">
+                        <option value="Tous">Tous</option>
+                        <option v-for="fournisseur in fournisseursUtilises" :key="fournisseur.value" :value="fournisseur.value">{{ fournisseur.label }}</option>
+                    </select>
+            </div>
+            <div class="col-4" style="display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
+                <h6>Total Budgété: <strong>{{ totalAmount }} Ar</strong></h6>
+                <h6>Total Réel: <strong>{{ totalAmountR}} Ar</strong></h6>
             </div>
         </div>
+        
         
         <!-- Tableau des détails -->
         <div class="table_block_list">
             <Table
                 ref="tableRef"
                 :columns="columns"
-                :rows="demande_details"
+                :rows="filteredDemandeDetails"
                 :type_but_modal="true"
                 :but_Validation="true"
                 :actions="[
                     { label: 'Valider', color: 'success' },
                     { label: 'Rejeter', color: 'danger' },
+                    { label: 'Retour vers supérieur', color: 'primary'},
                 ]"
                 title_modal_neutre="Ajouter un document"
                 @validation_action="handleValidationAction"
@@ -83,6 +103,65 @@
                 </div>
             
         </Modal>
+        <Modal id="listeBc" title="Bons de commande de la demande">
+            <div class="mb-4">
+                <h6 style="font-weight: bold;">Enregistrer un nouveau BC</h6>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <label>Fournisseur</label>
+                        <select class="form-control" v-model="nouveauBc.fournisseur" style="min-height: 38px;">
+                            <option value="" disabled>Choisir...</option>
+                            <option v-for="f in fournisseursDisponiblesPourBC" :key="f.id" :value="f.id">{{ f.nom }}</option>
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <label>Mode de paiement</label>
+                        <input class="form-control" v-model="nouveauBc.mode">
+                    </div>
+                    <div class="col-5">
+                        <label>Au nom de</label>
+                        <input class="form-control" v-model="nouveauBc.nom">
+                    </div>
+                </div>
+                <div class="col-2 d-flex align-items-end">
+                        <button class="btn btn-outline-success" @click="saveBC()">Enregistrer</button>
+                </div>
+                <p v-if="fournisseursDisponiblesPourBC.length === 0" class="text-muted mt-2">
+                    Tous les fournisseurs ont déjà un BC enregistré pour cette demande.
+                </p>
+            </div>
+            <hr>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Référence</th>
+                            <th>Fournisseur</th>
+                            <th>Mode de paiement</th>
+                            <th>Au nom de</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="bc in listeBcAchat" :key="bc.id">
+                            <td>{{ bc.ref }}</td>
+                            <td>{{ fournisseursAllData.find(f => f.id === bc.fournisseur)?.nom || '' }}</td>
+                            <td><input class="form-control" v-model="bc.mode"></td>
+                            <td><input class="form-control" v-model="bc.nom"></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-success" @click="updateBC(bc)">Enregistrer</button>
+                                <button class="btn btn-sm btn-outline-danger" @click="deleteBC(bc.id)">Supprimer</button>
+                            </td>
+                        </tr>
+                        <tr v-if="listeBcAchat.length === 0">
+                            <td colspan="5" class="text-center text-muted">Aucun BC enregistré pour cette demande</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+                <br><br>
+            </div>
+        </Modal>
     </div>
     
 </template>
@@ -103,7 +182,7 @@ const tableRef = ref(null);
 // Définition des colonnes du tableau
 const columns = computed(() => [
     { key: 'num', label: 'N°'},
-    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com'), // Exclure la colonne 'id' et 'com' 
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com'&& col.key !== 'num_tiger'), // Exclure la colonne 'id' et 'com' 
     { key: 'com', label: 'Commentaire',style: {minWidth: '350px'}},
     { key: 'imputation', label: 'Imputation analytique'},
     { 
@@ -131,6 +210,7 @@ const fileName = ref('') // référence au fichier sélectionné
 const uploading = ref(false)
 const fileUrl = ref(null)
 const doc_achat = ref([]) // contient les documents reliers a une article de l'achat
+const selectedFournisseur = ref('Tous');// Fournisseur sélectionné pour le filtre
 // Alert system
 const alert = ref({
     show: false,
@@ -178,7 +258,7 @@ const getDemandeDetails = async () => {
         });
         demande_details.value = allDataView;
         loading.value = false;
-        console.log('data get',demande_details.value );
+        //console.log('data get',demande_details.value );
         
         // Récupération des informations de l'objet
         const { data: demandeObj, error: demandeObjError } = await supabase
@@ -198,6 +278,53 @@ const getDemandeDetails = async () => {
         console.log(error);
     }
 };
+
+// prendre seulement les fournisseurs des articles de la demande
+const fournisseursUtilises = computed(() => {
+    const nomsUniques = [...new Set(//new Set() → enlève les doublons //[...] → reconvertit en tableau
+        demande_details.value
+            .map(item => item.fournisseur) //.map()→ extrait juste les noms de fournisseur
+            .filter(nom => nom !== null && nom !== undefined && nom !== '')//.filter()→ enlève les vides/null
+    )];
+
+    return nomsUniques
+        .sort((a, b) => a.localeCompare(b))
+        .map(nom => ({ label: nom, value: nom }));
+});
+
+// Données filtrées selon le fournisseur sélectionné
+const filteredDemandeDetails = computed(() => {
+    if (selectedFournisseur.value === "Tous") return demande_details.value;
+    return demande_details.value.filter(item => item.fournisseur === selectedFournisseur.value);
+});
+//Formatage des nombres avec virgule et espace
+const toNumber = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    // Remplace la virgule par un point, retire les espaces (séparateurs de milliers éventuels)
+    return parseFloat(val.toString().replace(/\s/g, '').replace(',', '.')) || 0;
+};
+// Formatage du montant avec séparateur de milliers
+const formatMontant = (val) => {
+    const nombre = toNumber(val); 
+    return new Intl.NumberFormat('fr-FR').format(nombre);
+};
+// Total brut
+const totalAmount = computed(() => {
+    return formatMontant(filteredDemandeDetails.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prix));
+    }, 0));
+});
+// Total pour prixR
+const totalAmountR = computed(() => {
+    return formatMontant(filteredDemandeDetails.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prixR));
+    }, 0));
+});
 //Recuperation fournisseurs
 const listFournisseurs = async() => {
         try {
@@ -228,7 +355,7 @@ const handleValidationAction = async (validationPayload) => {
     
     // Ignorer l'action "Ajouter un document" pour l'instant
     if (action === 'Ajouter un document') {
-        console.log('Action "Ajouter un document" - non implémentée pour le moment');
+        //console.log('Action "Ajouter un document" - non implémentée pour le moment');
         return;
     }
     // Stocker pour affichage (debug)
@@ -239,7 +366,7 @@ const handleValidationAction = async (validationPayload) => {
         editableFields: editableData.fields,
         timestamp: new Date().toISOString()
     };
-    console.log(editableData.fields);
+    //console.log(editableData.fields);
     
     if (action === 'Valider') {
         if(editableData.fields.fournisseur2 === null){
@@ -252,55 +379,6 @@ const handleValidationAction = async (validationPayload) => {
         }
 
         await handleValidation(item, editableData);
-        // Recuperation des infos fournisseur
-        //const fournisseurSelectionneData = fournisseursAllData.value.find(f => f.id === editableData.fields.fournisseur2);
-        
-        // Verifier si le fournisseur a un contrat et activation des condition de validation 
-        //condition individuelle selon le montant et le nbr de doc 
-        /*
-        if (fournisseurSelectionneData) {
-            let nbrDoc = 0
-            if (fournisseurSelectionneData.contrat === 'Oui') {
-                await handleValidation(item, editableData);
-            }
-            else {
-                    try{
-                        const { count, error: nbrDocError} = await supabase 
-                        .from('ses_doc_achat')
-                        .select('*', { count: 'exact', head: true})
-                        .eq('id_item', item.id)
-
-                        if (nbrDocError) throw nbrDocError
-
-                        nbrDoc = count || 0
-                    }catch(error){
-                        showAlert("Erreur lors de la recherche du nombre de document", "Oups!", "danger")
-                        console.error('Erreur lors de la recherche du nombre de document:', error.message);
-                    }
-
-                    if(editableData.fields.totalR < 1000000 && nbrDoc < 1){
-                        showAlert("Veuillez ajouter au moins un proforma", "Oups!", "danger")
-                        return
-                    }
-                    if(editableData.fields.totalR >= 1000000 && editableData.fields.totalR < 5000000 && nbrDoc < 4){
-                        showAlert("Veuillez ajouter au moins 3 proforma et un tableau comparatif ou une lettre de dérogation", "Oups!", "danger")
-                        return
-                    }
-
-                    if(editableData.fields.totalR >= 5000000 && editableData.fields.totalR < 16000000 && nbrDoc < 5){
-                        showAlert("Veuillez ajouter au moins 4 proforma et un tableau comparatif ou une lettre de dérogation", "Oups!", "danger")
-                        return
-                    }
-
-                    if(editableData.fields.totalR >= 16000000 && nbrDoc < 6){
-                        showAlert("Veuillez ajouter au moins un document d'appel d'offre !", "Oups!", "danger")
-                        return
-                    }
-
-                    await handleValidation(item, editableData);
-                }                
-        }*/
-        
     } else if (action === 'Rejeter') {
         if(editableData.fields.motif === undefined || editableData.fields.motif === null || editableData.fields.motif === ''){
             showAlert('Veuillez fournir un motif de rejet avant de rejeter l\'article.', 'Oops', 'danger');
@@ -308,15 +386,17 @@ const handleValidationAction = async (validationPayload) => {
         }else{
             await handleRejection(item, editableData);
         }
+    }else if (action === 'Retour vers supérieur') {
+        await handleReturnToSup(item, editableData);
     }
 };
 
 // Gestion de la validation
 const handleValidation = async (item, editableData) => {
     try {
-        console.log('Validation de l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
-        console.log('je valide maintenant');
+        //console.log('Validation de l\'item:', item.id);
+        //console.log('Avec les données éditables:', editableData.fields);
+        //console.log('je valide maintenant');
         
         // Préparer les données à mettre à jour
         const updateData = {
@@ -366,12 +446,13 @@ const handleRejection = async (item, editableData) => {
                 editableData.fields[key] = null
             }
         }
-        console.log('Rejet de l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
+        //console.log('Rejet de l\'item:', item.id);
+        //console.log('Avec les données éditables:', editableData.fields);
 
         // Préparer les données à mettre à jour
         const updateData = {
             niv_val: niveau.refuse, // Statut rejeté par l'acheteur
+            user_refuse: userStore.id, // ID de l'utilisateur qui rejette
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
         
@@ -401,17 +482,59 @@ const handleRejection = async (item, editableData) => {
 
         if (insertHistError) throw insertHistError;
         
-        console.log('Rejet réussi pour l\'item:', item.id);
+        //console.log('Rejet réussi pour l\'item:', item.id);
         showAlert("Item rejeté avec succès !", "Succès!", "success")
     } catch (error) {
         console.error('Erreur lors du rejet:', error);
         showAlert("Erreur lors du rejet !", "Oups!", "danger")
     }
 };
+// Gestion du retour vers Supérieur
+const handleReturnToSup = async (item, editableData) => {
+    try {
+        // Préparer les données à mettre à jour
+        const updateData = {
+            niv_val: niveau.superieur,
+            com_achat: editableData.fields.com_achat || null // Inclure le commentaire de l'acheteur si fourni
+            //...editableData.fields // Inclure les données éditables (commentaires par exemple)
+        };
+        
+        // Mettre à jour dans la base de données
+        const { error } = await supabase
+            .from('ses_demItems')
+            .update(updateData)
+            .eq('id', item.id);
+        
+        if (error) throw error;
+        
+        // Actualiser les données
+        await getDemandeDetails();
+        
+        // Enregistrement dans historique
 
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: route.params.id,
+                id_item: item.id,
+                action: 'Retour de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                type: 'retour',
+                niv_val:niveau.superieur,
+            });
+
+        if (insertHistError) throw insertHistError;
+        
+        
+        showAlert('Renvoi vers le supérieur réussi !', 'Succès', 'success');
+    } catch (error) {
+        console.error('Erreur lors du retour financier:', error);
+        showAlert('Erreur lors du renvoi financier !', 'Oups!', 'danger');
+    }
+}
 // Gestionnaire pour les changements de champs éditables (optionnel)
 const handleEditableFieldChange = (changeData) => {
-    console.log('Changement détecté:', changeData);
+    //console.log('Changement détecté:', changeData);
     // Vous pouvez faire quelque chose ici si nécessaire (auto-save, validation, etc.)
 };
 
@@ -459,7 +582,7 @@ const fonctionFiles = (event) => {
     if (file) {
         uploading.value = false
         fileName.value = file.value.name // récupère le nom du fichier
-        console.log('Nom du fichier :', file.value)
+        //console.log('Nom du fichier :', file.value)
     } else {
         uploading.value= true
         fileName.value = ''
@@ -468,7 +591,7 @@ const fonctionFiles = (event) => {
 
 
 const upload_file = async (id_item) => {
-    console.log(file.value);
+    //console.log(file.value);
 
     if(!file.value) return showAlert("Veuillez sélectionner un fichier", 'Oups!', 'danger')
 
@@ -578,7 +701,7 @@ const downloadFile = async (name_doc,nameStorage) => {
 const exportToExcel = async () => {
     try {
         const data = demande_details.value
-        console.log(data)
+        //console.log(data)
         // Préparer les données pour l'exportation
         const exportData = data.map(item => ({
             'Num': item.num,
@@ -604,11 +727,119 @@ const exportToExcel = async () => {
         showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
     }
 };
+// ------- BONS DE COMMANDE -------
+const listeBcAchat = ref([])
+const nouveauBc = ref({ fournisseur: '', mode: '', nom: '' })
 
+// Tous les fournisseurs qui n'ont pas encore de BC enregistré pour cette demande
+const fournisseursDisponiblesPourBC = computed(() => {
+    const fournisseursAvecBC = listeBcAchat.value.map(bc => bc.fournisseur)
+    return fournisseursAllData.value.filter(f => !fournisseursAvecBC.includes(f.id))
+})
+
+// Conversion numéro -> lettre(s) : 1=A, 26=Z, 27=AA, 28=AB, ...
+const numberToLetters = (num) => {
+    let letters = ''
+    while (num > 0) {
+        const remainder = (num - 1) % 26
+        letters = String.fromCharCode(65 + remainder) + letters
+        num = Math.floor((num - 1) / 26)
+    }
+    return letters
+}
+// Conversion lettre(s) -> numéro (l'inverse)
+const lettersToNumber = (letters) => {
+    let num = 0
+    for (let i = 0; i < letters.length; i++) {
+        num = num * 26 + (letters.charCodeAt(i) - 64)
+    }
+    return num
+}
+// Prochaine lettre disponible pour cette demande (basé sur le max déjà utilisé,
+// pour éviter les doublons même si un BC a été supprimé entre-temps)
+const getNextLettre = () => {
+    const idStr = String(route.params.id)
+    const usedNumbers = listeBcAchat.value
+        .map(bc => String(bc.ref).startsWith(idStr) ? String(bc.ref).slice(idStr.length) : null)
+        .filter(l => l && /^[A-Z]+$/.test(l))
+        .map(l => lettersToNumber(l))
+    const maxUsed = usedNumbers.length ? Math.max(...usedNumbers) : 0
+    return numberToLetters(maxUsed + 1)
+}
+
+const getListeBC = async () => {
+    try {
+        const { data, error } = await supabase
+            .from('ses_bc')
+            .select('*')
+            .eq('id_obj', route.params.id)
+            .order('ref', { ascending: true })
+        if (error) throw error
+        listeBcAchat.value = data
+    } catch (error) {
+        console.error('Erreur récupération liste BC', error)
+        showAlert('Erreur lors de la récupération des BC', 'Oups!', 'danger')
+    }
+}
+
+const saveBC = async () => {
+    if (!nouveauBc.value.fournisseur) {
+        showAlert('Veuillez choisir un fournisseur', 'Oups', 'danger')
+        return
+    }
+    const refCalcule = `${route.params.id}${getNextLettre()}`
+    try {
+        const { error } = await supabase
+            .from('ses_bc')
+            .insert({
+                id_obj: route.params.id,
+                fournisseur: nouveauBc.value.fournisseur,
+                ref: refCalcule,
+                mode: nouveauBc.value.mode,
+                nom: nouveauBc.value.nom,
+            })
+        if (error) throw error
+        showAlert('Bon de commande enregistré !', 'Succès', 'success')
+        nouveauBc.value = { fournisseur: '', mode: '', nom: '' }
+        getListeBC()
+    } catch (error) {
+        console.error('Erreur enregistrement BC', error)
+        showAlert('Erreur lors de l\'enregistrement du BC', 'Oups!', 'danger')
+    }
+}
+
+const updateBC = async (bc) => {
+    try {
+        const { error } = await supabase
+            .from('ses_bc')
+            .update({ mode: bc.mode, nom: bc.nom })
+            .eq('id', bc.id)
+        if (error) throw error
+        showAlert('Bon de commande mis à jour !', 'Succès', 'success')
+    } catch (error) {
+        console.error('Erreur mise à jour BC', error)
+        showAlert('Erreur lors de la mise à jour du BC', 'Oups!', 'danger')
+    }
+}
+
+const deleteBC = async (id) => {
+    try {
+        const { error } = await supabase
+            .from('ses_bc')
+            .delete()
+            .eq('id', id)
+        if (error) throw error
+        showAlert('Bon de commande supprimé !', 'Succès', 'success')
+        getListeBC()
+    } catch (error) {
+        console.error('Erreur suppression BC', error)
+        showAlert('Erreur lors de la suppression du BC', 'Oups!', 'danger')
+    }
+}
 // LIFECYCLE HOOKS
 onMounted(() => {
     getDemandeDetails();
     listFournisseurs()
-    
+    getListeBC();
 });
 </script>

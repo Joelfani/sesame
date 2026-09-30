@@ -14,11 +14,11 @@
 
         // ✅ Ne rien faire si déjà souscrit
         if (this.subscriptions[channelName]) {
-            console.log(`Déjà souscrit à ${channelName}`)
+            //console.log(`Déjà souscrit à ${channelName}`)
             return
         }
 
-        console.log(`Souscription à ${channelName}`)
+        //console.log(`Souscription à ${channelName}`)
 
         const subscription = supabase
             .channel(channelName)
@@ -26,7 +26,7 @@
             'postgres_changes',
             { event: '*', schema: 'public', table: tableName },
             (payload) => {
-                console.log('Realtime event received:', payload.eventType, payload)
+                //console.log('Realtime event received:', payload.eventType, payload)
 
                 // Vérifier que storeContext est bien un ref ou reactive contenant un array
                 const list = storeContext.value ?? storeContext
@@ -37,7 +37,7 @@
 
                 // Accès à l'array réelle
                 const targetList = list[var_data] ?? list
-                console.log('list', targetList);
+                //console.log('list', targetList);
                 
                 if (payload.eventType === 'INSERT') {
                 const updatedList = order === 'desc'
@@ -65,7 +65,7 @@
             }
             )
             .subscribe((status, error) => {
-            console.log(`Subscription status for ${channelName}:`, status)
+            //console.log(`Subscription status for ${channelName}:`, status)
             if (error) console.error(`Subscription error for ${channelName}:`, error)
             })
 
@@ -79,7 +79,7 @@
         if (this.subscriptions[channelName]) {
             supabase.removeChannel(this.subscriptions[channelName])
             delete this.subscriptions[channelName]
-            console.log(`Désabonnement de ${channelName}`)
+            //console.log(`Désabonnement de ${channelName}`)
         }
         },
 
@@ -87,7 +87,7 @@
         const supabase = useSupabaseClient()
         Object.entries(this.subscriptions).forEach(([channelName, subscription]) => {
             supabase.removeChannel(subscription)
-            console.log(`Désabonnement de ${channelName}`)
+            //console.log(`Désabonnement de ${channelName}`)
         })
         this.subscriptions = {}
         }

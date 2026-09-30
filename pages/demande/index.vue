@@ -1,7 +1,10 @@
 <template>
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>LISTE DE TOUTES MES DEMANDES</h1>
+            <h1>MES DEMANDES D'ACHAT</h1>
+
+            <MiniNav LinkSelected="/demande" baseLink="demande"/>
+            
             <div class="link_demande">
                 <NuxtLink v-if="userStore.sup != ''" to="/demande/add" class="btn btn-outline-success">Faire une demande</NuxtLink>
                 <button v-else class="btn btn-outline-success" @click="alertNoSup">Faire une demande</button>
@@ -50,6 +53,7 @@ const choix_filtre = ref('num');
 const search_term = ref('');
 const date_debut = ref('');
 const date_fin = ref('');
+const selectedType = ref('/demande');
 
 const columns = [
     { key: 'id', label: 'N° d\'enregistrement' },
@@ -88,7 +92,10 @@ const filtered_demandes = ref([]); // Liste filtrée pour l'affichage
 const alertNoSup = () => {
     showAlert('Veuillez choisir un supérieur avant de faire une demande', 'Oups!', 'danger');
 }
-
+// Navigation vers le type de demande sélectionné
+const naviguer = () => {
+    navigateTo(selectedType.value);
+};
 //data for realtime
 const dataForRealtime = ref([]);
 const activeRealtime = ref(true);
@@ -115,6 +122,7 @@ const getDemande = async () => {
             return {
                 ...item,
                 niv_val: 
+                    minVal === niveau.erg ? 'En attente de votre soumission' :
                     minVal === niveau.superieur ? 'En attente de validation chez votre superieur' :
                     minVal === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
                     minVal === niveau.afe ? 'En attente d\' AFE-BC' :
@@ -221,9 +229,7 @@ const formatDate = (dateString) => {
 watch(
     () => dataForRealtime.value,
     async (newRows) => {
-        await getDemande();
-        console.log('je passe dans watch');
-        
+        await getDemande();        
     },
     { deep: true }
 )

@@ -2,10 +2,11 @@
     <div class="demandes_validation_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>VALIDATION AU NIVEAU DU DPR</h1>
-            <div class="link_demande">
+            <h1>VALIDATION DES DEMANDES D'ACHAT - DPR</h1>
+            <div class="link_demande"> 
                 
             </div>
+            <MiniNav LinkSelected="/dpr" baseLink="dpr"/>
         </div>
         
         <!-- Champ de recherche -->
@@ -64,6 +65,7 @@ const choix_filtre = ref('num');
 const search_term = ref('');
 const date_debut = ref('');
 const date_fin = ref('');
+const selectedType = ref('/dpr');
 
 /* METHODS */
 const getValidationDPR = async () => {
@@ -97,7 +99,7 @@ const getValidationDPR = async () => {
         liste_demandes_a_valider.value = result;
         filtered_demandes.value = [...result];
 
-        console.log('liste demandes niveau DPR', result);
+        //console.log('liste demandes niveau DPR', result);
 
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
@@ -171,6 +173,10 @@ const formatDate = (dateString) => {
     return `${day}/${month}/${year}`;
 };
 
+// Navigation vers le type de demande sélectionné
+const naviguer = () => {
+    navigateTo(selectedType.value);
+};
 // Lifecycle
 onMounted(() => {
     getValidationDPR();

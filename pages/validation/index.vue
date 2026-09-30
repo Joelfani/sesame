@@ -2,10 +2,11 @@
     <div class="demandes_validation_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>LISTE DES DEMANDES À VALIDER</h1>
+            <h1>VALIDATION DES DEMANDES D'ACHAT - SUPÉRIEUR</h1>
             <div class="link_demande">
                 
             </div>
+            <MiniNav :viewDRFMS="false" LinkSelected="/validation" baseLink="validation"/> 
         </div>
         
         <!-- Champ de recherche -->
@@ -72,7 +73,7 @@ const getValidation = async () => {
     loading.value = true;
 
     try {
-        // 1️⃣ Une seule requête SQL optimisée
+        // Une seule requête SQL optimisée
         const { data, error } = await supabase
             .from('ses_demandeObj')
             .select(`
@@ -86,7 +87,7 @@ const getValidation = async () => {
 
         if (error) throw error;
 
-        // 2️⃣ Traitement rapide
+        // Traitement rapide
         const result = data.map(item => ({
             ...item,
 
@@ -102,10 +103,10 @@ const getValidation = async () => {
             id_user: item.users?.full_name || "Nom non trouvé"
         }));
 
-        // 3️⃣ On garde uniquement les demandes qui ont réellement des items à valider
+        // On garde uniquement les demandes qui ont réellement des items à valider
         const filtered = result.filter(r => r.nbrnv > 0);
 
-        // 4️⃣ Affectation
+        // Affectation
         liste_demandes_a_valider.value = filtered;
         filtered_demandes.value = [...filtered];
 

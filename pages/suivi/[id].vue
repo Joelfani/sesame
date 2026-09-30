@@ -1,4 +1,4 @@
-    <template>
+<template>
     <div class="purchase_page">
         <!-- Header avec titre et lien de retour -->
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -9,12 +9,19 @@
         </div>
 
         <!-- Informations générales de la demande -->
-        <div>
-        <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
-        <h6>Date: {{ dataObj.date }}</h6>
-        <div class="d-flex align-items-center gap-3">
-            <h6>Objet: {{ dataObj.nom }}</h6>
-        </div>
+        <div class ="row">
+            <div class="col-8">
+                <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
+                <h6>Date: <span>{{ dataObj.date }}</span></h6>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+                </div>
+            </div>
+            <div class="col-4" style="display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
+                <h6>Total Budgété: <strong>{{ totalAmount }} Ar</strong></h6>
+                <h6>Total Réel: <strong>{{ totalAmountR }} Ar</strong></h6>
+            </div>
         </div>
 
         <!-- Tableau des détails -->
@@ -22,13 +29,58 @@
         <Table 
         :columns="columns" 
         :rows="demande_details" 
-        :showActions="false"
-        :loading="loading"/>
+        :showActions="true"
+        :loading="loading">
+            <template #actions="{ item }">
+                <button
+                    class="btn btn-outline-dark btn-sm"
+                    data-bs-toggle="modal"
+                    :data-bs-target="'#modCheques' + item.id"
+                    @click="chargerCheques(item)"
+                >
+                    Voir chèques
+                </button>
+            </template>
+        </Table>
         </div>
-    </div>
-    </template>
 
-    <script setup>
+        <!-- Modals des chèques par ligne -->
+        <Modal
+            v-for="item in demande_details"
+            :key="'modCheques' + item.id"
+            :id="'modCheques' + item.id"
+            title="Chèques affectés à cette ligne"
+        >
+            <div v-if="loadingCheques" class="text-center text-muted py-3">Chargement...</div>
+            <div v-else>
+                <!-- Premier chèque : géré directement sur la ligne -->
+                <div class="border rounded p-3 mb-2" v-if="item.num_cheque">
+                    <strong>{{ item.num_cheque }}</strong> — {{ item.date_emission_cheque || '-' }}
+                    <span class="badge bg-primary ms-2">1er chèque</span>
+                </div>
+                <div v-else class="text-muted mb-2">Aucun premier chèque enregistré pour cette ligne.</div>
+
+                <!-- Chèques supplémentaires -->
+                <div v-if="chequesSelectionnes.length === 0" class="text-muted">
+                    Aucun chèque supplémentaire pour cette ligne.
+                </div>
+                <div
+                    v-for="cheque in chequesSelectionnes"
+                    :key="cheque.id"
+                    class="border rounded p-3 mb-2"
+                    :class="{ 'bg-light': cheque.annule }"
+                >
+                    <strong>{{ cheque.num_cheque }}</strong>
+                    — {{ cheque.date_emission_cheque }}
+                    <span v-if="cheque.montant"> — {{ formatNumber(cheque.montant) }} Ar</span>
+                    <span v-if="cheque.annule" class="badge bg-secondary ms-2">Annulé</span>
+                </div>
+            </div>
+        </Modal>
+    </div>
+</template>
+
+<script setup>
 import {tableTete,niveau} from '~/assets/js/CommonVariable.js';
 
 // Services
@@ -45,8 +97,11 @@ const loading = ref(true);
     { key: 'num', label: 'N°'},
     { key: 'etat', label: 'État'}, 
     { key: 'motif', label: 'Motif de rejet ',style: {minWidth: '350px'}},
-    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif'), // Exclure la colonne 'id' et commentaire
+    { key: 'rejeteur', label: 'Rejeté par',style: {minWidth: '350px'}},
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif' && col.key !== 'num_tiger'), // Exclure la colonne 'id' et commentaire
     { key: 'imputation', label: 'Imputation analytique' },
+    { key: 'imputation_old', label: 'Ancienne Imputation' },
+    { key: 'num_tiger', label: 'Tiger' },
     { key: 'com', label: 'Commentaire', style: {minWidth: '350px'}},
     { key: 'fournisseur2', label: 'Fournisseur Réel' },
     { key: 'prixR', label: 'Prix Réel' },
@@ -62,6 +117,8 @@ const loading = ref(true);
     //DATA //
     const demande_details = ref([]);
     const dataObj = ref([]);
+    const chequesSelectionnes = ref([]);
+    const loadingCheques = ref(false);
 
     //METHODES
     const getDemandeDetails = async () => {
@@ -69,7 +126,7 @@ const loading = ref(true);
         try {
         const { data, error } = await supabase
             .from('ses_demItems')
-            .select('*,fournisseur(nom),fournisseur2(nom)')
+            .select('*,fournisseur(nom),fournisseur2(nom),user_refuse(full_name)')
             .eq('id_obj', route.params.id)
             .order('num', { ascending: true });
         if (error) throw error;
@@ -77,7 +134,8 @@ const loading = ref(true);
         const allDataView = data.map(item => {
         return {
             ...item,
-            etat: item.niv_val === niveau.superieur ? 'En attente de validation chez votre superieur' :
+            etat: item.niv_val === niveau.erg ? 'En attente de soumission de la ligne' :
+                item.niv_val === niveau.superieur ? 'En attente de validation chez votre superieur' :
                     item.niv_val === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
                     item.niv_val === niveau.afe ? 'En attente de validation chez le responsable administratif d\'achat' :
                         item.niv_val === niveau.finance ? 'En attente de validation chez le responsable financier' :
@@ -90,6 +148,7 @@ const loading = ref(true);
             delai: formatDate(item.delai),// Formatage de la date en jj/mm/aaaa
             fournisseur: item.fournisseur?.nom || '', // récupérer le nom du fournisseur
             fournisseur2: item.fournisseur2?.nom || '', // récupérer le nom du fournisseur réel
+            rejeteur: item.user_refuse?.full_name || '', // récupérer le nom du rejeteur
             };
         });
 
@@ -116,6 +175,59 @@ const loading = ref(true);
         console.log(error);
         }
     };
+
+    // Chargement des chèques supplémentaires (ses_chequeList) pour une ligne donnée
+    const chargerCheques = async (item) => {
+        loadingCheques.value = true;
+        chequesSelectionnes.value = [];
+        try {
+            const { data, error } = await supabase
+                .from('ses_chequeList')
+                .select('*')
+                .eq('id_item', item.id)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            chequesSelectionnes.value = data || [];
+        } catch (error) {
+            console.log('Erreur lors de la récupération des chèques', error);
+        } finally {
+            loadingCheques.value = false;
+        }
+    };
+    
+//Formatage des nombres avec virgule et espace
+const toNumber = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    // Remplace la virgule par un point, retire les espaces (séparateurs de milliers éventuels)
+    return parseFloat(val.toString().replace(/\s/g, '').replace(',', '.')) || 0;
+};
+// Formatage du montant avec séparateur de milliers
+const formatMontant = (val) => {
+    const nombre = toNumber(val); 
+    return new Intl.NumberFormat('fr-FR').format(nombre);
+};
+const formatNumber = (n) => {
+    if (n === null || n === undefined) return '-';
+    return Number(n).toLocaleString('fr-FR');
+};
+// Total brut (nombre)
+const totalAmount = computed(() => {
+    return formatMontant(demande_details.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prix));
+    }, 0));
+});
+// Total pour prixR
+const totalAmountR = computed(() => {
+    return formatMontant(demande_details.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prixR));
+    }, 0));
+});
 // Methode pour utilisation dans les methods
 const formatDate = (dateString) => {
     const d = new Date(dateString);

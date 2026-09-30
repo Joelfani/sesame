@@ -51,8 +51,26 @@
                             :disabled="true"
                         >
                     </div>
+                    <div class="col">
+                        <label class="label">Code Tiers</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            v-model="formData.code_tiers"
+                            :disabled="!isEditing"
+                        >
+                    </div>
                 </div>
                 <div class="row">
+                    <div class="col">
+                        <label class="label">Abrégé prénom</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            v-model="formData.abr_prenom"
+                            :disabled="!isEditing"
+                        >
+                    </div>
                     <div class="col">
                         <label class="label">Téléphone</label>
                         <input 
@@ -125,12 +143,6 @@
                             <option value="Service MEAL">Service MEAL</option>
                             <option value="Service PARTENARIAT">Service PARTENARIAT</option>
                         </select>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col">
-                        <br>
-                        <button class="btn btn-danger" @click="logout">Déconnexion</button>
                     </div>
                 </div>
                 <!-- Section Signature -->
@@ -273,6 +285,12 @@
                         >
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col">
+                        <br>
+                        <button class="btn btn-danger" @click="logout">Déconnexion</button>
+                    </div>
+                </div>
             </div>
         </div>
         <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
@@ -318,6 +336,8 @@ const formData = ref({
     genre: '',
     sup: '',
     service: '',
+    code_tiers: '',
+    abr_prenom: '',
     droits: {
         add: false,
         edit: false,
@@ -353,6 +373,8 @@ const initializeData = () => {
         genre: userStore.genre || '',
         sup: userStore.sup || '',
         service: userStore.service || '',
+        code_tiers: userStore.code_tiers || '',
+        abr_prenom: userStore.abr_prenom || '',
         droits: {
             add: userStore.add || false,
             edit: userStore.edit || false,
@@ -572,6 +594,8 @@ const saveChanges = async () => {
             resp: formData.value.resp,
             sup: formData.value.sup,
             avatar: selectedAvatar.value,
+            code_tiers: formData.value.code_tiers,
+            abr_prenom: formData.value.abr_prenom,
             service: formData.value.service
         }
         

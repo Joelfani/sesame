@@ -2,9 +2,11 @@
     <div class="demandes_validation_page">
         <!-- Header avec titre -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>VALIDATION AU NIVEAU DE LA FINANCE</h1>
+            <h1>VALIDATION DES DEMANDES D'ACHAT - FINANCE</h1>
             <div class="link_demande">
             </div>
+
+            <MiniNav LinkSelected="/finance" baseLink="finance"/> 
         </div> 
         
         <!-- Champ de recherche -->
@@ -63,7 +65,7 @@ const choix_filtre = ref('num');
 const search_term = ref('');
 const date_debut = ref('');
 const date_fin = ref('');
-
+const selectedType = ref('/finance');
 /* METHODS */
 const getValidationAchat = async () => {
     loading.value = true;
@@ -168,6 +170,10 @@ const formatDate = (dateString) => {
     return `${day}/${month}/${year}`;
 };
 
+// Navigation vers le type de demande sélectionné
+const naviguer = () => {
+    navigateTo(selectedType.value);
+};
 // Lifecycle
 onMounted(() => {
     getValidationAchat();

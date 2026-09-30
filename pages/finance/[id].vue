@@ -15,11 +15,18 @@
             </div>
         </div>
         <!-- Informations générales de la demande -->
-        <div>
-            <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
-            <h6>Date: <span>{{ dataObj.date }}</span></h6>
-            <div class="d-flex align-items-center gap-3">
-                <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+        <div class ="row">
+            <div class="col-8">
+                <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
+                <h6>Date: <span>{{ dataObj.date }}</span></h6>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+                </div>
+            </div>
+            <div class="col-4" style="display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
+                <h6>Total Budgété: <strong>{{ totalAmount }} Ar</strong></h6>
+                <h6>Total Réel: <strong>{{ totalAmountR }} Ar</strong></h6>
             </div>
         </div>
         
@@ -85,7 +92,7 @@ const tableRef = ref(null);
 // Définition des colonnes du tableau
 const columns = [
     { key: 'num', label: 'N°'},
-    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif'), // Exclure la colonne 'id' et 'com'
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif' && col.key !== 'num_tiger'), // Exclure la colonne 'id' et 'com'
     { key: 'com', label: 'Commentaire',style: {minWidth: '350px'}},
     { key: 'imputation', label: 'Imputation analytique' },
     { key: 'fournisseur2', label: 'Fournisseur Réel' },
@@ -99,7 +106,7 @@ const columns = [
 //column reduit
 const columns2 = [
     { key: 'num', label: 'N°'},
-    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'spec' && col.key !== 'fournisseur' && col.key !== 'prix' && col.key !== 'delai' && col.key !== 'total' && col.key !== 'com' && col.key !== 'motif'), // Exclure la colonne
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'spec' && col.key !== 'fournisseur' && col.key !== 'prix' && col.key !== 'delai' && col.key !== 'total' && col.key !== 'com' && col.key !== 'motif' && col.key !== 'num_tiger'), // Exclure la colonne
     { key: 'imputation', label: 'Imputation analytique' },
     { key: 'fournisseur2', label: 'Fournisseur Réel' },
     { key: 'prixR', label: 'Prix Réel' },
@@ -222,7 +229,7 @@ const getDemandeDetails = async () => {
 
         fournisseurAfe.value = fournisseurForAfe
 
-        console.log('afe', fournisseurAfe.value);
+        //console.log('afe', fournisseurAfe.value);
         
         
         // Récupération des informations de l'objet
@@ -243,14 +250,41 @@ const getDemandeDetails = async () => {
         console.log(error);
     }
 };
-
+//Formatage des nombres avec virgule et espace
+const toNumber = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    // Remplace la virgule par un point, retire les espaces (séparateurs de milliers éventuels)
+    return parseFloat(val.toString().replace(/\s/g, '').replace(',', '.')) || 0;
+};
+// Formatage du montant avec séparateur de milliers
+const formatMontant = (val) => {
+    const nombre = toNumber(val); 
+    return new Intl.NumberFormat('fr-FR').format(nombre);
+};
+// Total brut (nombre)
+const totalAmount = computed(() => {
+    return formatMontant(demande_details.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prix));
+    }, 0));
+});
+// Total pour prixR
+const totalAmountR = computed(() => {
+    return formatMontant(demande_details.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prixR));
+    }, 0));
+});
 // Gestionnaire principal pour les actions de validation
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
     
-    console.log('Action de validation finance:', action);
-    console.log('Item original:', item);
-    console.log('Données éditables:', editableData);
+    //console.log('Action de validation finance:', action);
+    //console.log('Item original:', item);
+    //console.log('Données éditables:', editableData);
     
     // Stocker pour affichage (debug)
     validationData.value = {
@@ -278,8 +312,8 @@ const handleValidationAction = async (validationPayload) => {
 // Gestion de la validation
 const handleValidation = async (item, editableData) => {
     try {
-        console.log('Validation financière de l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
+        //console.log('Validation financière de l\'item:', item.id);
+        //console.log('Avec les données éditables:', editableData.fields);
         
         // Préparer les données à mettre à jour
         const updateData = {
@@ -312,7 +346,7 @@ const handleValidation = async (item, editableData) => {
 
         if (insertHistError) throw insertHistError;
         
-        console.log('Validation financière réussie pour l\'item:', item.id);
+        //console.log('Validation financière réussie pour l\'item:', item.id);
         showAlert('Validation financière réussie !', 'Succès', 'success');
     } catch (error) {
         console.error('Erreur lors de la validation financière:', error);
@@ -323,12 +357,13 @@ const handleValidation = async (item, editableData) => {
 // Gestion du rejet 
 const handleRejection = async (item, editableData) => {
     try {
-        console.log('Rejet financier de l\'item:', item.id);
-        console.log('Avec les données éditables:', editableData.fields);
+        //console.log('Rejet financier de l\'item:', item.id);
+        //console.log('Avec les données éditables:', editableData.fields);
         
         // Préparer les données à mettre à jour
         const updateData = {
             niv_val: niveau.refuse, // Statut rejeté (rejet général)
+            user_refuse: userStore.id, // ID de l'utilisateur qui rejette
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
         
@@ -358,7 +393,7 @@ const handleRejection = async (item, editableData) => {
 
         if (insertHistError) throw insertHistError;
         
-        console.log('Rejet financier réussi pour l\'item:', item.id);
+        //console.log('Rejet financier réussi pour l\'item:', item.id);
         showAlert('Rejet financier réussi !', 'Succès', 'success');
     } catch (error) {
         console.error('Erreur lors du rejet financier:', error);
@@ -400,7 +435,7 @@ const handleReturnToPurchase = async (item, editableData) => {
 
         if (insertHistError) throw insertHistError;
         
-        console.log('Retour vers achat réussi pour l\'item:', item.id);
+        //console.log('Retour vers achat réussi pour l\'item:', item.id);
         showAlert('Renvoi vers responsable d\'achat réussi !', 'Succès', 'success');
     } catch (error) {
         console.error('Erreur lors du retour financier:', error);
@@ -409,7 +444,7 @@ const handleReturnToPurchase = async (item, editableData) => {
 }
 // Gestionnaire pour les changements de champs éditables (optionnel)
 const handleEditableFieldChange = (changeData) => {
-    console.log('Changement détecté:', changeData);
+    //console.log('Changement détecté:', changeData);
     // Vous pouvez faire quelque chose ici si nécessaire (auto-save, validation, etc.)
 };
 
@@ -534,7 +569,7 @@ const generatePDF = async (domname,namepdf) => {
 const exportToExcel = async () => {
     try {
         const data = demande_details.value
-        console.log(data)
+        //console.log(data)
         // Préparer les données pour l'exportation
         const exportData = data.map(item => ({
             'Num': item.num,

@@ -8,20 +8,34 @@
                 <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
                 <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#afe" @click="initiliseFour()">A.F.E</button>
                 <client-only>
-                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bc" @click="initiliseFour()">Bon de commande</button>
+                    <button
+                        class="btn btn-outline-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#listeBc"
+                        @click="getListeBC"
+                    >
+                        Gerer les bons de commande
+                    </button>
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bc" @click="initiliseFour()">Générer un BC</button>
                     <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modDoc" @click="doc_recovery({id:route.params.id})">Liste document</button>
                 </client-only>
-                
             </div>
             <div class="link_demande">
             </div>
         </div>
         <!-- Informations générales de la demande -->
-        <div>
-            <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
-            <h6>Date: <span>{{ dataObj.date }}</span></h6>
-            <div class="d-flex align-items-center gap-3">
-                <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+        <div class ="row">
+            <div class="col-8">
+                <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
+                <h6>Date: <span>{{ dataObj.date }}</span></h6>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+                </div>
+            </div>
+            <div class="col-4" style="display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
+                <h6>Total Budgété: <strong>{{ totalAmount }} Ar</strong></h6>
+                <h6>Total Réel: <strong>{{ totalAmountR }} Ar</strong></h6>
             </div>
         </div>
         
@@ -76,47 +90,48 @@
         <!-- Modal BC -->
         <Modal id="bc" title="Bon de commande">
             <div class="pdf-content">
-                <label >Sélectionnez un fournisseur</label>
-                <select
-                    class="form-control"
-                    v-model="pdffournisseurSelected"
-                >
-                    <option v-for="option in fournisseurAfe" :key="option.id" :value="option.nom">
+                <label>Sélectionnez un fournisseur</label>
+                <select class="form-control" v-model="pdffournisseurSelected">
+                    <option value="">-- Choisir --</option>
+                    <option
+                        v-for="option in fournisseurAfe"
+                        :key="option.id"
+                        :value="option.nom"
+                    >
                         {{ option.nom }}
                     </option>
                 </select>
-                <label for="">Référence</label>
-                <input type="text" class="form-control" v-model="refBc">
-                <label for="">Mode de paiement</label>
-                <input type="text" class="form-control" v-model="paimentMode">
-                <label for="">Au nom de:</label>
-                <input type="text" class="form-control" v-model="auNomDe">
-                <label for="">Taxe:</label>
-                <Cleave 
-                    class="form-control" 
-                    v-model="taxe" 
-                    :options="{ 
-                        numeral: true, 
-                        delimiter: ' ', // espace comme séparateur
-                        numeralThousandsGroupStyle: 'thousand' }" 
-                    placeholder="Entrez le taux"
-                />
-                <!--
-                <label for="">Remise:</label>
-                <Cleave 
-                    class="form-control" 
-                    v-model="remise" 
-                    :options="{ 
-                        numeral: true, 
-                        delimiter: ' ', // espace comme séparateur
-                        numeralThousandsGroupStyle: 'thousand' }"
-                    placeholder="Entrez le taux"
 
+                <label>Référence</label>
+                <input type="text" class="form-control" v-model="refBc" readonly disabled>
+
+                <label>Mode de paiement</label>
+                <input type="text" class="form-control" v-model="paimentMode" readonly disabled>
+
+                <label>Au nom de</label>
+                <input type="text" class="form-control" v-model="auNomDe" readonly disabled>
+
+                <label>Taxe</label>
+                <Cleave
+                    class="form-control"
+                    v-model="taxe"
+                    :options="{ numeral: true, delimiter: ' ', numeralThousandsGroupStyle: 'thousand' }"
+                    placeholder="Entrez le taux"
                 />
-                -->
+
+                <p v-if="pdffournisseurSelected && !refBc" class="text-danger mt-2">
+                    Aucun BC enregistré pour ce fournisseur. Créez-le d’abord via « Bons de commande ».
+                </p>
+
                 <hr>
                 <span v-if="pdfButtonLoading">Traitement ...</span>
-                <button class="btn btn-outline-dark" @click="generatePDF('pdfbc','Bon de commande')" :disabled="pdfButtonLoading">Générer un BC</button>            
+                <button
+                    class="btn btn-outline-dark"
+                    @click="generatePDF('pdfbc', 'Bon de commande')"
+                    :disabled="pdfButtonLoading || !refBc"
+                >
+                    Générer un BC
+                </button>
                 <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
             </div>
         </Modal>
@@ -181,7 +196,7 @@
                 <!-- Tableau des montants par affectation -->
                 <div style="margin: 20px 0;">
                     <p style=" font-size: 9pt; margin-bottom: 5px; padding: 0 10px;">
-                        0Ar à 1 000 000 Ar (Facture, BC, BL, DA, 1Devis ou proforma) <br>
+                        0 Ar à 1 000 000 Ar (Facture, BC, BL, DA, 1Devis ou proforma) <br>
                         1 000 001 Ar à 5 000 000 Ar (Facture, BC, BL, DA, 3Devis ou proforma, Tableau comparatif) <br>
                         5 000 001 Ar à 16 000 000 Ar (Facture, BC, BL, DA, 4Devis ou proforma, Tableau comparatif) <br>
                         > 16 000 000 Ar (Appel d'offre national ou international, 3 Devis, Facture, BC, BL, DA, Tableau comparatif)
@@ -406,6 +421,72 @@
                 </div>
             
         </Modal>
+        <!-- Gestion Bon de commande --> 
+        <Modal id="listeBc" title="Bons de commande de la demande">
+            <div class="mb-4">
+                <h6 style="font-weight: bold;">Enregistrer un nouveau BC</h6>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <label>Fournisseur réel</label>
+                        <select class="form-control" v-model="nouveauBc.fournisseur">
+                            <option value="" disabled>Choisir...</option>
+                            <option
+                                v-for="f in fournisseursDisponiblesPourBC"
+                                :key="f.id"
+                                :value="f.id"
+                            >
+                                {{ f.nom }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <label>Mode de paiement</label>
+                        <input class="form-control" v-model="nouveauBc.mode">
+                    </div>
+                    <div class="col-5">
+                        <label>Au nom de</label>
+                        <input class="form-control" v-model="nouveauBc.nom">
+                    </div>
+                    
+                </div>
+                <div class="col-2 d-flex align-items-end">
+                        <button class="btn btn-outline-success" @click="saveBC" :disabled="fournisseursDisponiblesPourBC.length === 0">Enregistrer</button>
+                </div>
+                <p v-if="fournisseursDisponiblesPourBC.length === 0" class="text-muted mt-2">
+                    Tous les fournisseurs réels ont déjà un BC pour cette demande.
+                </p>
+            </div>
+            <hr>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Référence</th>
+                            <th>Fournisseur</th>
+                            <th>Mode de paiement</th>
+                            <th>Au nom de</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="bc in listeBcAchat" :key="bc.id">
+                            <td>{{ bc.ref }}</td>
+                            <td>{{ fournisseurAfe.find(f => f.id === bc.fournisseur)?.nom || bc.fournisseur }}</td>
+                            <td><input class="form-control" v-model="bc.mode"></td>
+                            <td><input class="form-control" v-model="bc.nom"></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-success" @click="updateBC(bc)">Enregistrer</button>
+                                <button class="btn btn-sm btn-outline-danger" @click="deleteBC(bc.id)">Supprimer</button>
+                            </td>
+                        </tr>
+                        <tr v-if="listeBcAchat.length === 0">
+                            <td colspan="5" class="text-center text-muted">Aucun BC enregistré</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </Modal>
     </div>
 </template>
 
@@ -585,7 +666,34 @@ const getDemandeDetails = async () => {
         console.error(error);
     }
 };
-
+//Formatage des nombres avec virgule et espace
+const toNumber = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    // Remplace la virgule par un point, retire les espaces (séparateurs de milliers éventuels)
+    return parseFloat(val.toString().replace(/\s/g, '').replace(',', '.')) || 0;
+};
+// Formatage du montant avec séparateur de milliers
+const formatMontant = (val) => {
+    const nombre = toNumber(val); 
+    return new Intl.NumberFormat('fr-FR').format(nombre);
+};
+// Total brut (nombre)
+const totalAmount = computed(() => {
+    return formatMontant(demande_details.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prix));
+    }, 0));
+});
+// Total pour prixR
+const totalAmountR = computed(() => {
+    return formatMontant(demande_details.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prixR));
+    }, 0));
+});
 // Gestionnaire principal pour les actions de validation
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
@@ -662,6 +770,7 @@ const handleRejection = async (item, editableData) => {
         // Préparer les données à mettre à jour
         const updateData = {
             niv_val: niveau.refuse, // Statut rejeté (rejet général)
+            user_refuse: userStore.id, // ID de l'utilisateur qui rejette
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
         
@@ -1031,20 +1140,155 @@ const exportToExcel = async () => {
         showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
     }
 };
-const initiliseFour = () =>{
+const initiliseFour = async () => {
     pdffournisseurSelected.value = ''
+    refBc.value = ''
+    paimentMode.value = ''
+    auNomDe.value = ''
+    await getListeBC()
 }
+// ------- BONS DE COMMANDE -------
+const listeBcAchat = ref([])
+const nouveauBc = ref({ fournisseur: '', mode: '', nom: '' })
+
+const getListeBC = async () => {
+    try {
+        const { data, error } = await supabase
+            .from('ses_bc')
+            .select('*')
+            .eq('id_obj', route.params.id)
+            .order('ref', { ascending: true })
+        if (error) throw error
+        listeBcAchat.value = data || []
+    } catch (error) {
+        console.error('Erreur récupération liste BC', error)
+        showAlert('Erreur lors de la récupération des BC', 'Oups!', 'danger')
+    }
+}
+
+// Fournisseurs réels SANS BC déjà enregistré
+const fournisseursDisponiblesPourBC = computed(() => {
+    const deja = listeBcAchat.value.map(bc => bc.fournisseur)
+    return fournisseurAfe.value.filter(f => f.id && !deja.includes(f.id))
+})
+
+const numberToLetters = (num) => {
+    let letters = ''
+    while (num > 0) {
+        const remainder = (num - 1) % 26
+        letters = String.fromCharCode(65 + remainder) + letters
+        num = Math.floor((num - 1) / 26)
+    }
+    return letters
+}
+const lettersToNumber = (letters) => {
+    let num = 0
+    for (let i = 0; i < letters.length; i++) {
+        num = num * 26 + (letters.charCodeAt(i) - 64)
+    }
+    return num
+}
+const getNextLettre = () => {
+    const idStr = String(route.params.id)
+    const usedNumbers = listeBcAchat.value
+        .map(bc => String(bc.ref).startsWith(idStr) ? String(bc.ref).slice(idStr.length) : null)
+        .filter(l => l && /^[A-Z]+$/.test(l))
+        .map(l => lettersToNumber(l))
+    const maxUsed = usedNumbers.length ? Math.max(...usedNumbers) : 0
+    return numberToLetters(maxUsed + 1)
+}
+
+const saveBC = async () => {
+    if (!nouveauBc.value.fournisseur) {
+        showAlert('Veuillez choisir un fournisseur', 'Oups', 'danger')
+        return
+    }
+    const refCalcule = `${route.params.id}${getNextLettre()}`
+    try {
+        const { error } = await supabase.from('ses_bc').insert({
+            id_obj: route.params.id,
+            fournisseur: nouveauBc.value.fournisseur, // id fournisseur réel
+            ref: refCalcule,
+            mode: nouveauBc.value.mode,
+            nom: nouveauBc.value.nom
+        })
+        if (error) throw error
+        showAlert('Bon de commande enregistré !', 'Succès', 'success')
+        nouveauBc.value = { fournisseur: '', mode: '', nom: '' }
+        await getListeBC()
+    } catch (error) {
+        console.error(error)
+        showAlert('Erreur lors de l\'enregistrement du BC', 'Oups!', 'danger')
+    }
+}
+
+const updateBC = async (bc) => {
+    try {
+        const { error } = await supabase
+            .from('ses_bc')
+            .update({ mode: bc.mode, nom: bc.nom })
+            .eq('id', bc.id)
+        if (error) throw error
+        showAlert('Bon de commande mis à jour !', 'Succès', 'success')
+        await getListeBC()
+    } catch (error) {
+        console.error(error)
+        showAlert('Erreur lors de la mise à jour du BC', 'Oups!', 'danger')
+    }
+}
+
+const deleteBC = async (id) => {
+    try {
+        const { error } = await supabase.from('ses_bc').delete().eq('id', id)
+        if (error) throw error
+        showAlert('Bon de commande supprimé !', 'Succès', 'success')
+        await getListeBC()
+    } catch (error) {
+        console.error(error)
+        showAlert('Erreur lors de la suppression du BC', 'Oups!', 'danger')
+    }
+}
+
 // Watchers
 watch(pdffournisseurSelected, (newValue) => {
-    fournisseurPdfDetails.value = demande_details.value.filter(item => item.fournisseur2 === newValue && item.niv_val != niveau.refuse && item.niv_val >= niveau.afe)
+    // Détails PDF (lignes du fournisseur)
+    fournisseurPdfDetails.value = demande_details.value.filter(
+        item =>
+            item.fournisseur2 === newValue &&
+            item.niv_val != niveau.refuse &&
+            item.niv_val >= niveau.afe
+    )
+
     nifstat.value = fournisseurAfe.value.filter(item => item.nom === newValue)
-    nif.value = nifstat.value[0]?nifstat.value[0].nif :''
-    stat.value = nifstat.value[0]?nifstat.value[0].stat :''
-}, { deep: true });
+    nif.value = nifstat.value[0]?.nif || ''
+    stat.value = nifstat.value[0]?.stat || ''
+
+    // Auto-remplir BC depuis ses_bc (lecture seule)
+    const four = fournisseurAfe.value.find(f => f.nom === newValue)
+    if (!four?.id) {
+        refBc.value = ''
+        paimentMode.value = ''
+        auNomDe.value = ''
+        return
+    }
+
+    const bc = listeBcAchat.value.find(b => b.fournisseur === four.id)
+    if (bc) {
+        refBc.value = bc.ref || ''
+        paimentMode.value = bc.mode || ''
+        auNomDe.value = bc.nom || ''
+    } else {
+        refBc.value = ''
+        paimentMode.value = ''
+        auNomDe.value = ''
+    }
+}, { deep: true })
+
 
 // LIFECYCLE HOOKS
 onMounted(() => {
     getDemandeDetails();
+    getListeBC()
 });
 </script>
 <style scoped>

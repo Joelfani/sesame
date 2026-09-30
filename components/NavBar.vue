@@ -1,5 +1,5 @@
 <template>
-    <!-- Navigation Bar -->
+    <!-- Navigation Bar (inchangée par rapport à l'original) -->
     <nav class="navbar navbar-expand-sm navbar-light fixed-top">
         <div class="container-fluid">
             <NuxtLink to="/demande" class="navbar-brand centre logo-not-activer" style="margin-left: 5%;">
@@ -33,6 +33,9 @@
                 <li v-if="userStore.livraison" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/livraison">Livraisons</NuxtLink>
                 </li>
+                <li v-if="userStore.rh" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" to="/rh">RH</NuxtLink>
+                </li>
                 <li v-if="userStore.type_compte === 1 || userStore.achat || userStore.livraison || userStore.cheque || userStore.finance" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/rectification">Rectifications</NuxtLink>
                 </li>
@@ -42,9 +45,10 @@
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/suivi">Suivi</NuxtLink>
                 </li>
-                <li v-if="userStore.finance || userStore.achat" class="nav-item">
-                    <NuxtLink class="nav-link btn btn-light" to="/signature">Signature</NuxtLink>
+                <li v-if="userStore.type_compte === 1 || userStore.finance || userStore.achat || userStore.rh" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" :to="userStore.rh && userStore.type_compte != 1 && !userStore.finance && !userStore.achat ? '/signature/drfms' : '/signature'">Signature</NuxtLink>
                 </li>
+
                 <li v-if="userStore.type_compte === 1" class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/utilisateur">Utilisateurs</NuxtLink>
                 </li>
@@ -56,8 +60,8 @@
                 </li>
                 <li class="nav-item">
                     <div class="notification-wrapper" data-bs-toggle="modal" data-bs-target="#notificationModal" @click="openNotificationModal">
-                        <div v-if="totalNotifications > 0" class="notification-badge">
-                            {{ totalNotifications > 99 ? '99+' : totalNotifications }}
+                        <div v-if="totalNotificationsAll > 0" class="notification-badge">
+                            {{ totalNotificationsAll > 99 ? '99+' : totalNotificationsAll }}
                         </div>
                         <img src="/public/icon/bell.png" alt="notification" class="notification-icon">
                     </div>
@@ -84,9 +88,36 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+
+                <!-- NOUVEAU : chips de filtre par flow (achat / drfms / ndf / odm / bourse).
+                     Cliquer une chip filtre les 3 onglets ci-dessous sur ce flow uniquement ;
+                     re-cliquer la chip active (ou "Tous") retire le filtre. -->
+                <div class="flow-filter-bar px-3 pt-3">
+                    <button
+                        type="button"
+                        class="flow-chip"
+                        :class="{ active: activeFlowFilter === null }"
+                        @click="activeFlowFilter = null"
+                    >
+                        Tous
+                    </button>
+                    <button
+                        v-for="(flow, key) in flows"
+                        :key="key"
+                        type="button"
+                        class="flow-chip"
+                        :style="{ '--chip-color': flow.badgeColor }"
+                        :class="{ active: activeFlowFilter === key }"
+                        @click="activeFlowFilter = activeFlowFilter === key ? null : key"
+                    >
+                        {{ flow.label }}
+                        <span v-if="countByFlow[key]" class="flow-chip-count">{{ countByFlow[key] }}</span>
+                    </button>
+                </div>
+
                 <div class="onglets-container">
                     <!-- Onglets de filtrage -->
-                    <ul class="nav nav-tabs px-3 pt-3" id="notificationTabs" role="tablist">
+                    <ul class="nav nav-tabs px-3 pt-2" id="notificationTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-notifications" type="button" role="tab">
                                 Toutes <span class="badge bg-secondary ms-1">{{ totalNotifications }}</span>
@@ -94,24 +125,31 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal-notifications" type="button" role="tab">
-                                Personnelles <span class="badge bg-info ms-1">{{ solos.length }}</span>
+                                Personnelles <span class="badge bg-info ms-1">{{ filteredSolos.length }}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team-notifications" type="button" role="tab">
-                                Équipe <span class="badge bg-success ms-1">{{ sups.length }}</span>
+                                Équipe <span class="badge bg-success ms-1">{{ filteredSups.length }}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system-notifications" type="button" role="tab">
-                                Système <span class="badge bg-warning ms-1">{{ others.length }}</span>
+                                Système <span class="badge bg-warning ms-1">{{ filteredOthers.length }}</span>
                             </button>
                         </li>
                     </ul>
                 </div>
+
                 <div class="modal-body p-0">
-                    <!-- Contenu des onglets -->
-                    <div class="tab-content" id="notificationTabContent">
+                    <!-- Spinner de chargement (résout le "flash" de modal vide pendant le fetch) -->
+                    <div v-if="isLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+
+                    <div v-else class="tab-content" id="notificationTabContent">
                         <!-- Toutes les notifications -->
                         <div class="tab-pane fade show active" id="all-notifications" role="tabpanel">
                             <div class="notification-list">
@@ -119,20 +157,21 @@
                                     <img src="/public/icon/bell.png" alt="Aucune notification" style="width: 60px; opacity: 0.3;">
                                     <p class="text-muted mt-3">Aucune notification pour le moment</p>
                                 </div>
-                                
+
                                 <!-- Notifications personnelles -->
-                                <div v-for="solo in solos" :key="'solo-' + solo.id" class="notification-item personal" @click="goToRequestSolo(solo.id_obj?.id,'solo',solo.id)" data-bs-dismiss="modal">
+                                <div v-for="solo in filteredSolos" :key="'solo-' + solo._flow + '-' + solo.id" class="notification-item personal" @click="goTo('solo', solo)" data-bs-dismiss="modal">
                                     <div class="notification-icon">
                                         <i class="bi bi-person-check-fill text-primary"></i>
                                     </div>
                                     <div class="notification-content">
                                         <div class="notification-header">
                                             <span class="notification-badge badge bg-primary">Personnel</span>
+                                            <span class="badge flow-badge" :style="{ backgroundColor: flows[solo._flow].badgeColor }">{{ flows[solo._flow].label }}</span>
                                             <span class="notification-number">#{{ solo.id_obj?.id }}</span>
                                         </div>
                                         <div class="notification-title">Mise à jour sur votre demande</div>
                                         <div class="notification-description">
-                                            La demande n° {{ solo.id_obj?.id }} a été mise à jour
+                                            {{ solo.action }}
                                         </div>
                                         <div class="notification-footer">
                                             <span class="notification-time">
@@ -140,19 +179,20 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <button class="btn-mark-read" @click.stop="markAsRead('solo', solo.id)" title="Marquer comme lu">
+                                    <button class="btn-mark-read" @click.stop="markAsRead('solo', solo)" title="Marquer comme lu">
                                         <i class="bi bi-check2"></i>
                                     </button>
                                 </div>
 
                                 <!-- Notifications d'équipe -->
-                                <div v-for="sup in sups" :key="'sup-' + sup.id" class="notification-item team" @click="goToRequestSup(sup.id_obj?.id,'sup', sup.id)" data-bs-dismiss="modal">
+                                <div v-for="sup in filteredSups" :key="'sup-' + sup._flow + '-' + sup.id" class="notification-item team" @click="goTo('sup', sup)" data-bs-dismiss="modal">
                                     <div class="notification-icon">
                                         <i class="bi bi-people-fill text-success"></i>
                                     </div>
                                     <div class="notification-content">
                                         <div class="notification-header">
                                             <span class="notification-badge badge bg-success">Équipe</span>
+                                            <span class="badge flow-badge" :style="{ backgroundColor: flows[sup._flow].badgeColor }">{{ flows[sup._flow].label }}</span>
                                             <span class="notification-number">#{{ sup.id_obj?.id }}</span>
                                         </div>
                                         <div class="notification-title">Nouvelle demande à valider</div>
@@ -165,24 +205,25 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <button class="btn-mark-read" @click.stop="markAsRead('sup', sup.id)" title="Marquer comme lu">
+                                    <button class="btn-mark-read" @click.stop="markAsRead('sup', sup)" title="Marquer comme lu">
                                         <i class="bi bi-check2"></i>
                                     </button>
                                 </div>
 
                                 <!-- Notifications système -->
-                                <div v-for="other in others" :key="'other-' + other.id" class="notification-item system" @click="goToRequestOther(other.id_obj,other.niv_val,'other', other.id)" data-bs-dismiss="modal">
+                                <div v-for="other in filteredOthers" :key="'other-' + other._flow + '-' + other.id" class="notification-item system" @click="goTo('other', other)" data-bs-dismiss="modal">
                                     <div class="notification-icon">
                                         <i class="bi bi-exclamation-circle-fill text-warning"></i>
                                     </div>
                                     <div class="notification-content">
                                         <div class="notification-header">
                                             <span class="notification-badge badge bg-warning">Système</span>
-                                            <span class="notification-number">#{{ other.id_obj }}</span>
+                                            <span class="badge flow-badge" :style="{ backgroundColor: flows[other._flow].badgeColor }">{{ flows[other._flow].label }}</span>
+                                            <span class="notification-number">#{{ other.id_obj?.id }}</span>
                                         </div>
                                         <div class="notification-title">Validation en attente</div>
                                         <div class="notification-description">
-                                            {{ getValidationLevel(other.niv_val) }}
+                                            {{ getNotificationLabel(other) }}
                                         </div>
                                         <div class="notification-footer">
                                             <span class="notification-time">
@@ -190,7 +231,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <button class="btn-mark-read" @click.stop="markAsRead('other', other.id)" title="Marquer comme lu">
+                                    <button class="btn-mark-read" @click.stop="markAsRead('other', other)" title="Marquer comme lu">
                                         <i class="bi bi-check2"></i>
                                     </button>
                                 </div>
@@ -200,21 +241,22 @@
                         <!-- Notifications personnelles uniquement -->
                         <div class="tab-pane fade" id="personal-notifications" role="tabpanel">
                             <div class="notification-list">
-                                <div v-if="solos.length === 0" class="text-center py-5">
+                                <div v-if="filteredSolos.length === 0" class="text-center py-5">
                                     <i class="bi bi-person-check" style="font-size: 3rem; opacity: 0.3;"></i>
                                     <p class="text-muted mt-3">Aucune notification personnelle</p>
                                 </div>
-                                <div v-for="solo in solos" :key="solo.id" class="notification-item personal" @click="goToRequestSolo(solo.id_obj?.id,'solo',solo.id)" data-bs-dismiss="modal">
+                                <div v-for="solo in filteredSolos" :key="solo._flow + '-' + solo.id" class="notification-item personal" @click="goTo('solo', solo)" data-bs-dismiss="modal">
                                     <div class="notification-icon">
                                         <i class="bi bi-person-check-fill text-primary"></i>
                                     </div>
                                     <div class="notification-content">
                                         <div class="notification-header">
+                                            <span class="badge flow-badge" :style="{ backgroundColor: flows[solo._flow].badgeColor }">{{ flows[solo._flow].label }}</span>
                                             <span class="notification-number">#{{ solo.id_obj?.id }}</span>
                                         </div>
                                         <div class="notification-title">Mise à jour sur votre demande</div>
                                         <div class="notification-description">
-                                            La demande n° {{ solo.id_obj?.id }} a été mise à jour
+                                            {{ solo.action }}
                                         </div>
                                         <div class="notification-footer">
                                             <span class="notification-time">
@@ -222,7 +264,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <button class="btn-mark-read" @click.stop="markAsRead('solo', solo.id)">
+                                    <button class="btn-mark-read" @click.stop="markAsRead('solo', solo)">
                                         <i class="bi bi-check2"></i>
                                     </button>
                                 </div>
@@ -232,16 +274,17 @@
                         <!-- Notifications d'équipe uniquement -->
                         <div class="tab-pane fade" id="team-notifications" role="tabpanel">
                             <div class="notification-list">
-                                <div v-if="sups.length === 0" class="text-center py-5">
+                                <div v-if="filteredSups.length === 0" class="text-center py-5">
                                     <i class="bi bi-people" style="font-size: 3rem; opacity: 0.3;"></i>
                                     <p class="text-muted mt-3">Aucune notification d'équipe</p>
                                 </div>
-                                <div v-for="sup in sups" :key="sup.id" class="notification-item team" @click="goToRequestSup(sup.id_obj?.id,'sup', sup.id)" data-bs-dismiss="modal">
+                                <div v-for="sup in filteredSups" :key="sup._flow + '-' + sup.id" class="notification-item team" @click="goTo('sup', sup)" data-bs-dismiss="modal">
                                     <div class="notification-icon">
                                         <i class="bi bi-people-fill text-success"></i>
                                     </div>
                                     <div class="notification-content">
                                         <div class="notification-header">
+                                            <span class="badge flow-badge" :style="{ backgroundColor: flows[sup._flow].badgeColor }">{{ flows[sup._flow].label }}</span>
                                             <span class="notification-number">#{{ sup.id_obj?.id }}</span>
                                         </div>
                                         <div class="notification-title">Nouvelle demande à valider</div>
@@ -254,7 +297,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <button class="btn-mark-read" @click.stop="markAsRead('sup', sup.id)">
+                                    <button class="btn-mark-read" @click.stop="markAsRead('sup', sup)">
                                         <i class="bi bi-check2"></i>
                                     </button>
                                 </div>
@@ -264,21 +307,22 @@
                         <!-- Notifications système uniquement -->
                         <div class="tab-pane fade" id="system-notifications" role="tabpanel">
                             <div class="notification-list">
-                                <div v-if="others.length === 0" class="text-center py-5">
+                                <div v-if="filteredOthers.length === 0" class="text-center py-5">
                                     <i class="bi bi-exclamation-circle" style="font-size: 3rem; opacity: 0.3;"></i>
                                     <p class="text-muted mt-3">Aucune notification système</p>
                                 </div>
-                                <div v-for="other in others" :key="other.id" class="notification-item system" @click="goToRequestOther(other.id_obj,other.niv_val,'other', other.id)" data-bs-dismiss="modal">
+                                <div v-for="other in filteredOthers" :key="other._flow + '-' + other.id" class="notification-item system" @click="goTo('other', other)" data-bs-dismiss="modal">
                                     <div class="notification-icon">
                                         <i class="bi bi-exclamation-circle-fill text-warning"></i>
                                     </div>
                                     <div class="notification-content">
                                         <div class="notification-header">
-                                            <span class="notification-number">#{{ other.id_obj }}</span>
+                                            <span class="badge flow-badge" :style="{ backgroundColor: flows[other._flow].badgeColor }">{{ flows[other._flow].label }}</span>
+                                            <span class="notification-number">#{{ other.id_obj?.id }}</span>
                                         </div>
                                         <div class="notification-title">Validation en attente</div>
                                         <div class="notification-description">
-                                            {{ getValidationLevel(other.niv_val) }}
+                                            {{ getNotificationLabel(other) }}
                                         </div>
                                         <div class="notification-footer">
                                             <span class="notification-time">
@@ -286,7 +330,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <button class="btn-mark-read" @click.stop="markAsRead('other', other.id)">
+                                    <button class="btn-mark-read" @click.stop="markAsRead('other', other)">
                                         <i class="bi bi-check2"></i>
                                     </button>
                                 </div>
@@ -307,212 +351,36 @@
 
 <script setup>
 import '~/assets/css/navbar.css'
-import { ref, computed } from 'vue';
-import { niveau } from '~/assets/js/CommonVariable';
-
-// Utilisation du module @nuxtjs/supabase
-const supabase = useSupabaseClient()
-const router = useRouter()
-// Store
+// Store utilisateur (rôles, flags achat/finance/cg/dpr/afe/cheque/livraison/rh, etc.)
 const userStore = useUserStore()
-// Store
-const realtimeStore = useSubscribeStore()
-//route
-const route = useRoute();
-//DATA
-const data_notif = ref([])
-const resultats = {};
-const solos = ref([])
-const sups = ref([])
-const others = ref([])
-const dataItems = ref([]);
 
-// Computed
-const totalNotifications = computed(() => {
-    return solos.value.length + sups.value.length + others.value.length;
-});
+// Toute la logique de notification (5 flows) vit dans le composable —
+// ce composant ne fait plus que l'afficher et réagir aux clics.
+const {
+    isLoading,
+    totalNotificationsAll,
+    totalNotifications,
+    countByFlow,
+    activeFlowFilter,
+    filteredSolos,
+    filteredSups,
+    filteredOthers,
+    flows,
+    fetchAll,
+    markAsRead,
+    markAllAsRead,
+    goTo,
+    getNotificationLabel,
+    subscribeRealtime,
+    unsubscribeRealtime,
+} = useSesameNotifications()
 
-//METHODS
+// Ouverture du modal : on ne relance pas fetchAll() si un chargement est
+// déjà en cours (évite d'empiler des requêtes si l'utilisateur clique
+// plusieurs fois rapidement sur la cloche)
 const openNotificationModal = async () => {
-    await get_notif();
-};
-
-const get_notif = async () => {
-    try{
-        // NOTIF SOLO
-        const { data: notif_solo, error: error_solo } = await supabase
-        .from('ses_histo')
-        .select('*, id_obj!inner(*,id_user)') 
-        .eq('id_obj.id_user', userStore.id)
-        .neq('niv_val', 1)
-        .eq('stat_not_sol', false)
-        .order('id',{ ascending: false })
-        
-        if (error_solo) throw error_solo;
-        solos.value = notif_solo
-        
-        //NOTIF SUP
-        const { data: notif_sup, error: error_sup } = await supabase
-        .from('ses_histo')
-        .select('*, id_obj!inner(*,id_sup)') 
-        .eq('id_obj.id_sup', userStore.id)
-        .eq('niv_val', 1)
-        .eq('stat_not', false)
-        .order('id',{ ascending: false })
-        
-        if (error_sup) throw error_sup;
-        sups.value = notif_sup
-        
-        //AUTRE NOTIF
-        const niveaux = [
-            { key: 'achat', niv: niveau.achat},
-            { key: 'cg', niv: niveau.cg},
-            { key: 'finance', niv: niveau.finance},
-            { key: 'dpr', niv: niveau.dpr},
-            { key: 'afe', niv: niveau.afe},
-            { key: 'cheque', niv: niveau.cheque},
-            { key: 'livraison', niv: niveau.livraison},
-        ];
-
-        for (const { key, niv } of niveaux) {
-            if (userStore[key] === true) {
-                const { data, error } = await supabase
-                .from('ses_histo')
-                .select('*')
-                .eq('stat_not', false)
-                .eq('niv_val', niv)
-                .order('id', { ascending: false })
-
-                if (error) throw error
-                console.log('niveau',niv);
-                resultats[key] = data || [] 
-            }
-        }
-        
-        others.value = [
-            ...Object.values(resultats)
-        ].flat()
-        
-    }catch (error) {
-        console.log(error);
-    }
-}
-
-const markAsRead = async (type, id) => {
-    try {
-        const column = type === 'solo' ? 'stat_not_sol' : 'stat_not';
-        
-        const { error } = await supabase
-            .from('ses_histo')
-            .update({ [column]: true })
-            .eq('id', id);
-        
-        if (error) throw error;
-        
-        // Retirer la notification de la liste
-        if (type === 'solo') {
-            solos.value = solos.value.filter(n => n.id !== id);
-        } else if (type === 'sup') {
-            sups.value = sups.value.filter(n => n.id !== id);
-        } else {
-            others.value = others.value.filter(n => n.id !== id);
-        }
-    } catch(error) {
-        console.log(error);
-    }
-}
-
-const markAllAsRead = async () => {
-    try {
-        const soloIds = solos.value.map(n => n.id)
-        const supIds = sups.value.map(n => n.id)
-        const otherIds = others.value.map(n => n.id)
-
-        solos.value = []
-        sups.value = []
-        others.value = []
-        const promises = []
-
-        if (soloIds.length > 0) {
-            promises.push(
-                supabase
-                    .from('ses_histo')
-                    .update({ stat_not_sol: true })
-                    .in('id', soloIds)
-            )
-        }
-
-        if (supIds.length > 0) {
-            promises.push(
-                supabase
-                    .from('ses_histo')
-                    .update({ stat_not: true })
-                    .in('id', supIds)
-            )
-        }
-
-        if (otherIds.length > 0) {
-            promises.push(
-                supabase
-                    .from('ses_histo')
-                    .update({ stat_not: true })
-                    .in('id', otherIds)
-            )
-        }
-
-        const results = await Promise.all(promises)
-
-        // Vérifier les erreurs
-        results.forEach(r => {
-            if (r.error) throw r.error
-        })
-
-        // Vider l’état local instantanément
-        solos.value = []
-        sups.value = []
-        others.value = []
-
-    } catch (error) {
-        console.error('Erreur markAllAsRead:', error)
-    }
-}
-
-
-const goToRequestSolo = (requestId,type,id) => {
-    // Naviguer vers la page de détails
-    router.push(`/demande/${requestId}`);
-    markAsRead(type,id)
-    
-}
-const goToRequestSup = (requestId,type,id) => {
-    // Naviguer vers la page de détails
-    router.push(`/validation/${requestId}`);
-    markAsRead(type,id)
-}
-
-const goToRequestOther = (requestId,cheminNiveau,type,id) => {
-    console.log('niv',cheminNiveau);
-    
-    // Naviguer vers la page de détails
-    if(cheminNiveau === niveau.achat) router.push(`/achat/${requestId}`);
-    if(cheminNiveau === niveau.cg) router.push(`/controlleur/${requestId}`);
-    if(cheminNiveau === niveau.finance) router.push(`/finance/${requestId}`);
-    if(cheminNiveau === niveau.dpr) router.push(`/dpr/${requestId}`);
-    if(cheminNiveau === niveau.afe) router.push(`/afe/${requestId}`);
-    if(cheminNiveau === niveau.cheque) router.push(`/cheque/${requestId}`);
-    if(cheminNiveau === niveau.livraison) router.push(`/livraison/${requestId}`);
-
-    markAsRead(type,id)
-}
-
-const getValidationLevel = (niv_val) => {
-    if (niv_val === niveau.achat) return 'En attente de validation au niveau de l\'achat';
-    if (niv_val === niveau.cg) return 'En attente de validation au niveau du CG';
-    if (niv_val === niveau.finance) return 'En attente de validation au niveau de la finance';
-    if (niv_val === niveau.dpr) return 'En attente de validation au niveau du DPR';
-    if (niv_val === niveau.afe) return 'En attente de validation au niveau de l\'AFE-BC';
-    if (niv_val === niveau.cheque) return 'En attente d\'émission de chèque';
-    return 'En attente de livraison';
+    if (isLoading.value) return
+    await fetchAll()
 }
 
 const formatDate = (dateString) => {
@@ -523,63 +391,27 @@ const formatDate = (dateString) => {
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    
+
     if (seconds < 60) return 'À l\'instant';
     if (minutes < 60) return `Il y a ${minutes} minute${minutes > 1 ? 's' : ''}`;
     if (hours < 24) return `Il y a ${hours} heure${hours > 1 ? 's' : ''}`;
     if (days < 7) return `Il y a ${days} jour${days > 1 ? 's' : ''}`;
-    
-    return date.toLocaleDateString('fr-FR', { 
-        day: 'numeric', 
-        month: 'short', 
-        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+
+    return date.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });
 }
 
-const getdataItems = async () => {
-    try{
-        const { data, error } = await supabase
-        .from('ses_demItems')
-        .select('*')
-        
-        if (error) throw error;
-        
-        dataItems.value = data;
-    }catch(error){
-        console.log(error);
-    }
-}
-
-watch(
-    () => dataItems.value,
-    async (newRows) => {
-        get_notif();
-    },
-    { deep: true }
-)
-
 // LIFECYCLE HOOKS
 onMounted(async () => {
-    get_notif();
-    
-    try {
-        await getdataItems()
-        
-        await nextTick()
-        if (realtimeStore && typeof realtimeStore.subscribeToTable === 'function') {
-            realtimeStore.subscribeToTable('ses_demItems', 'dataItems', dataItems, 'id', 'asc')
-        } else {
-            console.error('Store realtime non disponible')
-        }
-    } catch (error) {
-        console.error('Erreur lors de l\'initialisation:', error)
-    }
+    await fetchAll()
+    subscribeRealtime()
 });
 
 onBeforeUnmount(() => {
-    if (realtimeStore && typeof realtimeStore.unsubscribeFromTable === 'function') {
-        realtimeStore.unsubscribeFromTable('ses_demItems', 'dataItems')
-    }
+    unsubscribeRealtime()
 })
 </script>
 
@@ -658,6 +490,53 @@ onBeforeUnmount(() => {
     overflow-y: auto;
     background-color: #ffffff !important;
     width: 100%;
+}
+
+/* NOUVEAU : chips de filtre par flow */
+.flow-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    background-color: #ffffff !important;
+}
+
+.flow-chip {
+    --chip-color: #6c757d;
+    border: 1.5px solid var(--chip-color);
+    color: var(--chip-color);
+    background: white;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.flow-chip.active {
+    background: var(--chip-color);
+    color: white;
+}
+
+.flow-chip-count {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 999px;
+    padding: 0 6px;
+    font-size: 0.7rem;
+}
+
+.flow-chip.active .flow-chip-count {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Badge de flow affiché sur chaque notification */
+.flow-badge {
+    color: white;
+    font-size: 10px;
+    padding: 2px 8px;
 }
 
 /* Tabs */
@@ -782,6 +661,7 @@ onBeforeUnmount(() => {
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
+    flex-wrap: wrap;
 }
 
 .notification-badge {
@@ -867,22 +747,22 @@ onBeforeUnmount(() => {
         max-width: 95% !important;
         margin: 0.5rem;
     }
-    
+
     .notification-item {
         padding: 12px 16px;
     }
-    
+
     .notification-icon {
         width: 36px;
         height: 36px;
         margin-right: 12px;
     }
-    
+
     .nav-tabs .nav-link {
         padding: 10px 12px;
         font-size: 0.875rem;
     }
-    
+
     .nav-tabs .badge {
         display: none;
     }

@@ -19,7 +19,7 @@
                             v-if="col.type == 'select'" 
                             class="form-control" 
                             v-model="rowsInput2[rowIndex][col.key]" 
-                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : false"
+                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 || col.disabled ? true : false"
                             @change="changement(rowIndex, col.key, rowsInput2[rowIndex][col.key])">
                             <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.label }}</option>
                             <option v-if="col.autre" value="autre">Autre...</option>
@@ -39,7 +39,7 @@
                             :min="col.min ? col.min : ''"
                             class="form-control"
                             :placeholder="col.placeholder ? col.placeholder : col.label"
-                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : false"
+                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : col.key == 'total' ? col.disabled : col.key == 'prix' ? col.disabled : false"
                             v-model="rowsInput2[rowIndex][col.key]"
                             @input="changement(rowIndex, col.key, rowsInput2[rowIndex][col.key])"
                         />
@@ -47,11 +47,12 @@
                             v-else
                             class="form-control" 
                             :options="{ 
-                                numeral: true, 
+                                numeral: true,
+                                numeralDecimalMark: '.',
                                 delimiter: ' ',
                                 numeralThousandsGroupStyle: 'thousand' }"
                             :placeholder="col.placeholder ? col.placeholder : col.label"
-                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : false"
+                            :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : col.key == 'total' ? col.disabled : col.key == 'prix' ? col.disabled : false"
                             v-model="rowsInput2[rowIndex][col.key]"
                             @input.native="handleCleaveInput($event, rowIndex, col.key)"
                         />
@@ -124,6 +125,23 @@
                         <option v-if="col.autre" value="autre">Autre ...</option>
                     </select>
                     <textarea v-else-if="col.type == 'textarea'" rows="2" class="form-control" :placeholder="col.placeholder ? col.placeholder : col.label" :disabled="col.disabled ? col.disabled : false" v-model="rowsInput[rowIndex][col.key]" @input="updateData"></textarea>
+                    <div v-else-if="col.type === 'radio'">
+
+                        <label
+                            v-for="opt in (col.dynamicOptions ? col.dynamicOptions(rowsInput[rowIndex]) : col.options)"
+                            :key="opt.value"
+                            class="me-3"
+                        >
+                            <input
+                                type="radio"
+                                :name="`radio-${col.key}-${rowIndex}`"
+                                :value="opt.value"
+                                v-model="rowsInput[rowIndex][col.key]"
+                                @change="updateData"
+                            />
+                            {{ opt.label }}
+                        </label>
+                    </div>
                     <input 
                         v-else-if ="col.type != 'number'"
                         :type="col.type ? col.type : 'text'"
@@ -139,12 +157,13 @@
                         class="form-control" 
                         :options="{
                             numeral: true,
+                            numeralDecimalMark: '.',
                             delimiter: ' ',
                             numeralThousandsGroupStyle: 'thousand' }"
                         :placeholder="col.placeholder ? col.placeholder : col.label"
                         :disabled="col.disabled ? col.disabled : false"
                         v-model="rowsInput[rowIndex][col.key]"
-                        @input.native="handleCleaveInputAdd($event, rowIndex, col.key)"
+                        @input="handleCleaveInputAdd($event, rowIndex, col.key)"
                     />
                     <p v-if="col.key === 'delai'" style="font-size: 12px; color: gray;">
                     (Idealement 10 jours après la demande)</p>
@@ -158,7 +177,8 @@
                     <button class="btn btn-primary" @click="addRowFunction">+ Ajouter une ligne</button>
                 </td>
             </tr>
-            <h2>Total: {{ totalAmount }}</h2>
+            <h4 v-if="totalDAadd">Total: {{ totalAmount }}</h4>
+            <h4 v-if="totalview">Total: {{ totalAmount2 }}</h4>
         </tbody>
     </table>
 
@@ -228,7 +248,11 @@ const props = defineProps({
     tableDelete: { type: String, default: '' },
     title_modal_neutre: { type: String, default:'Need a title' },
     loading: { type: Boolean, default: false },
-    title_modal_users: { type: String, default:'Modifier status du compte' }
+    title_modal_users: { type: String, default:'Modifier status du compte' },
+    computeRow: {type: Function,default: null},
+    totalDAadd:{ type: Boolean, default: false },
+    totalview:{ type: Boolean, default: false },
+    funcTotal: {type: Function,default: null},
 })
 
 const emit = defineEmits([
@@ -252,11 +276,19 @@ const rowsInput = ref([]);
 const rowsInput2 = ref([]);
 const editableData = ref({});
 const isUpdating = ref(false); // FLAG pour éviter les boucles
+//calcule des total des DA Add
 const totalAmount = computed(() => {
     return rowsInput.value.reduce((total, row) => {
         const qte = parseFloat(row.qte) || 0;
         const prix = parseFloat(row.prix) || 0;
         return total + (qte * prix);
+    }, 0);
+});
+
+//calcule des total
+const totalAmount2 = computed(() => {
+    return rowsInput.value.reduce((total, row) => {
+        return total + (props.funcTotal ? props.funcTotal(row) : 0);
     }, 0);
 });
 
@@ -273,13 +305,7 @@ watch(
 
 // CORRECTION 3: Méthode pour gérer les inputs Cleave
 const handleCleaveInput = (event, rowIndex, fieldKey) => {
-    // Récupérer la valeur brute (sans formatage)
-    const rawValue = event.target.value.replace(/\s/g, ''); // Enlever les espaces
-    const numericValue = parseFloat(rawValue) || 0;
-    
-    // Mettre à jour la valeur dans rowsInput2
-    rowsInput2.value[rowIndex][fieldKey] = numericValue;
-    
+    const numericValue = event.target.value;
     // Appeler changement avec la valeur numérique
     changement(rowIndex, fieldKey, numericValue);
 }
@@ -290,11 +316,13 @@ const changement = (rowIndex, fieldKey, value) => {
     const numericValue = typeof value === 'string' ? (parseFloat(value.replace(/\s/g, '')) || 0) : (value || 0);
     
     // Calculer totalR si nécessaire
-    if ((fieldKey === 'qte' || fieldKey === 'prixR') && rowsInput2.value[rowIndex]) {
+    if ((fieldKey === 'qte' || fieldKey === 'prixR' || fieldKey === 'prix') && rowsInput2.value[rowIndex]) {
         const qte = fieldKey === 'qte' ? numericValue : (rowsInput2.value[rowIndex].qte || 0);
         const prixR = fieldKey === 'prixR' ? numericValue : (rowsInput2.value[rowIndex].prixR || 0);
-        
+        const prix = fieldKey === 'prix' ? numericValue : (rowsInput2.value[rowIndex].prix || 0);
+
         rowsInput2.value[rowIndex].totalR = qte * prixR;
+        rowsInput2.value[rowIndex].total = qte * prix;
     }
     
     // Tracker le changement
@@ -302,15 +330,10 @@ const changement = (rowIndex, fieldKey, value) => {
 }
 
 const handleCleaveInputAdd = (event, rowIndex, fieldKey) => {
-    // Récupérer la valeur brute (sans les espaces de formatage)
-    const rawValue = event.target.value.replace(/\s/g, '');
-    // Convertir en nombre
-    const numericValue = parseFloat(rawValue) || 0;
-    
-    // Mettre à jour la valeur dans rowsInput
-    rowsInput.value[rowIndex][fieldKey] = numericValue;
-    
-    // Appeler updateData pour recalculer les totaux et émettre l'événement
+    const rawValue = event.target.value;
+
+    rowsInput.value[rowIndex][fieldKey] = rawValue;
+
     updateData();
 };
 
@@ -359,17 +382,34 @@ const onEditableFieldChange = (rowIndex, fieldKey, value) => {
         allEditableData: editableData.value[itemId]
     });
 };
+// Suppression des espaces et conversion en nombre pour les champs numériques
+const parseNumber = (value) => {
+    if (!value) return 0;
 
+    return Number(
+        String(value)
+            .replace(/\s/g, '')
+            .replace(',', '.')
+    ) || 0;
+};
 const updateData = () => {
-    // Calculer les totaux pour rowsInput
     rowsInput.value.forEach(row => {
+        const qte = parseNumber(row.qte);
+        const prix = parseNumber(row.prix);
+
         if (row.qte && row.prix) {
-            row.total = row.qte * row.prix;
+            row.total = qte * prix;
+        }
+        else {
+            row.total = 0;
         }
 
+        //Moyen pour declancher une fonction dans le parent a chaque changement dans une ligne
+        if (props.computeRow) {
+            props.computeRow(row);
+        }
     });
-    console.log('data update',rowsInput.value);
-    
+
     emit('update_table_data', [...rowsInput.value]);
 };
 

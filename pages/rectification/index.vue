@@ -116,12 +116,12 @@
                         <p v-for="doc in doc_achat" :key="doc.id" style="font-weight: bold;">
                             {{ doc.name_doc }}
                             <button class="btn btn-outline-secondary" @click="downloadFile(doc.name_doc, doc.nameStorage)"><img src="/public/icon/download.png" style="width: 20px; height: 20px;"></button>
-                            <button class="btn btn-outline-light" @click="funcSupClick"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
+                            <button class="btn btn-outline-light" @click="funcSupClick(doc.id,doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
                         </p>
                         <div class="alert alert-danger" v-if="supprimerClick">
                             <strong>! Attention </strong><br>
-                                Vous êtes sur le point de supprimer un document. Cette action est irréversible. <br>
-                                <button class="btn btn-outline-light" @click="deleteFile(searchObjId,doc.id, doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"> Oui</button>
+                                Vous êtes sur le point de supprimer un document. Cette action est irréversible.<br>
+                                <button class="btn btn-outline-light" @click="deleteFile(searchObjId,id_doc_to_delete,nameStorage_to_delete)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"> Oui</button>
                         </div>
                 </div>
                 <p v-else style="color: #b1b1b1;">Aucun document associé </p>
@@ -195,28 +195,140 @@
             <input v-model="form.date_emission_cheque" type="date" class="form-control" :disabled="!userStore.cheque"/>
             </div>
 
+            <!-- ======= Chèques supplémentaires ======= -->
+            <div v-if="userStore.cheque" class="chequeSup">
+                <hr class="mt-4">
+                <h5 class="modal-title-step">Chèques supplémentaires</h5>
+                <p class="modal-subtitle">
+                    Les ajouts/modifications/annulations ci-dessous ne seront enregistrés qu'avec la rectification, en bas de ce formulaire.
+                </p>
+
+                <div v-if="loadingCheques" class="text-muted">Chargement des chèques...</div>
+
+                <div v-else>
+                    <div v-if="chequesAffichees.length === 0 && pendingNewCheques.length === 0" class="text-muted mb-3">
+                        Aucun chèque supplémentaire pour le moment.
+                    </div>
+
+                    <!-- Chèques déjà en base -->
+                    <div
+                        v-for="cheque in chequesAffichees"
+                        :key="cheque.id"
+                        class="border rounded p-3 mb-2"
+                        :class="{ 'bg-light': cheque.annule || cheque._pendingCancel }"
+                    >
+                        <div v-if="editingChequeId !== cheque.id" class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ cheque.num_cheque }}</strong>
+                                — {{ cheque.date_emission_cheque }}
+                                <span v-if="cheque.montant"> — {{ formatNumber(cheque.montant) }} Ar</span>
+                                <span v-if="cheque.annule" class="badge bg-secondary ms-2">Annulé</span>
+                                <span v-else-if="cheque._pendingCancel" class="badge bg-warning text-dark ms-2">Annulation en attente</span>
+                                <span v-if="cheque._pendingEdit" class="badge bg-info text-dark ms-2">Modification en attente</span>
+                            </div>
+                            <div v-if="!cheque.annule" class="d-flex gap-2">
+                                <template v-if="!cheque._pendingCancel">
+                                    <button class="btn btn-outline-primary btn-sm" @click="openEditCheque(cheque)">Modifier</button>
+                                    <button class="btn btn-outline-danger btn-sm" @click="demanderAnnulationCheque(cheque.id)">Annuler</button>
+                                    <button v-if="cheque._pendingEdit" class="btn btn-outline-secondary btn-sm" @click="annulerEditionEnAttente(cheque.id)">
+                                        Revenir à l'original
+                                    </button>
+                                </template>
+                                <button v-else class="btn btn-outline-secondary btn-sm" @click="annulerLAnnulationEnAttente(cheque.id)">
+                                    Annuler l'annulation
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-if="chequeToCancel === cheque.id" class="alert alert-warning mt-2 mb-0">
+                            Confirmer la mise en attente de l'annulation de ce chèque ? Elle ne sera effective qu'après enregistrement de la rectification.
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-danger btn-sm" @click="annulerCheque">Oui, mettre en attente</button>
+                                <button class="btn btn-outline-secondary btn-sm" @click="chequeToCancel = null">Non</button>
+                            </div>
+                        </div>
+
+                        <div v-if="editingChequeId === cheque.id" class="row g-2 mt-1">
+                            <div class="col-md-4">
+                                <label class="form-label">N° Chèque</label>
+                                <input v-model="editChequeForm.num_cheque" type="text" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date d'émission</label>
+                                <input v-model="editChequeForm.date_emission_cheque" type="date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Montant (Ar)</label>
+                                <input v-model.number="editChequeForm.montant" type="number" min="0" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12 d-flex gap-2 mt-2">
+                                <button class="btn btn-success btn-sm" @click="saveEditCheque">Valider (en attente)</button>
+                                <button class="btn btn-outline-secondary btn-sm" @click="cancelEditCheque">Fermer</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nouveaux chèques en attente -->
+                    <div v-for="cheque in pendingNewCheques" :key="cheque.tempId" class="border border-info rounded p-3 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ cheque.num_cheque }}</strong>
+                                — {{ cheque.date_emission_cheque }}
+                                — {{ formatNumber(cheque.montant) }} Ar
+                                <span class="badge bg-info text-dark ms-2">Nouveau (en attente)</span>
+                            </div>
+                            <button class="btn btn-outline-danger btn-sm" @click="retirerNouveauCheque(cheque.tempId)">Retirer</button>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire d'ajout -->
+                    <div class="border rounded p-3 mt-3">
+                        <h6 class="fw-bold">Ajouter un chèque</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label">N° Chèque</label>
+                                <input v-model="newCheque.num_cheque" type="text" class="form-control form-control-sm" placeholder="Ex: CHQ-00456">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date d'émission</label>
+                                <input v-model="newCheque.date_emission_cheque" type="date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Montant (Ar)</label>
+                                <input v-model.number="newCheque.montant" type="number" min="0" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-outline-success btn-sm mt-2" @click="ajouterCheque">
+                                    + Ajouter ce chèque (en attente)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Motif (obligatoire) -->
             <div class="col-12">
-            <label class="form-label">
-                Motif de rectification
-                <span class="text-danger">*</span>
-            </label>
-            <textarea
-                v-model="form.motif_rectif"
-                rows="3"
-                class="form-control"
-                placeholder="Expliquez la raison de cette rectification..."
-                :class="{ 'is-invalid': submitAttempted && !form.motif_rectif }"
-            ></textarea>
-            <div v-if="submitAttempted && !form.motif_rectif" class="invalid-feedback">
-                Le motif de rectification est obligatoire.
-            </div>
+                <label class="form-label">
+                    Motif de rectification
+                    <span class="text-danger">*</span>
+                </label>
+                <textarea
+                    v-model="form.motif_rectif"
+                    rows="3"
+                    class="form-control"
+                    placeholder="Expliquez la raison de cette rectification..."
+                    :class="{ 'is-invalid': submitAttempted && !form.motif_rectif }"
+                ></textarea>
+                <div v-if="submitAttempted && !form.motif_rectif" class="invalid-feedback">
+                    Le motif de rectification est obligatoire.
+                </div>
             </div>
 
         </div>
 
         <div v-if="saveError" class="alert alert-danger mt-3">{{ saveError }}</div>
-
+        
+        <!-- ========================================== -->
         <div class="d-flex justify-content-between gap-2 mt-4">
             <button class="btn btn-outline-secondary" @click="currentStep = articlesFound.length > 1 ? 1 : 0">Retour</button>
             <button class="btn btn-success" :disabled="loadingSave" @click="saveRectification">
@@ -317,6 +429,20 @@ const uploading = ref(false)
 const fileUrl = ref(null)
 const doc_achat = ref([]) // contient les documents reliers a une article de l'achat
 
+// Gestion des chèques supplémentaires (au-delà du 1er, géré ailleurs)
+const chequesListe = ref([]) // chèques déjà en base pour cet article
+const loadingCheques = ref(false)
+const newCheque = ref({ num_cheque: '', date_emission_cheque: '', montant: null })
+const editingChequeId = ref(null)
+const editChequeForm = ref({ num_cheque: '', date_emission_cheque: '', montant: null })
+const chequeToCancel = ref(null) // id du chèque en attente de confirmation d'annulation
+
+// États "en attente" — rien n'est écrit en base tant que la rectification n'est pas enregistrée
+const pendingNewCheques = ref([])      // [{ tempId, num_cheque, date_emission_cheque, montant }]
+const pendingEditCheques = ref({})     // { [chequeId]: { num_cheque, date_emission_cheque, montant } }
+const pendingCancelCheques = ref([])   // [chequeId, ...]
+
+
 // Fournisseurs pour le select
 const fournisseurs = ref([])
 const fournisseursAllData = ref([])
@@ -387,6 +513,14 @@ const resetModal = () => {
         date_emission_cheque: '',
         motif_rectif: '',
     }
+    // Réinitialisation du staging des chèques
+    chequesListe.value = []
+    pendingNewCheques.value = []
+    pendingEditCheques.value = {}
+    pendingCancelCheques.value = []
+    resetNewCheque()
+    editingChequeId.value = null
+    chequeToCancel.value = null
 }
 
 // Étape 1 : Recherche
@@ -445,6 +579,7 @@ form.value = {
     motif_rectif: '',
 }
 currentStep.value = 2
+loadCheques(a.id)
 }
 
 
@@ -457,57 +592,95 @@ form.value.totalR = q * p
 
 // Étape 3 : Enregistrement
 const saveRectification = async () => {
-submitAttempted.value = true
-if (!form.value.motif_rectif) return
+    submitAttempted.value = true
+    if (!form.value.motif_rectif) return
 
-loadingSave.value = true
-saveError.value = ''
+    loadingSave.value = true
+    saveError.value = ''
 
-const a = selectedArticle.value
+    const a = selectedArticle.value
 
-try {
-    // 1. INSERT dans ses_rectification (anciennes valeurs)
-    const { error: insertError } = await supabase
-    .from('ses_rectification')
-    .insert({
-        obj_id: parseInt(searchObjId.value),
-        item_id: a.id,
-        num_item: a.num,
-        qte: a.qte,
-        fournisseur2: a.fournisseur2?.id ?? a.fournisseur2 ?? null,
-        prixR: a.prixR,
-        totalR: a.totalR,
-        num_cheque: a.num_cheque,
-        date_emission_cheque: a.date_emission_cheque,
-        motif_rectif: form.value.motif_rectif,
-        user: user.value?.id,
-    })
-    if (insertError) throw insertError
+    try {
+        // 1. INSERT dans ses_rectification (anciennes valeurs) — récupère l'id pour tracer les chèques
+        const { data: insertedRectif, error: insertError } = await supabase
+            .from('ses_rectification')
+            .insert({
+                obj_id: parseInt(searchObjId.value),
+                item_id: a.id,
+                num_item: a.num,
+                qte: a.qte,
+                fournisseur2: a.fournisseur2?.id ?? a.fournisseur2 ?? null,
+                prixR: a.prixR,
+                totalR: a.totalR,
+                num_cheque: a.num_cheque,
+                date_emission_cheque: a.date_emission_cheque,
+                motif_rectif: form.value.motif_rectif,
+                user: user.value?.id,
+            })
+            .select('id')
+            .single()
+        if (insertError) throw insertError
 
-    // 2. UPDATE ses_demItems (nouvelles valeurs)
-    const { error: updateError } = await supabase
-    .from('ses_demItems')
-    .update({
-        qte: form.value.qte,
-        fournisseur2: form.value.fournisseur2,
-        prixR: form.value.prixR,
-        totalR: form.value.totalR,
-        num_cheque: form.value.num_cheque,
-        date_emission_cheque: form.value.date_emission_cheque,
-    })
-    .eq('id', a.id)
-    if (updateError) throw updateError
+        // 2. UPDATE ses_demItems (nouvelles valeurs)
+        const { error: updateError } = await supabase
+            .from('ses_demItems')
+            .update({
+                qte: form.value.qte,
+                fournisseur2: form.value.fournisseur2,
+                prixR: form.value.prixR,
+                totalR: form.value.totalR,
+                num_cheque: form.value.num_cheque,
+                date_emission_cheque: form.value.date_emission_cheque,
+            })
+            .eq('id', a.id)
+        if (updateError) throw updateError
 
-    showAlert('Rectification enregistrée avec succès.', 'Succès', 'success')
-    closeModal()
-    loadRectifications()
+        // 3. Nouveaux chèques en attente
+        for (const cheque of pendingNewCheques.value) {
+            const { error: chequeError } = await supabase
+                .from('ses_chequeList')
+                .insert({
+                    id_item: a.id,
+                    num_cheque: cheque.num_cheque,
+                    date_emission_cheque: cheque.date_emission_cheque,
+                    montant: cheque.montant,
+                    id_user: user.value?.id
+                })
+            if (chequeError) throw chequeError
+        }
 
-} catch (e) {
-    saveError.value = 'Une erreur est survenue lors de l\'enregistrement.'
-    console.error(e)
-} finally {
-    loadingSave.value = false
-}
+        // 4. Modifications de chèques en attente
+        for (const [chequeId, values] of Object.entries(pendingEditCheques.value)) {
+            const { error: chequeEditError } = await supabase
+                .from('ses_chequeList')
+                .update({
+                    num_cheque: values.num_cheque,
+                    date_emission_cheque: values.date_emission_cheque,
+                    montant: values.montant,
+                })
+                .eq('id', chequeId)
+            if (chequeEditError) throw chequeEditError
+        }
+
+        // 5. Annulations de chèques en attente
+        for (const chequeId of pendingCancelCheques.value) {
+            const { error: chequeCancelError } = await supabase
+                .from('ses_chequeList')
+                .update({ annule: true})
+                .eq('id', chequeId)
+            if (chequeCancelError) throw chequeCancelError
+        }
+
+        showAlert('Rectification enregistrée avec succès.', 'Succès', 'success')
+        closeModal()
+        loadRectifications()
+
+    } catch (e) {
+        saveError.value = 'Une erreur est survenue lors de l\'enregistrement.'
+        console.error(e)
+    } finally {
+        loadingSave.value = false
+    }
 }
 
 // ===================== UTILS =====================
@@ -630,7 +803,11 @@ const downloadFile = async (name_doc,nameStorage) => {
     }
 }
 const supprimerClick = ref(false)
-const funcSupClick = () => {
+const id_doc_to_delete = ref(null)
+const nameStorage_to_delete = ref(null)
+const funcSupClick = (id, nameStorage) => {
+    id_doc_to_delete.value = id
+    nameStorage_to_delete.value = nameStorage
     supprimerClick.value = true
     setTimeout(() => {
         supprimerClick.value = false
@@ -725,6 +902,117 @@ const upload_file = async (id_item) => {
 
 
 }
+
+// ===================== GESTION DES CHÈQUES SUPPLÉMENTAIRES (staging local) =====================
+const loadCheques = async (idItem) => {
+    loadingCheques.value = true
+    try {
+        const { data, error } = await supabase
+            .from('ses_chequeList')
+            .select('*')
+            .eq('id_item', idItem)
+            .order('created_at', { ascending: true })
+
+        if (error) throw error
+        chequesListe.value = data || []
+    } catch (error) {
+        console.error('Erreur lors du chargement des chèques:', error)
+        showAlert('Erreur lors du chargement des chèques.', 'Oops', 'danger')
+    } finally {
+        loadingCheques.value = false
+    }
+}
+
+const resetNewCheque = () => {
+    newCheque.value = { num_cheque: '', date_emission_cheque: '', montant: null }
+}
+
+// Ajout d'un nouveau chèque : mis en attente, pas encore en base
+const ajouterCheque = () => {
+    if (!newCheque.value.num_cheque || !newCheque.value.date_emission_cheque || !newCheque.value.montant) {
+        showAlert('Veuillez renseigner le numéro, la date et le montant du chèque.', 'Oops', 'danger')
+        return
+    }
+    pendingNewCheques.value.push({
+        tempId: 'new-' + Date.now() + '-' + Math.random().toString(36).slice(2),
+        num_cheque: newCheque.value.num_cheque,
+        date_emission_cheque: newCheque.value.date_emission_cheque,
+        montant: newCheque.value.montant,
+    })
+    resetNewCheque()
+}
+
+const retirerNouveauCheque = (tempId) => {
+    pendingNewCheques.value = pendingNewCheques.value.filter(c => c.tempId !== tempId)
+}
+
+// Édition d'un chèque déjà en base : reprend un éventuel brouillon en attente
+const openEditCheque = (cheque) => {
+    editingChequeId.value = cheque.id
+    const pending = pendingEditCheques.value[cheque.id]
+    editChequeForm.value = pending
+        ? { ...pending }
+        : {
+            num_cheque: cheque.num_cheque,
+            date_emission_cheque: cheque.date_emission_cheque,
+            montant: cheque.montant,
+        }
+}
+
+const cancelEditCheque = () => {
+    editingChequeId.value = null
+}
+
+// Sauvegarde de l'édition : mise en attente, pas encore en base
+const saveEditCheque = () => {
+    if (!editChequeForm.value.num_cheque || !editChequeForm.value.date_emission_cheque || !editChequeForm.value.montant) {
+        showAlert('Veuillez renseigner le numéro, la date et le montant du chèque.', 'Oops', 'danger')
+        return
+    }
+    pendingEditCheques.value = {
+        ...pendingEditCheques.value,
+        [editingChequeId.value]: { ...editChequeForm.value },
+    }
+    editingChequeId.value = null
+}
+
+// Annuler une modification déjà mise en attente (revenir à l'original)
+const annulerEditionEnAttente = (chequeId) => {
+    const copy = { ...pendingEditCheques.value }
+    delete copy[chequeId]
+    pendingEditCheques.value = copy
+}
+
+// Annulation d'un chèque : mise en attente, pas encore en base
+const demanderAnnulationCheque = (chequeId) => {
+    chequeToCancel.value = chequeId
+}
+
+const annulerCheque = () => {
+    if (!chequeToCancel.value) return
+    if (!pendingCancelCheques.value.includes(chequeToCancel.value)) {
+        pendingCancelCheques.value.push(chequeToCancel.value)
+    }
+    chequeToCancel.value = null
+}
+
+// Annuler l'annulation en attente (revenir à l'état actif)
+const annulerLAnnulationEnAttente = (chequeId) => {
+    pendingCancelCheques.value = pendingCancelCheques.value.filter(id => id !== chequeId)
+}
+
+// Vue fusionnée pour l'affichage : chèques en base + leurs modifications en attente
+const chequesAffichees = computed(() => {
+    return chequesListe.value.map(c => {
+        const edit = pendingEditCheques.value[c.id]
+        return {
+            ...c,
+            ...(edit || {}),
+            _pendingEdit: !!edit,
+            _pendingCancel: pendingCancelCheques.value.includes(c.id),
+        }
+    })
+})
 // ===================== LIFECYCLE =====================
 onMounted(() => {
     loadRectifications();

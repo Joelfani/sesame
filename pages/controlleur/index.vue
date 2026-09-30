@@ -5,6 +5,7 @@
             <h1>VALIDATION AU NIVEAU DU CONTROLLEUR DE GESTION</h1>
             <div class="link_demande">
             </div>
+            <MiniNav LinkSelected="/controlleur" baseLink="controlleur"/> 
         </div> 
         
         <!-- Champ de recherche -->
@@ -63,13 +64,13 @@ const choix_filtre = ref('num');
 const search_term = ref('');
 const date_debut = ref('');
 const date_fin = ref('');
-
+const selectedType = ref('/controlleur');
 /* METHODS */
 const getValidationAchat = async () => {
     loading.value = true;
 
     try {
-        // 1️⃣ Récupérer les demandes + nom du user + items niv_val = finance
+        // Récupérer les demandes + nom du user + items niv_val = finance
         const { data, error } = await supabase
             .from('ses_demandeObj')
             .select(`
@@ -82,7 +83,7 @@ const getValidationAchat = async () => {
 
         if (error) throw error;
 
-        // 2️⃣ Transformer les données retournées
+        // Transformer les données retournées
         const result = data.map(row => ({
             ...row,
             nbrnv: row.ses_demItems?.length ?? 0,   // nombre d'items niveau finance
@@ -92,7 +93,7 @@ const getValidationAchat = async () => {
             id_user: row.users?.full_name || "Nom non trouvé"
         }));
 
-        // 3️⃣ Mettre à jour les stores
+        // Mettre à jour les stores
         liste_demandes_a_valider.value = result;
         filtered_demandes.value = [...result];
 
@@ -166,6 +167,10 @@ const formatDate = (dateString) => {
     const year = d.getFullYear();
     
     return `${day}/${month}/${year}`;
+};
+// Navigation vers le type de demande sélectionné
+const naviguer = () => {
+    navigateTo(selectedType.value);
 };
 
 // Lifecycle

@@ -1,7 +1,7 @@
     <template>
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>DEMANDE D'ACHAT</h1>
+        <h1>NOUVELLE DEMANDE D'ACHAT</h1>
         <div class="link_demande">
             <NuxtLink to="" class="btn btn-success" @click="sendTableData">Envoyer la demande</NuxtLink>
         </div>
@@ -21,6 +21,7 @@
             :tableinputadd="true" 
             :add-row="true"
             ref="tableRef"
+            :totalDAadd="true"
             />
         </div>
         <!-- Alert pour les notifications -->
@@ -166,7 +167,7 @@
         if (insertObjError) throw insertObjError;
 
         const insertedId = insertedObj.id; // id de la demande insérée
-        console.log("ID nouvel objet:", insertedId);
+        //console.log("ID nouvel objet:", insertedId);
 
         // 2. Préparation des items avec id_obj
         const insertData = tableData.map(item => ({

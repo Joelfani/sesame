@@ -21,7 +21,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
             'cheque': 'cheque',
             'livraison': 'livraison',
             'fournisseur': 'fournisseur',
-            'signature': 'finance|achat',
+            'signature': 'finance|achat|rh',
+            'rh':'rh'
         }
         
         // Vérifier si l'utilisateur est connecté

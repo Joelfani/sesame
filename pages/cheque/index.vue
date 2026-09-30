@@ -5,6 +5,7 @@
             <h1>DEMANDES EN ATTENTE DE CHÈQUE</h1>
             <div class="link_demande">
             </div>
+            <MiniNav LinkSelected="/cheque" baseLink="cheque"/>
         </div>
         
         <!-- Champ de recherche -->
@@ -63,13 +64,14 @@ const choix_filtre = ref('num');
 const search_term = ref('');
 const date_debut = ref('');
 const date_fin = ref('');
+const selectedType = ref('/cheque');
 
 /* METHODS */
 const getDemandesAttenteCheque = async () => {
     loading.value = true;
 
     try {
-        // 1️⃣ Requête unique avec jointures
+        // Requête unique avec jointures
         const { data, error } = await supabase
             .from('ses_demandeObj')
             .select(`
@@ -82,7 +84,7 @@ const getDemandesAttenteCheque = async () => {
 
         if (error) throw error;
 
-        // 2️⃣ Transformation rapide des données
+        // Transformation rapide des données
         const result = data.map(row => ({
             ...row,
             nbrnv: row.ses_demItems?.length ?? 0,   // nombre d'items niveau cheque
@@ -92,11 +94,11 @@ const getDemandesAttenteCheque = async () => {
             id_user: row.users?.full_name || "Nom non trouvé"
         }));
 
-        // 3️⃣ Mise à jour des listes
+        // Mise à jour des listes
         liste_demandes_attente_cheque.value = result;
         filtered_demandes.value = [...result];
 
-        console.log('liste demandes en attente de chèque', result);
+        //console.log('liste demandes en attente de chèque', result);
 
     } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error);
@@ -169,7 +171,10 @@ const formatDate = (dateString) => {
     
     return `${day}/${month}/${year}`;
 };
-
+// Navigation vers le type de demande sélectionné
+const naviguer = () => {
+    navigateTo(selectedType.value);
+};
 // Lifecycle
 onMounted(() => {
     getDemandesAttenteCheque();

@@ -10,12 +10,18 @@
         </div>
         
         <!-- Informations générales de la demande -->
-        <div>
-            <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
-            <h6>Date: <span>{{ dataObj.date }}</span></h6>
-            <h6></h6>
-            <div class="d-flex align-items-center gap-3">
-                <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+        <div class ="row">
+            <div class="col-8">
+                <h6>N° d'enregistrement: <span>{{ route.params.id }}</span></h6>
+                <h6>Date: <span>{{ dataObj.date }}</span></h6>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <h6>Objet: <span>{{ dataObj.nom }}</span></h6>
+                </div>
+            </div>
+            <div class="col-4" style="display: flex; flex-direction: column; justify-content: center; align-items: flex-end;">
+                <h6>Total Budgété: <strong>{{ totalAmount }} Ar</strong></h6>
+                <h6>Total Réel: <strong>{{ totalAmountR }} Ar</strong></h6>
             </div>
         </div>
         
@@ -188,7 +194,34 @@ const getDemandeDetails = async () => {
         console.error(error);
     }
 };
-
+//Formatage des nombres avec virgule et espace
+const toNumber = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    // Remplace la virgule par un point, retire les espaces (séparateurs de milliers éventuels)
+    return parseFloat(val.toString().replace(/\s/g, '').replace(',', '.')) || 0;
+};
+// Formatage du montant avec séparateur de milliers
+const formatMontant = (val) => {
+    const nombre = toNumber(val); 
+    return new Intl.NumberFormat('fr-FR').format(nombre);
+};
+// Total brut (nombre)
+const totalAmount = computed(() => {
+    return formatMontant(demande_details.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prix));
+    }, 0));
+});
+// Total pour prixR
+const totalAmountR = computed(() => {
+    return formatMontant(demande_details.value
+            .filter(item => item.etat !== 2)
+            .reduce((total, item) => {
+        return total + (toNumber(item.qte) * toNumber(item.prixR));
+    }, 0));
+});
 // Gestionnaire principal pour les actions de validation
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
@@ -251,6 +284,7 @@ const handleLivraison = async (item, editableData) => {
                 id_obj: route.params.id,
                 id_item: item.id,
                 action: 'Validation de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                type:'fin',
                 niv_val:niveau.livraison + 1,
             });
 
@@ -269,6 +303,7 @@ const handleRejection = async (item, editableData) => {
         // Préparer les données à mettre à jour
         const updateData = {
             niv_val: niveau.refuse, // Statut rejeté
+            user_refuse: userStore.id, // ID de l'utilisateur qui rejette
             ...editableData.fields // Inclure les données éditables (commentaires par exemple)
         };
         
@@ -339,18 +374,19 @@ const exportToExcel = async () => {
             'Spécificités techniques': item.spec,
             'Quantité': item.qte,
             'Prix Unitaire': item.prix,
-            'Fournisseur': item.fournisseur|| '',
+            'Fournisseur': item.fournisseur|| '-',
             'Délai': item.delai,
-            'Imputation Analytique': item.imputation || '',
-            'Fournisseur Réel':item.fournisseur|| '',
-            'Prix Réel': item.prixR || '',
-            'Montant Réel': item.totalR || '',
-            'Observation DPR': item.observation_dpr || '',
-            'N° Chèque': item.num_cheque || '',
-            'Date d\'émission': item.date_emission_cheque || '',
-            'Observation Chèque': item.observation_cheque || '',
-            'Date de livraison': item.date_livraison ? formatDate(item.date_livraison) : '',
-            'Observation Livraison': item.observation_livraison || '',
+            'Imputation Analytique': item.imputation || '-',
+            'Tiger': item.num_tiger || '-',
+            'Fournisseur Réel':item.fournisseur|| '-',
+            'Prix Réel': item.prixR || '-',
+            'Montant Réel': item.totalR || '-',
+            'Observation DPR': item.observation_dpr || '-',
+            'N° Chèque': item.num_cheque || '-',
+            'Date d\'émission': item.date_emission_cheque || '-',
+            'Observation Chèque': item.observation_cheque || '-',
+            'Date de livraison': item.date_livraison ? formatDate(item.date_livraison) : '-',
+            'Observation Livraison': item.observation_livraison || '-',
             'Statut': item.niv_val == niveau.livraison ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.livraison ? 'Validation pas encore a votre niveau' : 'Validé',
         }));
 
