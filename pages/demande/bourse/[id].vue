@@ -2,7 +2,7 @@
     <div class="purchase_page">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>DÉTAILS DE LA DEMANDE DE BOURSE</h1>
+            <h1>DÉTAILS DE LA DEMANDE DE DEPENSES ETUDIANTES</h1>
 
             <client-only>
                 <button v-if="dataObj.niv_val == niveauBourse.erg"
@@ -117,6 +117,10 @@
                         disabled
                     >
                 </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">Observations</label>
+                    <textarea v-model="editForm.observation" class="form-control" rows="2"></textarea>
+                </div>
             </div>
             <div class="d-flex gap-2 justify-content-end mt-4">
                 <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -216,7 +220,8 @@ const editForm = ref({
     description: '',
     qte: null,
     prix: null,
-    montant: null
+    montant: null,
+    observation: ''
 })
 
 const columns = [
@@ -225,6 +230,7 @@ const columns = [
     { key: 'qte', label: 'Nombre' },
     { key: 'prix', label: 'Montant unitaire' },
     { key: 'montant', label: 'Montant' },
+    { key: 'observation', label: 'Observation' },
     { key: 'statut_ligne', label: 'Statut' }
 ]
 
@@ -322,6 +328,7 @@ const openEditModal = (item) => {
     editForm.value = {
         id: item.id,
         description: item.description || '',
+        observation: item.observation || '',
         qte: Number(item.qte) || null,
         prix: Number(item.prix) || null,
         montant: Number(item.montant) || 0
@@ -366,7 +373,8 @@ const saveEditItem = async () => {
                 description: editForm.value.description.trim(),
                 qte: editForm.value.qte,
                 prix: editForm.value.prix,
-                montant: editForm.value.montant
+                montant: editForm.value.montant,
+                observation: editForm.value.observation.trim()
             })
             .eq('id', editForm.value.id)
             .eq('niv_val', niveauBourse.erg) // sécurité

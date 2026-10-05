@@ -16,7 +16,6 @@ const columns = [
     { key: 'num', label: 'N°' },
     { key: 'description', label: 'Libellé de facture / Commentaires'},
     { key: 'nature', label: 'Nature de la dépense'},
-    { key: 'ok', label: 'OK/NOK'},
     { key: 'montant', label: 'Montant (Ar)'},
     {
         key: 'imputation',

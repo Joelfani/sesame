@@ -1,6 +1,6 @@
 <template>
     <BourseList
-        titre="VALIDATION DES DEMANDES DE BOURSE - DPR"
+        titre="DPR"
         link-selected="/dpr/bourse"
         base-link="dpr"
         but-link-path="dpr/bourse/"

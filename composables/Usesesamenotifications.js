@@ -36,8 +36,14 @@ import {
   niveauBourse,
 } from '~/assets/js/CommonVariable'
 
-const SOLO_TYPES = ['retour', 'rejeter', 'edit', 'fin']
-
+const SOLO_TYPES = ['retour', 'rejeter', 'edit', 'fin','delete']
+// Types qui représentent une VRAIE arrivée à un niveau de validation
+// (quelqu'un a validé, renvoyé, ou finalisé — niv_val a changé pour de
+// bon). 'edit' et 'delete' ne déplacent rien : niv_val y est juste le
+// niveau courant au moment du log, pas une destination — ils ne doivent
+// jamais générer de notif "système"/"équipe", seulement une notif "solo"
+// (déjà couvert par SOLO_TYPES).
+const QUEUE_TYPES = ['valider', 'retour', 'fin']
 // --------------------------------------------------------------------------
 // 1. CONFIG PAR FLOW
 // --------------------------------------------------------------------------
@@ -352,6 +358,7 @@ export function useSesameNotifications() {
       .eq('id_obj.id_sup', userStore.id)
       .eq(flow.queueColumn, false)
       .eq('niv_val', flow.supLevel)
+      .in('type', QUEUE_TYPES)
       .order('id', { ascending: false })
 
     if (flow.catProc) query = query.eq('cat_proc', flow.catProc)
@@ -384,6 +391,7 @@ export function useSesameNotifications() {
         .select(buildSelect(flow))
         .eq(flow.queueColumn, false)
         .eq('niv_val', niv)
+        .in('type', QUEUE_TYPES)
         .order('id', { ascending: false })
 
       if (flow.catProc) query = query.eq('cat_proc', flow.catProc)

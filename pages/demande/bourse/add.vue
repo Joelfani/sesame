@@ -1,7 +1,7 @@
 <template>
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>NOUVELLE DEMANDE DE BOURSE</h1>
+            <h1>NOUVELLE DEMANDE DE DEPENSE ETUDIANTE</h1>
             <div class="link_demande d-flex gap-2">
                 <NuxtLink to="/demande/bourse" class="btn btn-outline-secondary">
                     Retour
@@ -25,7 +25,7 @@
                     class="form-control"
                     style="width: 40%; height: 30px;"
                     v-model="objBourse"
-                    placeholder="Objet de la demande de bourse"
+                    placeholder="( Ecolage, Trajet Ville, Frais de concours...etc )"
                 >
             </div>
         </div>
@@ -112,7 +112,13 @@ const columns = computed(() => [
         type: 'number',
         min: '0',
         disabled: true
-    }
+    },
+    {
+        key: 'observation',
+        label: 'Observation',
+        type: 'textarea',
+        style: { height: '62px' }
+    },
 ])
 
 // Calcul automatique du montant (appelé par Table à chaque saisie)
@@ -201,6 +207,7 @@ const sendTableData = async () => {
                 qte,
                 prix,
                 montant,
+                observation: item.observation?.toString().trim() || null,
                 niv_val: niveauBourse.erg
             }
         })

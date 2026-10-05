@@ -3,7 +3,7 @@
     <div class="purchase_page">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>{{ titre }}</h1>
+            <h1>{{ stateTitle }} {{ titre }}</h1>
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-success" @click="exportToExcel">
                     Exporter vers Excel
@@ -18,7 +18,6 @@
                 >
                     Validation en masse
                 </button>
-
                 <client-only>
                     <button
                         class="btn btn-outline-dark"
@@ -176,7 +175,45 @@
                 </p>
             </div>
         </Modal>
+
+                <!-- Bouton caché motif retour -->
+        <button
+            ref="btnOpenReturnModal"
+            type="button"
+            class="d-none"
+            data-bs-toggle="modal"
+            data-bs-target="#modalRetourBourse"
+        ></button>
+
+        <!-- Modal motif de retour -->
+        <Modal id="modalRetourBourse" title="Motif de retour">
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    Motif du retour
+                    <span class="text-danger">*</span>
+                </label>
+                <textarea
+                    v-model="returnMotif"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Indiquez le motif du retour..."
+                ></textarea>
+            </div>
+            <div class="d-flex gap-2 justify-content-end mb-2">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Annuler
+                </button>
+                <button
+                    class="btn btn-outline-primary"
+                    :disabled="loadingAction"
+                    @click="confirmReturn"
+                >
+                    Confirmer le retour
+                </button>
+            </div>
+        </Modal>
     </div>
+
 </template>
 
 <script setup>
@@ -184,6 +221,7 @@ import { niveauBourse } from '~/assets/js/CommonVariable.js'
 import { exportExcel } from '~/assets/js/export.js'
 
 const props = defineProps({
+    stateTitle: { type: String, default: 'DETAIL DES DÉPENSES ÉTUDIANTES - ' },
     titre: { type: String, default: 'VALIDATION DEMANDE DE BOURSE' },
     niveau: { type: [Number, String], required: true },
     nextLevel: { type: [Number, String], default: null },
@@ -203,7 +241,7 @@ const props = defineProps({
     exportColumns: { type: Array, default: () => [] },
     checkSup: { type: Boolean, default: false },
     imputationKey: { type: String, default: 'imputation' },
-    imputationOldKey: { type: String, default: 'imputation_old' }
+    imputationOldKey: { type: String, default: 'imputation_old' },
 })
 
 const supabase = useSupabaseClient()
@@ -218,6 +256,9 @@ const demande_details = ref([])
 const massForm = ref({})
 const imputationOptions = ref([])
 const doc_bourse = ref([])
+const btnOpenReturnModal = ref(null)
+const returnMotif = ref('')
+const pendingReturn = ref(null) // { item, fields, config } pour le retour en attente de confirmation
 /** Case à cocher : modifier l'imputation en masse (défaut non) */
 const massModifyImputation = ref(false)
 
@@ -443,6 +484,8 @@ const downloadFile = async (name_doc, nameStorage) => {
 }
 
 // ====================== VALIDATION LIGNE ======================
+
+// Remplacer le branchement return dans handleValidationAction :
 const handleValidationAction = async ({ action, item, editableData }) => {
     const config = getActionConfig(action)
     if (!config) return
@@ -454,10 +497,21 @@ const handleValidationAction = async ({ action, item, editableData }) => {
 
     const fields = editableData?.fields || {}
 
-    if (config.type === 'validate') await doValidate(item, fields)
-    else if (config.type === 'reject') await doReject(item, fields, config)
-    else if (config.type === 'return') await doReturn(item, fields, config)
+    if (config.type === 'validate') {
+        await doValidate(item, fields)
+    } else if (config.type === 'reject') {
+        await doReject(item, fields, config)
+    } else if (config.type === 'return') {
+        if (config.requireMotif) {
+            pendingReturn.value = { item, fields, config }
+            returnMotif.value = ''
+            nextTick(() => btnOpenReturnModal.value?.click())
+        } else {
+            await doReturn(item, fields, config, null)
+        }
+    }
 }
+
 
 const doValidate = async (item, fields) => {
     for (const key of getRequiredKeys()) {
@@ -551,26 +605,48 @@ const doReject = async (item, fields, config) => {
     }
 }
 
-const doReturn = async (item, fields, config) => {
+const confirmReturn = async () => {
+    if (!pendingReturn.value) return
+
+    const motif = (returnMotif.value || '').trim()
+    if (!motif) {
+        showAlert('Veuillez indiquer un motif de retour.', 'Oops', 'danger')
+        return
+    }
+
+    const { item, fields, config } = pendingReturn.value
+    await doReturn(item, fields, config, motif)
+
+    closeModal('modalRetourBourse')
+    pendingReturn.value = null
+    returnMotif.value = ''
+}
+
+// Remplacer entièrement doReturn :
+const doReturn = async (item, fields, config, motifFromModal = null) => {
     const target = config.targetLevel
     if (target === undefined || target === null) {
         showAlert('Niveau de retour non configuré.', 'Oops', 'danger')
         return
     }
 
-    const motif = fields.motif ?? item.motif
-    if (config.requireMotif && (!motif || !String(motif).trim())) {
+    const motif = (motifFromModal ?? '').trim()
+    if (config.requireMotif && !motif) {
         showAlert('Veuillez indiquer un motif de retour.', 'Oops', 'danger')
         return
     }
 
+    loadingAction.value = true
     try {
+        // Ne PAS écrire motif sur l'item (réservé au rejet)
+        const fieldsClean = { ...fields }
+        delete fieldsClean.motif
+
         const { error } = await supabase
             .from('ses_items_bourse')
             .update({
                 niv_val: target,
-                motif: motif || null,
-                ...fields
+                ...fieldsClean
             })
             .eq('id', item.id)
 
@@ -580,10 +656,11 @@ const doReturn = async (item, fields, config) => {
             id_user: userStore.id,
             id_obj: route.params.id,
             id_item: item.id,
-            action: `Retour de l'article ${item.num} de la bourse n°${route.params.id}${config.labelLevel ? ' au niveau ' + config.labelLevel : ''}${motif ? ' - Motif: ' + motif : ''}`,
+            action: `Retour de l'article ${item.num} de la dépense n°${route.params.id}${config.labelLevel ? ' au niveau ' + config.labelLevel : ''}${motif ? ' - Motif: ' + motif : ''}`,
             niv_val: target,
             cat_proc: 'bourse',
-            type: 'retour'
+            type: 'retour',
+            motif_ret: motif || null
         })
 
         await getDemandeDetails()
@@ -591,6 +668,8 @@ const doReturn = async (item, fields, config) => {
     } catch (error) {
         console.error(error)
         showAlert('Erreur lors du retour', 'Oops', 'danger')
+    } finally {
+        loadingAction.value = false
     }
 }
 

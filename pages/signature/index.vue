@@ -49,7 +49,7 @@ const load = async () => {
                 users: id_user ( full_name ),
                 ses_demItems!inner ( id, niv_val )
             `)
-            .eq('ses_demItems.niv_val', niveau.valide)
+            .in('ses_demItems.niv_val', [niveau.valide, niveau.cheque])
             .order('id', { ascending: false })
 
         if (error) throw error
@@ -74,7 +74,7 @@ const load = async () => {
     }
 }
 
-if (!userStore.finance && !userStore.achat && userStore.type_compte !== 1) {
+if (!userStore.finance && !userStore.achat && !userStore.cheque && userStore.type_compte !== 1) {
     navigateTo('/demande')
 }
 

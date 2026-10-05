@@ -1,6 +1,6 @@
 <template>
     <BourseList
-        titre="VALIDATION DES DEMANDES DE BOURSE - CHEQUE"
+        titre="CHEQUE"
         link-selected="/cheque/bourse"
         base-link="cheque"
         but-link-path="cheque/bourse/"

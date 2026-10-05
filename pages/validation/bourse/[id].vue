@@ -1,6 +1,6 @@
 <template>
     <BourseDetail
-        titre="VALIDATION BOURSE - SUPÉRIEUR"
+        titre="SUPÉRIEUR"
         :niveau="niveauBourse.superieur"
         :check-sup="true"
         retour-path="/validation/bourse"
@@ -44,10 +44,11 @@ const actions = [
     { label: 'Rejeter', color: 'danger', type: 'reject', requireMotif: true },
     {
         label: 'Retourner au collaborateur',
-        color: 'primary',
+        color: 'outline-primary',
         type: 'return',
         targetLevel: niveauBourse.erg,
-        labelLevel : 'collaborateur'
+        labelLevel : 'collaborateur',
+        requireMotif: true
     },
 ]
 
@@ -60,7 +61,8 @@ const massValidation = {
             label: 'Imputation analytique',
             type: 'select',
             required: true,
-            isImputation: true
+            isImputation: true,
+            optionalToggle:false
         },
         {
             key: 'com_sup',

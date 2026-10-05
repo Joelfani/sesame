@@ -12,8 +12,13 @@
             </div>
         </div>
 
-        <!-- Modal Émission Chèque -->
-        <Modal id="cheque" title="Émission de chèque">
+        <!-- Modal Émission Chèque PAR FOURNISSEUR
+             Le chèque saisi (num + date + montant) est dupliqué à l'identique
+             sur CHAQUE article du fournisseur sélectionné, via ChequeManagerPanel
+             (voir ce composant pour le détail). Cette action n'avance PAS le
+             niveau des articles : il faudra ensuite cliquer "Valider" sur
+             chaque ligne individuellement (cf. commentaire sur handleValiderLigne). -->
+        <Modal id="cheque" title="Émission de chèque par fournisseur">
             <div class="pdf-content">
                 <label>Sélectionnez un fournisseur</label>
                 <select
@@ -26,50 +31,57 @@
                     </option>
                 </select>
 
-                <label>N° de Chèque</label>
-                <input 
-                    type="text" 
-                    class="form-control mb-3" 
-                    v-model="numCheque"
-                    placeholder="Entrez le numéro de chèque"
-                    pattern="\d*"
-                    @input="validateNumCheque"
-                >
+                <div v-if="fournisseurSelected">
+                    <div class="alert alert-info" v-if="articlesAffiches.length > 0">
+                        <strong>Articles concernés :</strong> {{ articlesAffiches.length }} article(s)
+                        <ul class="mt-2 mb-0">
+                            <li v-for="article in articlesAffiches" :key="article.id">
+                                {{ article.num }} - {{ article.designation }} ({{ article.totalR }} Ar)
+                            </li>
+                        </ul>
+                        <strong>Total des prix :</strong> {{ totalArticles }} Ar
+                    </div>
+                    <div v-else class="alert alert-warning">
+                        Aucun article éligible pour ce fournisseur (niveau pas encore atteint, ou déjà rejeté).
+                    </div>
 
-                <label>Date d'émission</label>
-                <input 
-                    type="date" 
-                    class="form-control mb-3" 
-                    v-model="dateEmission"
-                >
-
-                <label>Observation (optionnel)</label>
-                <textarea 
-                    class="form-control mb-3" 
-                    v-model="observationCheque"
-                    rows="3"
-                    placeholder="Ajoutez une observation si nécessaire"
-                ></textarea>
-
-                <div class="alert alert-info" v-if="fournisseurSelected && articlesAffiches.length > 0">
-                    <strong>Articles concernés :</strong> {{ articlesAffiches.length }} article(s)
-                    <ul class="mt-2 mb-0">
-                        <li v-for="article in articlesAffiches" :key="article.id">
-                            {{ article.num }} - {{ article.designation }} ({{ article.totalR }} Ar)
-                        </li>
-                    </ul>
-                    <strong>Total des prix :</strong> {{ totalArticles }} Ar
+                    <!-- Panneau de gestion des chèques, partagé par tous les
+                         articles du fournisseur sélectionné -->
+                    <ChequeManagerPanel
+                        v-if="articlesAffiches.length > 0"
+                        :item-ids="articlesAffiches.map(a => a.id)"
+                        @updated="getDemandeDetails"
+                    />
                 </div>
 
                 <hr>
-                <span v-if="chequeButtonLoading">Traitement en cours...</span>
-                <button 
-                    class="btn btn-outline-dark" 
-                    @click="emettreCheque" 
-                    :disabled="chequeButtonLoading || !fournisseurSelected || !numCheque || !dateEmission"
-                >
-                    Émettre le chèque
-                </button>            
+                <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </Modal>
+
+        <!-- Modal Gestion des chèques POUR UNE SEULE LIGNE
+             Ouvert dynamiquement (voir openLigneChequeModal) plutôt que via
+             data-bs-toggle statique, car l'item concerné change selon la
+             ligne du tableau cliquée. -->
+        <button
+            ref="chequeLigneTrigger"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#chequeLigneModal"
+            style="display: none;"
+        ></button>
+
+        <Modal id="chequeLigneModal" :title="`Gestion des chèques — Article n°${selectedLigneNum}`">
+            <div class="pdf-content">
+                <!-- v-if évite de monter le panneau tant qu'aucune ligne n'est
+                    sélectionnée (itemIds vide) -->
+                <ChequeManagerPanel
+                    v-if="selectedLigneItemId"
+                    :item-ids="[selectedLigneItemId]"
+                    @updated="getDemandeDetails"
+                />
+
+                <hr>
                 <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
             </div>
         </Modal>
@@ -99,7 +111,8 @@
                 :type_but_modal="true"
                 :but_Validation="true"
                 :actions="[
-                    { label: 'Chèque émis', color: 'success' },
+                    { label: 'Gérer chèques', color: 'primary' },
+                    { label: 'Valider', color: 'success' },
                     { label: 'Rejeter', color: 'secondary' }
                 ]"
                 @validation_action="handleValidationAction"
@@ -125,12 +138,16 @@ const route = useRoute();
 
 // Loading
 const loading = ref(true);
-const chequeButtonLoading = ref(false);
 
 // Référence vers le composant Table
 const tableRef = ref(null);
 
 // Définition des colonnes du tableau
+// ⚠️ 'num_cheque' et 'date_emission_cheque' retirés : ces informations
+// vivent maintenant dans ses_chequeList (potentiellement plusieurs chèques
+// par article) et se gèrent via le bouton "Gérer chèques", pas en édition
+// inline. 'observation_cheque' reste INCHANGÉ (commentaire du responsable
+// chèque sur l'article, pas lié à un chèque précis).
 const columns = [
     { key: 'num', label: 'N°'},
     ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif'),
@@ -144,18 +161,10 @@ const columns = [
     { key: 'com_cg', label: 'Commentaire du contrôleur de gestion',style: {minWidth: '350px'}},
     { key: 'observation_dpr', label: 'Observation DPR'},
     { key: 'motif', label: 'Motif de rejet ',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
-    { 
-        key: 'num_cheque', 
-        label: 'N° Chèque', 
-        editable: true, 
-        type: 'text'
-    },
-    { 
-        key: 'date_emission_cheque', 
-        label: 'Date d\'émission', 
-        editable: true, 
-        type: 'date'
-    },
+    // Colonne informative (lecture seule) : nombre de chèques déjà affectés
+    // à cet article — sert aussi de repère visuel pour savoir si "Valider"
+    // est utilisable (il faut au moins 1 chèque).
+    { key: 'nb_cheques', label: 'Nb. chèques' },
     { 
         key: 'observation_cheque', 
         label: 'Observation sur le Chèque', 
@@ -174,18 +183,7 @@ const columns2 = [
     { key: 'totalR', label: 'Montant Réel' },
     { key: 'observation_dpr', label: 'Observation DPR'},
     { key: 'motif', label: 'Motif de rejet ',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
-    { 
-        key: 'num_cheque', 
-        label: 'N° Chèque', 
-        editable: true, 
-        type: 'text'
-    },
-    { 
-        key: 'date_emission_cheque', 
-        label: 'Date d\'émission', 
-        editable: true, 
-        type: 'date'
-    },
+    { key: 'nb_cheques', label: 'Nb. chèques' },
     { 
         key: 'observation_cheque', 
         label: 'Observation sur le Chèque', 
@@ -199,12 +197,16 @@ const dataObj = ref([]);
 const demande_details = ref([]);
 const validationData = ref(null);
 const dev = ref(false)
-// Données du modal
+// Données du modal fournisseur (seule la sélection reste ici, la gestion
+// du chèque lui-même est déléguée à ChequeManagerPanel)
 const fournisseurSelected = ref('');
 const fournisseurList = ref([]);
-const numCheque = ref('');
-const dateEmission = ref('');
-const observationCheque = ref('');
+
+// Sélection courante pour le modal "chequeLigneModal" (une seule ligne)
+const selectedLigneItemId = ref(null);
+const selectedLigneNum = ref(null);
+// Référence vers le bouton caché déclencheur du modal
+const chequeLigneTrigger = ref(null)
 
 // Alert system
 const alert = ref({
@@ -214,7 +216,8 @@ const alert = ref({
     type: ''
 });
 
-// Articles affichés pour le fournisseur sélectionné
+// Articles affichés pour le fournisseur sélectionné (critère d'éligibilité
+// inchangé : pas rejeté, et déjà au niveau "chèque" ou au-delà)
 const articlesAffiches = computed(() => {
     if (!fournisseurSelected.value) return [];
     return demande_details.value.filter(item => 
@@ -223,14 +226,6 @@ const articlesAffiches = computed(() => {
         item.niv_val >= niveau.cheque
     );
 });
-
-//Calcul du total des articles affichés pour le fournisseur sélectionné
-const totalArticles = computed(() => {
-    return articlesAffiches.value.reduce((total, article) => {
-        return total + (article.totalR || 0);
-    }, 0);
-}); // reduce => permet de transfomer un tableau en une seule valeur (ici la somme des totaux des articles)
-    // array.reduce((accumulateur(valeur actuel dans la boucle), valeurCourante (element traverse actuellement)) => accumulateur + valeurCourante, valeurInitiale (valeur de commencement));
 
 // METHODES
 // Gestion du tableau
@@ -251,104 +246,22 @@ const showAlert = (message, title, type) => {
     }, 5000)
 }
 
-// Valider que le numéro de chèque ne contient que des chiffres
-const validateNumCheque = (event) => {
-    numCheque.value = event.target.value.replace(/\D/g, '');
-}
-
-// Initialiser le modal
+// Réinitialise la sélection du modal fournisseur à l'ouverture
 const initialiseFournisseur = () => {
     fournisseurSelected.value = '';
-    numCheque.value = '';
-    dateEmission.value = '';
-    observationCheque.value = '';
 }
 
-// Émettre le chèque pour tous les articles du fournisseur
-const emettreCheque = async () => {
-    if (!fournisseurSelected.value) {
-        showAlert('Veuillez sélectionner un fournisseur !', 'Oops', 'danger');
-        return;
-    }
+// Ouvre le modal "Gérer chèques" pour UNE ligne précise du tableau.
+// On met d'abord à jour la ligne sélectionnée, on attend que le DOM se
+// mette à jour (nextTick), PUIS on simule un clic sur le bouton caché —
+// c'est ce clic qui déclenche l'ouverture Bootstrap, sans aucun import JS.
+const openLigneChequeModal = (item) => {
+    selectedLigneItemId.value = item.id
+    selectedLigneNum.value = item.num
 
-    if (!numCheque.value || numCheque.value.trim() === '') {
-        showAlert('Veuillez renseigner le numéro de chèque !', 'Oops', 'danger');
-        return;
-    }
-
-    if (!/^\d+$/.test(numCheque.value)) {
-        showAlert('Le numéro de chèque ne doit contenir que des chiffres !', 'Erreur de saisie', 'danger');
-        return;
-    }
-
-    if (!dateEmission.value) {
-        showAlert('Veuillez renseigner la date d\'émission de chèque !', 'Oops', 'danger');
-        return;
-    }
-
-    chequeButtonLoading.value = true;
-
-    try {
-        // Récupérer tous les articles du fournisseur sélectionné
-        const articlesATraiter = articlesAffiches.value;
-
-        if (articlesATraiter.length === 0) {
-            showAlert('Aucun article trouvé pour ce fournisseur !', 'Oops', 'warning');
-            chequeButtonLoading.value = false;
-            return;
-        }
-
-        // Préparer les données de mise à jour
-        const updateData = {
-            niv_val: niveau.cheque + 1,
-            num_cheque: numCheque.value,
-            date_emission_cheque: dateEmission.value,
-            observation_cheque: observationCheque.value || null
-        };
-
-        // Mettre à jour tous les articles en une seule requête
-        const articlesIds = articlesATraiter.map(article => article.id);
-        
-        const { error: updateError } = await supabase
-            .from('ses_demItems')
-            .update(updateData)
-            .in('id', articlesIds);
-
-        if (updateError) throw updateError;
-
-        // Enregistrer dans l'historique pour chaque article
-        const histoInserts = articlesATraiter.map(article => ({
-            id_user: userStore.id,
-            id_obj: route.params.id,
-            id_item: article.id,
-            action: `Émission de chèque n°${numCheque.value} pour l'article ${article.num} - Fournisseur: ${fournisseurSelected.value}`,
-            niv_val: niveau.cheque + 1
-        }));
-
-        const { error: histoError } = await supabase
-            .from('ses_histo')
-            .insert(histoInserts);
-
-        if (histoError) throw histoError;
-
-        // Actualiser les données
-        await getDemandeDetails();
-
-        showAlert(
-            `Chèque n°${numCheque.value} émis avec succès pour ${articlesATraiter.length} article(s) !`, 
-            'Succès', 
-            'success'
-        );
-
-        // Réinitialiser le formulaire
-        initialiseFournisseur();
-
-    } catch (error) {
-        console.error('Erreur lors de l\'émission du chèque:', error);
-        showAlert('Erreur lors de l\'émission du chèque !', 'Oops', 'danger');
-    } finally {
-        chequeButtonLoading.value = false;
-    }
+    nextTick(() => {
+        chequeLigneTrigger.value?.click()
+    })
 }
 
 // Récupération des données
@@ -362,6 +275,24 @@ const getDemandeDetails = async () => {
             .order('num', { ascending: true });
         
         if (error) throw error;
+
+        // Récupère, en une seule requête groupée, le nombre de chèques déjà
+        // enregistrés par article (ses_chequeList n'a plus de colonnes sur
+        // ses_demItems directement) — sert à la colonne "Nb. chèques" et,
+        // indirectement, à comprendre pourquoi "Valider" peut être bloqué.
+        const itemIds = data.map(item => item.id);
+        let chequeCountMap = {};
+        if (itemIds.length > 0) {
+            const { data: chequeRows, error: chequeErr } = await supabase
+                .from('ses_chequeList')
+                .select('id_item')
+                .in('id_item', itemIds);
+            if (chequeErr) throw chequeErr;
+
+            (chequeRows || []).forEach(row => {
+                chequeCountMap[row.id_item] = (chequeCountMap[row.id_item] || 0) + 1;
+            });
+        }
         
         const allDataView = data.map(item => {
             return {
@@ -372,7 +303,7 @@ const getDemandeDetails = async () => {
                 fournisseur2: item.fournisseur2?.nom || '',
                 prix2: item.prixR || item.prix || 0,
                 total2: item.totalR || item.total || 0,
-                date_emission_cheque: item.date_emission_cheque
+                nb_cheques: chequeCountMap[item.id] || 0,
             };
         });
         
@@ -445,7 +376,8 @@ const totalAmountR = computed(() => {
         return total + (toNumber(item.qte) * toNumber(item.prixR));
     }, 0));
 });
-// Gestionnaire principal pour les actions de validation (validation individuelle)
+
+// Gestionnaire principal pour les actions de validation (une ligne à la fois)
 const handleValidationAction = async (validationPayload) => {
     const { action, item, editableData, rowIndex } = validationPayload;
     
@@ -457,8 +389,12 @@ const handleValidationAction = async (validationPayload) => {
         timestamp: new Date().toISOString()
     };
     
-    if (action === 'Chèque émis') {
-        await handleChequeEmis(item, editableData);
+    if (action === 'Gérer chèques') {
+        // Ouvre simplement le modal de gestion des chèques pour cette ligne
+        // — aucune écriture ici, tout se passe dans ChequeManagerPanel.
+        openLigneChequeModal(item);
+    } else if (action === 'Valider') {
+        await handleValiderLigne(item, editableData);
     } else if (action === 'Rejeter') {
         if(editableData.fields.motif === undefined || editableData.fields.motif === null || editableData.fields.motif === ''){
             showAlert('Veuillez fournir un motif de rejet avant de rejeter l\'article.', 'Oops', 'danger');
@@ -469,31 +405,36 @@ const handleValidationAction = async (validationPayload) => {
     }
 };
 
-// Gestion de l'émission du chèque individuel
-const handleChequeEmis = async (item, editableData) => {
+// Validation d'une ligne : fait avancer niv_val, MAIS seulement si au
+// moins un chèque existe déjà pour cet article dans ses_chequeList.
+// On revérifie en base au moment du clic (plutôt que de se fier au
+// compteur nb_cheques déjà chargé) pour éviter un état périmé si l'écran
+// n'a pas été rafraîchi entre l'ajout du chèque et le clic sur "Valider".
+const handleValiderLigne = async (item, editableData) => {
     try {
-        
-        if (!editableData.fields.num_cheque || editableData.fields.num_cheque.trim() === '') {
-            showAlert('Veuillez renseigner le numéro de chèque !', 'Oops', 'danger');
+        const { count, error: countError } = await supabase
+            .from('ses_chequeList')
+            .select('id', { count: 'exact', head: true })
+            .eq('id_item', item.id);
+        if (countError) throw countError;
+
+        if (!count || count === 0) {
+            showAlert(
+                'Impossible de valider : aucun chèque n\'est affecté à cet article. Utilisez "Gérer chèques" d\'abord.',
+                'Oops',
+                'danger'
+            );
             return;
         }
 
-        if (!/^\d+$/.test(editableData.fields.num_cheque)) {
-            showAlert('Le numéro de chèque ne doit contenir que des chiffres !', 'Erreur de saisie', 'danger');
-            return;
-        }
-
-        if (!editableData.fields.date_emission_cheque) {
-            showAlert('Veuillez renseigner la date d\'émission de chèque !', 'Oops', 'danger');
-            return;
-        }
-        
+        // ...editableData.fields reprend ici uniquement les champs encore
+        // éditables inline (ex: observation_cheque), num_cheque et
+        // date_emission_cheque n'existant plus comme colonnes de la table.
         const updateData = {
             niv_val: niveau.cheque + 1,
-            date_emission_cheque: editableData.fields.date_emission_cheque || new Date().toISOString().split('T')[0],
             ...editableData.fields
         };
-        
+
         const { error } = await supabase
             .from('ses_demItems')
             .update(updateData)
@@ -509,20 +450,21 @@ const handleChequeEmis = async (item, editableData) => {
                 id_user: userStore.id,
                 id_obj: route.params.id,
                 id_item: item.id,
-                action: 'Émission de chèque de l\'article '+ item.num + ' dans la demande d\'achat numéro ' + route.params.id,
-                niv_val: niveau.cheque + 1
+                action: 'Validation (chèque) de l\'article '+ item.num + ' dans la demande d\'achat numéro ' + route.params.id,
+                niv_val: niveau.cheque + 1,
+                type: 'fin'
             });
 
         if (insertHistError) throw insertHistError;
         
-        showAlert('Chèque émis avec succès !', 'Succès', 'success');
+        showAlert('Article validé avec succès !', 'Succès', 'success');
     } catch (error) {
-        console.error('Erreur lors de l\'émission du chèque:', error);
-        showAlert('Erreur lors de l\'émission du chèque !', 'Oops', 'danger');
+        console.error('Erreur lors de la validation:', error);
+        showAlert('Erreur lors de la validation !', 'Oops', 'danger');
     }
 };
 
-// Gestion du rejet
+// Gestion du rejet (inchangé)
 const handleRejection = async (item, editableData) => {
     try {
         const updateData = {
@@ -597,8 +539,7 @@ const exportToExcel = async () => {
             'Prix Réel': item.prixR || '',
             'Montant Réel': item.totalR || '',
             'Observation DPR': item.observation_dpr || '',
-            'N° Chèque': item.num_cheque || '',
-            'Date d\'émission': item.date_emission_cheque ? formatDate(item.date_emission_cheque) : '',
+            'Nb. chèques': item.nb_cheques || 0,
             'Observation Chèque': item.observation_cheque || '',
             'Statut': item.niv_val == niveau.cheque ? 'En attente de votre validation' : item.niv_val == niveau.refuse ? 'Rejeté' : item.niv_val < niveau.cheque ? 'Validation pas encore à votre niveau' : 'Validé',
         }));
@@ -612,6 +553,14 @@ const exportToExcel = async () => {
         showAlert('Erreur lors de l\'exportation vers Excel.', 'Oops', 'danger');
     }
 };
+
+//Calcul du total des articles affichés pour le fournisseur sélectionné
+const totalArticles = computed(() => {
+    return articlesAffiches.value.reduce((total, article) => {
+        return total + (article.totalR || 0);
+    }, 0);
+}); // reduce => permet de transfomer un tableau en une seule valeur (ici la somme des totaux des articles)
+    // array.reduce((accumulateur(valeur actuel dans la boucle), valeurCourante (element traverse actuellement)) => accumulateur + valeurCourante, valeurInitiale (valeur de commencement));
 
 // LIFECYCLE HOOKS
 onMounted(() => {

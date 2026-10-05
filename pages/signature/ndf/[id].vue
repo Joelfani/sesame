@@ -48,10 +48,10 @@
                         <th style="border: 1px solid #000; padding: 4px; width: 9%;">Date</th>
                         <th style="border: 1px solid #000; padding: 4px; width: 28%;">Libellé de facture / Commentaires</th>
                         <th style="border: 1px solid #000; padding: 4px; width: 14%;">Nature de la dépense</th>
-                        <th style="border: 1px solid #000; padding: 4px; width: 12%;">Montant</th>
-                        <th style="border: 1px solid #000; padding: 4px; width: 8%;">OK/NOK</th>
                         <th style="border: 1px solid #000; padding: 4px; width: 15%;">Ligne Budget</th>
                         <th style="border: 1px solid #000; padding: 4px; width: 15%;">Tiger</th>
+                        <th style="border: 1px solid #000; padding: 4px; width: 12%;">Montant</th>
+                        
                     </tr>
                 </thead>
                 <tbody>
@@ -60,10 +60,9 @@
                         <td style="border: 1px solid #000; padding: 4px; text-align: center;">{{ item.date_ligne || '' }}</td>
                         <td style="border: 1px solid #000; padding: 4px;">{{ item.description || '' }}</td>
                         <td style="border: 1px solid #000; padding: 4px;">{{ item.nature || '' }}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ formatNumber(item.montant) }} Ar</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: center;">{{ item.ok || 'OK' }}</td>
                         <td style="border: 1px solid #000; padding: 4px;">{{ item.imputation_label || '' }}</td>
                         <td style="border: 1px solid #000; padding: 4px;">{{ item.tiger || '' }}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: right;">{{ formatNumber(item.montant) }} Ar</td>
                     </tr>
 
                     <!-- Lignes vides pour garder la forme -->
@@ -98,7 +97,7 @@
                         <td colspan="2" style="border: 1px solid #000; padding: 5px;"></td>
                     </tr>-->
                     <tr style="background: #e8a838;">
-                        <td colspan="7" style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">
+                        <td colspan="6" style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">
                             TOTAL
                         </td>
                         <td style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">
@@ -191,7 +190,7 @@
                     <img
                         v-else
                         :src="validateurs.cg.signatureValide"
-                        alt="Signature DPR"
+                        alt="Signature CG"
                         style="max-width: 100%; height: 50px; display: block; margin: 10px auto;"
                     >
                     <p style="margin: 5px 0 0 0; color: #666; font-size: 7pt; text-align: center;">
@@ -243,7 +242,8 @@ const lignes = ref([])
 const validateurs = ref({
     superieur: null,
     finance: null,
-    dpr: null
+    dpr: null,
+    cg: null
 })
 
 const MIN_ROWS = 1
@@ -315,7 +315,7 @@ const getDemandeValidee = async () => {
             .from('ses_items_ndf')
             .select('*')
             .eq('id_obj', route.params.id)
-            .eq('niv_val', niveauNDF.valide)
+            .in('niv_val', [niveauNDF.valide, niveauNDF.cheque])
             .order('num', { ascending: true })
 
         if (itemsError) throw itemsError
@@ -336,6 +336,7 @@ const getDemandeValidee = async () => {
             ok: item.ok || 'OK'
         }))
 
+
         // Signatures via historique
         const { data: histo, error: histoError } = await supabase
             .from('ses_histo2')
@@ -347,7 +348,7 @@ const getDemandeValidee = async () => {
             `)
             .eq('id_obj', route.params.id)
             .eq('cat_proc', 'ndf')
-            .eq('type','valider')
+            .in('type',['valider', 'fin']) // <-- exclut les retours et les autres types
             .order('niv_val', { ascending: true })
             .order('id', { ascending: false })
 
@@ -364,7 +365,7 @@ const getDemandeValidee = async () => {
                 }
             }
         })
-
+        
         // Adapter selon ta logique d'insert niv_val dans ses_histo2
         validateurs.value = {
             superieur: map[niveauNDF.superieur + 1] || null,
@@ -372,6 +373,7 @@ const getDemandeValidee = async () => {
             dpr: map[niveauNDF.dpr + 1] || null,
             cg: map[niveauNDF.cg + 1] || null
         }
+        console.log('validateurs:', validateurs.value)
     } catch (error) {
         console.error(error)
     } finally {
@@ -379,7 +381,7 @@ const getDemandeValidee = async () => {
     }
 }
 
-if (!userStore.finance && !userStore.cg && userStore.type_compte !== 1) {
+if (!userStore.finance && !userStore.cg && !userStore.cheque && userStore.type_compte !== 1) {
     navigateTo('/demande')
 }
 

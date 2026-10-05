@@ -1,6 +1,6 @@
 <template>
     <BourseList
-        titre="VALIDATION DES DEMANDES DE BOURSE - CG"
+        titre="CG"
         link-selected="/controlleur/bourse"
         base-link="controlleur"
         but-link-path="controlleur/bourse/"

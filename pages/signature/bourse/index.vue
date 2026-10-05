@@ -1,6 +1,6 @@
 <template>
     <ListeDemandesValidees
-        titre="LISTE DES DEMANDES DE BOURSE VALIDÉES"
+        titre="LISTE DES DEMANDES DE DEPENSES ETUDIANTS VALIDÉES"
         :columns="columns"
         :rows="liste"
         :loading="loading"
@@ -50,7 +50,7 @@ const load = async () => {
                 ses_items_bourse!inner ( id, niv_val )
             `)
             .eq('cat_proc', 'bourse')
-            .eq('ses_items_bourse.niv_val', niveauBourse.valide)
+            .in('ses_items_bourse.niv_val', [niveauBourse.valide, niveauBourse.cheque])
             .order('id', { ascending: false })
 
         if (error) throw error

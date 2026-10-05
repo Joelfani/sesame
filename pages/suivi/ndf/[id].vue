@@ -35,7 +35,6 @@ const columns = [
     { key: 'etat', label: 'Statut de la ligne' },
     { key: 'description', label: 'Libellé de facture / Commentaires', style: { minWidth: '280px' } },
     { key: 'nature', label: 'Nature de la dépense' },
-    { key: 'ok', label: 'OK/NOK'},
     { key: 'montant', label: 'Montant (Ar)' },
     { key: 'imputation', label: 'Imputation' },
     { key: 'tiger', label: 'Tiger' },

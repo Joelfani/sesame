@@ -52,7 +52,7 @@
                 :actions="[
                     { label: 'Valider', color: 'success' },
                     { label: 'Rejeter', color: 'danger' },
-                    { label: 'Retour vers supérieur', color: 'primary'},
+                    { label: 'Retour vers supérieur', color: 'outline-primary'},
                 ]"
                 title_modal_neutre="Ajouter un document"
                 @validation_action="handleValidationAction"
@@ -162,6 +162,16 @@
                 <br><br>
             </div>
         </Modal>
+        <RetourAchat
+            ref="retourModalRef"
+            modal-id="modalRetourAchatAcheteur"
+            title="Retour vers le supérieur"
+            label="Motif du retour"
+            confirm-label="Confirmer le retour"
+            confirm-color="primary"
+            :loading="loadingReturn"
+            @confirm="onConfirmRetour"
+        />
     </div>
     
 </template>
@@ -203,6 +213,8 @@ const demande_details = ref([]);
 const validationData = ref(null); // Pour stocker les données de validation pour debug
 const fournisseurs = ref([])
 const fournisseursAllData = ref([])
+const retourModalRef = ref(null)
+const loadingReturn = ref(false)
 //DATA FOR FILE
 const file = ref(null) // Save the doc 
 const fileInput = ref(null) //référence à l’élément HTML <input>
@@ -386,8 +398,13 @@ const handleValidationAction = async (validationPayload) => {
         }else{
             await handleRejection(item, editableData);
         }
-    }else if (action === 'Retour vers supérieur') {
-        await handleReturnToSup(item, editableData);
+    } else if (action === 'Retour vers supérieur') {
+        retourModalRef.value?.open({
+            item,
+            editableData,
+            targetLevel: niveau.superieur,
+            labelLevel: 'supérieur'
+        })
     }
 };
 
@@ -490,27 +507,47 @@ const handleRejection = async (item, editableData) => {
     }
 };
 // Gestion du retour vers Supérieur
-const handleReturnToSup = async (item, editableData) => {
+const onConfirmRetour = async ({ ok, motif, context }) => {
+    if (!ok) {
+        showAlert('Veuillez indiquer un motif de retour.', 'Oops', 'danger')
+        return
+    }
+    if (!context?.item) return
+
+    await handleReturnToSup(
+        context.item,
+        context.editableData,
+        context.targetLevel,
+        motif,
+        context.labelLevel
+    )
+    retourModalRef.value?.close()
+}
+
+const handleReturnToSup = async (
+    item,
+    editableData,
+    targetLevel = niveau.superieur,
+    motif = '',
+    labelLevel = ''
+) => {
+    loadingReturn.value = true
     try {
-        // Préparer les données à mettre à jour
+        // motif réservé au rejet — ne pas l'écrire sur l'item
+        const fields = { ...(editableData?.fields || {}) }
+        delete fields.motif
+
         const updateData = {
-            niv_val: niveau.superieur,
-            com_achat: editableData.fields.com_achat || null // Inclure le commentaire de l'acheteur si fourni
-            //...editableData.fields // Inclure les données éditables (commentaires par exemple)
-        };
-        
-        // Mettre à jour dans la base de données
+            niv_val: targetLevel,
+            com_achat: fields.com_achat || null
+        }
+
         const { error } = await supabase
             .from('ses_demItems')
             .update(updateData)
-            .eq('id', item.id);
-        
-        if (error) throw error;
-        
-        // Actualiser les données
-        await getDemandeDetails();
-        
-        // Enregistrement dans historique
+            .eq('id', item.id)
+
+        if (error) throw error
 
         const { error: insertHistError } = await supabase
             .from('ses_histo')
@@ -518,18 +555,21 @@ const handleReturnToSup = async (item, editableData) => {
                 id_user: userStore.id,
                 id_obj: route.params.id,
                 id_item: item.id,
-                action: 'Retour de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                action: `Retour de l'article ${item.num} de la demande n°${route.params.id}${labelLevel ? ' au niveau ' + labelLevel : ''}${motif ? ' - Motif: ' + motif : ''}`,
                 type: 'retour',
-                niv_val:niveau.superieur,
-            });
+                niv_val: targetLevel,
+                motif_ret: motif || null
+            })
 
-        if (insertHistError) throw insertHistError;
-        
-        
-        showAlert('Renvoi vers le supérieur réussi !', 'Succès', 'success');
+        if (insertHistError) throw insertHistError
+
+        await getDemandeDetails()
+        showAlert('Renvoi vers le supérieur réussi !', 'Succès', 'success')
     } catch (error) {
-        console.error('Erreur lors du retour financier:', error);
-        showAlert('Erreur lors du renvoi financier !', 'Oups!', 'danger');
+        console.error('Erreur lors du retour:', error)
+        showAlert('Erreur lors du renvoi !', 'Oups!', 'danger')
+    } finally {
+        loadingReturn.value = false
     }
 }
 // Gestionnaire pour les changements de champs éditables (optionnel)

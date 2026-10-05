@@ -91,7 +91,8 @@ export const TeteBourse =
             { key: 'description', label: 'Description' },
             { key: 'qte', label: 'Nombre' },
             { key: 'prix', label: 'Montant unitaire' },
-            { key: 'montant', label: 'Montant' }
+            { key: 'montant', label: 'Montant' },
+            { key: 'observation', label: 'Observation' }
         ]
 
 export const exportColumnsExcel = [

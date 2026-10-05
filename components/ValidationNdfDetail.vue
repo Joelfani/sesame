@@ -229,6 +229,42 @@
                 </button>
             </div>
         </Modal>
+                <!-- Bouton caché motif retour -->
+        <button
+            ref="btnOpenReturnModal"
+            type="button"
+            class="d-none"
+            data-bs-toggle="modal"
+            data-bs-target="#modalRetourNdf"
+        ></button>
+
+        <!-- Modal motif de retour -->
+        <Modal id="modalRetourNdf" title="Motif de retour">
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    Motif du retour
+                    <span class="text-danger">*</span>
+                </label>
+                <textarea
+                    v-model="returnMotif"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Indiquez le motif du retour..."
+                ></textarea>
+            </div>
+            <div class="d-flex gap-2 justify-content-end mb-2">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Annuler
+                </button>
+                <button
+                    class="btn btn-outline-primary"
+                    :disabled="loadingAction"
+                    @click="confirmReturn"
+                >
+                    Confirmer le retour
+                </button>
+            </div>
+        </Modal>
     </div>
 </template>
 
@@ -358,6 +394,9 @@ const editItem = ref(null)
 const editConfig = ref(null)
 const editModalTitle = ref('Modifier la ligne')
 const type =ref('valider')
+const btnOpenReturnModal = ref(null)
+const returnMotif = ref('')
+const pendingReturn = ref(null) // { item, fields, config }
 // Alert
 const alert = ref({ show: false, message: '', title: '', type: '' })
 const showAlert = (message, title, type) => {
@@ -484,6 +523,7 @@ const getDemandeDetails = async () => {
 
         demande_details.value = (data || []).map(item => ({
             ...item,
+            date: formatDate(item.date),
             // 0 = à valider à ce niveau, 2 = refusé, 1 = déjà traité / autre niveau, 4 = pas encore au niveau 
             etat:
                 Number(item.niv_val) === Number(props.niveau) ? 0 :
@@ -514,10 +554,17 @@ const handleValidationAction = async ({ action, item, editableData }) => {
     } else if (config.type === 'reject') {
         await doReject(item, editableData?.fields || {}, config)
     } else if (config.type === 'return') {
-        await doReturn(item, editableData?.fields || {}, config)
+        const fields = editableData?.fields || {}
+        if (config.requireMotif) {
+            pendingReturn.value = { item, fields, config }
+            returnMotif.value = ''
+            nextTick(() => btnOpenReturnModal.value?.click())
+        } else {
+            await doReturn(item, fields, config, null)
+        }
     } else if (config.type === 'edit') {
-        openEditModal(item, config)
-    }
+            openEditModal(item, config)
+        }
 }
 
 const doValidate = async (item, fields) => {
@@ -631,6 +678,23 @@ const doReject = async (item, fields, config) => {
     }
 }
 
+const confirmReturn = async () => {
+    if (!pendingReturn.value) return
+
+    const motif = (returnMotif.value || '').trim()
+    if (!motif) {
+        showAlert('Veuillez indiquer un motif de retour.', 'Oops', 'danger')
+        return
+    }
+
+    const { item, fields, config } = pendingReturn.value
+    await doReturn(item, { ...fields, motif }, config)
+
+    closeModal('modalRetourNdf')
+    pendingReturn.value = null
+    returnMotif.value = ''
+}
+
 const doReturn = async (item, fields, config) => {
     const target = config.targetLevel
     if (target === undefined || target === null) {
@@ -638,6 +702,13 @@ const doReturn = async (item, fields, config) => {
         return
     }
 
+    const motif = fields.motif ?? item.motif
+    if (config.requireMotif && (!motif || !String(motif).trim())) {
+        showAlert('Veuillez indiquer un motif de retour.', 'Oops', 'danger')
+        return
+    }
+
+    loadingAction.value = true
     try {
         const updateData = {
             niv_val: target,
@@ -655,9 +726,10 @@ const doReturn = async (item, fields, config) => {
             id_user: userStore.id,
             id_obj: route.params.id,
             id_item: item.id,
-            action: `Retour de l'article ${item.num} de la NDF n°${route.params.id} au niveau ${target}`,
+            action: `Retour de l'article ${item.num} de la NDF n°${route.params.id}${config.labelLevel ? ' au niveau ' + config.labelLevel : ''}${motif ? ' - Motif: ' + motif : ''}`,
             niv_val: target,
             cat_proc: 'ndf',
+            motif_ret: motif || null,
             type: 'retour'
         })
 
@@ -666,9 +738,10 @@ const doReturn = async (item, fields, config) => {
     } catch (error) {
         console.error(error)
         showAlert('Erreur lors du retour', 'Oops', 'danger')
+    } finally {
+        loadingAction.value = false
     }
 }
-
 // ====================== MODAL EDITION ======================
 const btnOpenEditModal = ref(null)
 

@@ -198,7 +198,7 @@ const getDemandeValidee = async () => {
             .from('ses_demItems')
             .select('*, fournisseur2(nom)')
             .eq('id_obj', route.params.id)
-            .eq('niv_val', niveau.valide)
+            .in('niv_val', [niveau.valide, niveau.cheque])
             .order('num', { ascending: true })
 
         if (itemsError) throw itemsError
@@ -228,13 +228,14 @@ const getDemandeValidee = async () => {
                 .from('ses_histo')
                 .select('id, niv_val, created_at, userValide:id_user(full_name), signatureValide:id_user(signature_url)')
                 .eq('id_item', items[0].id)
+                .eq('type', 'valider')
                 .order('niv_val', { ascending: true })
                 .order('id', { ascending: false })
 
             if (itemsHistoError) throw itemsHistoError
 
             const validateursMap = {}
-            ;(itemsHisto || []).forEach(item => {
+            (itemsHisto || []).forEach(item => {
                 if (!validateursMap[item.niv_val]) {
                     validateursMap[item.niv_val] = {
                         niv_val: item.niv_val,
@@ -244,7 +245,7 @@ const getDemandeValidee = async () => {
                     }
                 }
             })
-
+            console.log('validateursMap:', validateursMap)
             validateurs.value = {
                 superieur: validateursMap[2] || null,
                 achat: validateursMap[3] || null,
@@ -259,7 +260,7 @@ const getDemandeValidee = async () => {
     }
 }
 
-if (!userStore.finance && !userStore.achat && userStore.type_compte !== 1) {
+if (!userStore.finance && !userStore.achat && !userStore.cheque && userStore.type_compte !== 1) {
     navigateTo('/demande')
 }
 

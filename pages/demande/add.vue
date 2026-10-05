@@ -1,4 +1,4 @@
-    <template>
+<template>
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>NOUVELLE DEMANDE D'ACHAT</h1>
@@ -28,7 +28,7 @@
         <Alert v-if="alert.show" :message="alert.message" :type="alert.type" :title="alert.title"/>
     </div>
     
-    </template>
+</template>
 
     <script setup>
     
@@ -123,7 +123,7 @@
         }
     };
     const clickbutsend = ref(false);
-    const sendTableData = async () => {
+const sendTableData = async () => {
     // Validation des champs
     if (demObj.value === '') {
         showAlert('Veuillez remplir le champ objet', 'Oups!', 'danger');
@@ -152,58 +152,61 @@
     if(clickbutsend.value) return;
     clickbutsend.value = true;
     try {
-        // 1. Insertion de l'objet et récupération de l'id
-        const { data: insertedObj, error: insertObjError } = await supabase
-            .from('ses_demandeObj')
-            .insert({
-                nom: demObj.value,
-                id_user: userStore.id,
-                date: currentDate.toISOString().split('T')[0], // format YYYY-MM-DD
-                id_sup: userStore.sup
-            })
-            .select('id') // récupère l'id
-            .single();    // on sait qu’on insère une seule ligne
-
-        if (insertObjError) throw insertObjError;
-
-        const insertedId = insertedObj.id; // id de la demande insérée
-        //console.log("ID nouvel objet:", insertedId);
-
-        // 2. Préparation des items avec id_obj
-        const insertData = tableData.map(item => ({
+    // Insertion de l'objet et récupération de l'id
+    const { data: insertedObj, error: insertObjError } = await supabase
+        .from('ses_demandeObj')
+        .insert({
+            nom: demObj.value,
             id_user: userStore.id,
-            id_obj: insertedId, // on lie les items à la demande
-            ...item
-        }));
+            date: currentDate.toISOString().split('T')[0],
+            id_sup: userStore.sup
+        })
+        .select('id')
+        .single()
 
-        // 3. Insertion des items
-        const { error: insertItemError } = await supabase
-            .from('ses_demItems')
-            .insert(insertData);
+    if (insertObjError) throw insertObjError
 
-        if (insertItemError) throw insertItemError;
-        
-        showAlert('Demande envoyée avec succès', 'Succès', 'success');
-        
-        // Enregistrement dans historique
+    const insertedId = insertedObj.id
 
+    // Préparation des items avec id_obj
+    const insertData = tableData.map(item => ({
+        id_user: userStore.id,
+        id_obj: insertedId,
+        ...item
+    }))
+
+    // Insertion des items + récupération de leurs id
+    const { data: insertedItems, error: insertItemError } = await supabase
+        .from('ses_demItems')
+        .insert(insertData)
+        .select('id')
+
+    if (insertItemError) throw insertItemError
+
+    // Historique : une ligne par item (avec id_item)
+    const histoRows = (insertedItems || []).map(it => ({
+        id_user: userStore.id,
+        id_obj: insertedId,
+        id_item: it.id,
+        action: `Envoi de la demande d'achat n°${insertedId} — article id:${it.id}`,
+        // optionnel si ta table ses_histo a niv_val :
+        // niv_val: niveau.superieur,
+    }))
+
+    if (histoRows.length > 0) {
         const { error: insertHistError } = await supabase
             .from('ses_histo')
-            .insert({
-                id_user: userStore.id,
-                id_obj: insertedId,
-                action: 'Envoie d\'une demande d\'achat numéro ' + insertedId,
-            });
+            .insert(histoRows)
 
-        if (insertHistError) throw insertHistError;
+        if (insertHistError) throw insertHistError
+    }
 
-        
-        
-        navigateTo('/demande')
+    showAlert('Demande envoyée avec succès', 'Succès', 'success')
+    navigateTo('/demande')
     } catch (error) {
-        showAlert('Erreur lors de l\'envoi', 'Oups!', 'danger');
-        clickbutsend.value = false;
-        console.error('Error sending table data:', error);
+        showAlert('Erreur lors de l\'envoi', 'Oups!', 'danger')
+        clickbutsend.value = false
+        console.error('Error sending table data:', error)
     }
 };
     // LIFECYCLE //

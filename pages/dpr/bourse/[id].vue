@@ -1,6 +1,6 @@
 <template>
     <BourseDetail
-        titre="VALIDATION BOURSE - DPR"
+        titre="DPR"
         :niveau="niveauBourse.dpr"
         retour-path="/dpr/bourse"
         :columns="columns"
@@ -73,24 +73,11 @@ const bourseActions = [
 
 const massValidation = {
     enabled: true,
-    title: 'Validation en masse - CG',
+    title: 'Validation en masse - DPR',
     fields: [
         {
-            key: 'imputation',
-            label: 'Imputation analytique',
-            type: 'select',
-            required: true,
-            isImputation: true
-        },
-        {
-            key: 'tiger',
-            label: 'Code Tiger',
-            type: 'text',
-            required: true
-        },
-        {
-            key: 'com_cg',
-            label: 'Commentaire CG',
+            key: 'com_dpr',
+            label: 'Commentaire DPR',
             type: 'textarea'
         }
     ]

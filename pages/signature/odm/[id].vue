@@ -358,7 +358,7 @@ const getDemandeValidee = async () => {
     }
 }
 
-if (!userStore.finance && !userStore.rh && !userStore.dpr && !userStore.cg && userStore.type_compte !== 1) {
+if (!userStore.finance && !userStore.rh && !userStore.dpr && !userStore.cg && !userStore.cheque && userStore.type_compte !== 1) {
     navigateTo('/demande')
 }
 

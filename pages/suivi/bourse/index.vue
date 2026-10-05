@@ -1,6 +1,6 @@
 <template>
     <ListeSuiviGeneric
-        titre="SUIVI DE TOUTES LES DEMANDES DE BOURSE"
+        titre="SUIVI DE TOUTES LES DEMANDES DE DEPENSES ETUDIANTS"
         :columns="columns"
         :rows="liste_demande"
         :loading="loading"

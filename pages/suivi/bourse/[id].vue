@@ -1,6 +1,6 @@
 <template>
     <SuiviDetailGeneric
-        titre="DÉTAILS DE LA DEMANDE DE BOURSE"
+        titre="DÉTAILS DE LA DEMANDE DE DEPENSES ETUDIANTS"
         retour-path="/suivi/bourse"
         :data-obj="dataObj"
         :info-fields="infoFields"

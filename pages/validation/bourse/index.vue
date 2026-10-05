@@ -1,6 +1,6 @@
 <template>
     <BourseList
-        titre="VALIDATION DES DEMANDES DE BOURSE - SUPÉRIEUR"
+        titre="SUPÉRIEUR"
         link-selected="/validation/bourse"
         base-link="validation"
         but-link-path="validation/bourse/"

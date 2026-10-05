@@ -58,6 +58,7 @@
                     class="btn btn-outline-primary"
                     data-bs-toggle="modal"
                     data-bs-target="#modalRetourRH"
+                    @click="motifRetour = ''"
                 >
                     Retourner au RH
                 </button>
@@ -130,10 +131,22 @@
         </Modal>
 
         <!-- ==================== MODAL RETOUR AU RH ==================== -->
+                <!-- ==================== MODAL RETOUR AU RH ==================== -->
         <Modal id="modalRetourRH" title="Retourner la DRFMS au RH">
             <div class="mb-3">
                 <p>Êtes-vous sûr de vouloir <strong>retourner</strong> cette DRFMS au niveau RH ?</p>
                 <p class="text-muted small">Le RH pourra à nouveau la modifier.</p>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    Motif du retour <span class="text-danger">*</span>
+                </label>
+                <textarea
+                    v-model="motifRetour"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Indiquez le motif du retour..."
+                ></textarea>
             </div>
             <div class="d-flex gap-2 justify-content-end">
                 <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -191,7 +204,7 @@ const demande_details = ref([])
 const dataObj = ref({})
 const doc_drfms = ref([])
 const motifRejet = ref('')
-
+const motifRetour = ref('')
 // Colonnes (sans actions)
 const columns = TeteDRFMS
 
@@ -425,6 +438,12 @@ const refuserDRFMS = async () => {
 const retournerAuRH = async () => {
     if (dataObj.value.niv_val !== niveauDRFMS.finance) return
 
+    const motif = (motifRetour.value || '').trim()
+    if (!motif) {
+        showAlert('Veuillez indiquer un motif de retour.', 'Oops', 'danger')
+        return
+    }
+
     loadingAction.value = true
     try {
         const previousLevel = niveauDRFMS.finance - 1
@@ -441,16 +460,17 @@ const retournerAuRH = async () => {
             .insert({
                 id_user: userStore.id,
                 id_obj: route.params.id,
-                action: `Retour de la DRFMS n°${route.params.id} au niveau RH par la Finance`,
+                action: `Retour de la DRFMS n°${route.params.id} au niveau RH par la Finance - Motif: ${motif}`,
                 niv_val: previousLevel,
-                type:'retour',
-                cat_proc: 'drfms'
+                type: 'retour',
+                cat_proc: 'drfms',
+                motif_ret: motif
             })
 
         closeModal('modalRetourRH')
+        motifRetour.value = ''
         dataObj.value.niv_val = previousLevel
         showAlert('DRFMS retournée au RH avec succès', 'Succès', 'success')
-
     } catch (error) {
         console.error('Erreur retour RH:', error)
         showAlert('Erreur lors du retour au RH', 'Oups!', 'danger')
@@ -458,7 +478,6 @@ const retournerAuRH = async () => {
         loadingAction.value = false
     }
 }
-
 // ====================== EXPORT EXCEL ======================
 const exportToExcel = async () => {
     try {

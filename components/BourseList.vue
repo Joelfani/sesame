@@ -3,7 +3,7 @@
     <div class="demandes_validation_page">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>{{ titre }}</h1>
+            <h1>{{ StateTitle }} {{ titre }}</h1>
             <MiniNav
                 :LinkSelected="linkSelected"
                 :baseLink="baseLink"
@@ -72,9 +72,13 @@
 <script setup>
 // ====================== PROPS ======================
 const props = defineProps({
+    StateTitle: {
+        type: String,
+        default: 'VALIDATION DES DÉPENSES ÉTUDIANTES - '
+    },
     titre: {
         type: String,
-        default: 'VALIDATION DES DEMANDES DE BOURSE'
+        default: ''
     },
     linkSelected: {
         type: String,

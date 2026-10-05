@@ -48,7 +48,7 @@ const load = async () => {
                 users: id_user ( full_name )
             `)
             .eq('cat_proc', 'odm')
-            .eq('niv_val', niveauODM.valide)
+            .in('niv_val', [niveauODM.valide, niveauODM.cheque])
             .order('id', { ascending: false })
 
         if (error) throw error

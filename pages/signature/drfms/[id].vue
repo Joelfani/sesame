@@ -21,8 +21,8 @@
                 <p style="margin: 0;">Pour les cas exceptionnels, demander l'autorisation préalable du DPR.</p>
                 <p style="margin: 0;">Les bénéficiaires du remboursement des Frais médicaux sont les collaborateurs, leur conjoints et leurs enfants moins de 21 ans.</p>
                 <p style="margin: 4px 0 0 0;">
-                    Le collaborateur paie la totalité des frais, remet la DRFMS avec les pièces justificatives (ordonnance, factures) auprès du RDRHA.
-                    Après contrôle du RDRHA et RDF, le DPR approuve et ordonne le remboursement des frais suivant les plafonds autorisés dans notre procédure.
+                    Le collaborateur paie la totalité des frais, remet la DRFMS avec les pièces justificatives (ordonnance, factures) auprès du RH.
+                    Après contrôle du RH, FINANCE et CG, le DPR approuve et ordonne le remboursement des frais suivant les plafonds autorisés dans notre procédure.
                 </p>
             </div>
 
@@ -70,7 +70,7 @@
                             <td colspan="2" style="border: 1px solid #000; padding: 6px;">
                                 <span style="margin-right: 18px;">
                                     <span style="display: inline-block; width: 12px; height: 12px; border: 1px solid #000; text-align: center; line-height: 12px; margin-right: 4px;">
-                                        {{ isCat('Moi-même') || isCat('moi-même') || isCat('Moi meme') ? '✓' : '' }}
+                                        {{ isCat('Moi') || isCat('moi') || isCat('Moi') ? '✓' : '' }}
                                     </span>
                                     Moi-même
                                 </span>
@@ -176,9 +176,9 @@
                     <p style="margin: 3px 0 0 0; font-size: 6.5pt; text-align: center;">{{ dataObj.date }}</p>
                 </div>
 
-                <!-- RH (RDRHA) -->
+                <!-- RH -->
                 <div style="border: 1px solid #999; padding: 8px; min-height: 95px;">
-                    <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center;">Validation par le RDRHA</p>
+                    <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center;">Validation par le RH</p>
                     <div v-if="!validateurs.rh?.signatureValide" style="margin-top: 35px;"></div>
                     <img
                         v-else
@@ -196,7 +196,7 @@
 
                 <!-- Finance (RDF) -->
                 <div style="border: 1px solid #999; padding: 8px; min-height: 95px;">
-                    <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center;">Contrôle par le RDF</p>
+                    <p style="font-weight: bold; margin: 0 0 3px 0; text-align: center;">Contrôle par le Finance</p>
                     <div v-if="!validateurs.finance?.signatureValide" style="margin-top: 35px;"></div>
                     <img
                         v-else
@@ -378,8 +378,8 @@ const getDemandeValidee = async () => {
             `)
             .eq('id_obj', route.params.id)
             .eq('cat_proc', 'drfms')
-            .in('type', ['valider', 'fin']) 
-            .order('niv_val', { ascending: true }) // <-- exclut les retours et les autres types
+            .in('type', ['valider', 'fin']) // <-- exclut les retours et les autres types
+            .order('niv_val', { ascending: true }) 
             .order('id', { ascending: false })
 
         if (histoError) throw histoError
@@ -411,7 +411,7 @@ const getDemandeValidee = async () => {
     }
 }
 
-if (!userStore.finance && !userStore.rh && !userStore.dpr && userStore.type_compte !== 1) {
+if (!userStore.finance && !userStore.rh && !userStore.dpr&& !userStore.cheque && userStore.type_compte !== 1) {
     navigateTo('/demande')
 }
 

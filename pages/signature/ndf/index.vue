@@ -48,7 +48,7 @@ const load = async () => {
                 ses_items_ndf!inner ( id, niv_val )
             `)
             .eq('cat_proc', 'ndf')
-            .eq('ses_items_ndf.niv_val', niveauNDF.valide)
+            .in('ses_items_ndf.niv_val', [niveauNDF.valide, niveauNDF.cheque])
             .order('id', { ascending: false })
 
         if (error) throw error

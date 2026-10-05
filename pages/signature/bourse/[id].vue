@@ -1,6 +1,6 @@
 <template>
     <ImpressionPdfGeneric
-        titre="IMPRESSION DE LA DEMANDE DE BOURSE"
+        titre="IMPRESSION DE LA DEMANDE DE DEPENSES ETUDIANTS"
         retour-path="/signature/bourse"
         :file-name="`Bourse_Validee_${route.params.id}`"
         orientation="l"
@@ -266,7 +266,7 @@ const getDemandeValidee = async () => {
             .from('ses_items_bourse')
             .select('*')
             .eq('id_obj', route.params.id)
-            .eq('niv_val', niveauBourse.valide)
+            .in('niv_val', [niveauBourse.valide, niveauBourse.cheque])
             .order('num', { ascending: true })
 
         if (itemsError) throw itemsError
@@ -296,6 +296,7 @@ const getDemandeValidee = async () => {
             `)
             .eq('id_obj', route.params.id)
             .eq('cat_proc', 'bourse')
+            .in('type',['valider', 'fin'])
             .order('niv_val', { ascending: true })
             .order('id', { ascending: false })
 
@@ -327,7 +328,7 @@ const getDemandeValidee = async () => {
     }
 }
 
-if (!userStore.finance && userStore.type_compte !== 1) {
+if (!userStore.finance && !userStore.cheque && userStore.type_compte !== 1) {
     navigateTo('/demande')
 }
 

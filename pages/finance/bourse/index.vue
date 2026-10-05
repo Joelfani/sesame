@@ -1,6 +1,6 @@
 <template>
     <BourseList
-        titre="VALIDATION DES DEMANDES DE BOURSE - FINANCE"
+        titre="FINANCE"
         link-selected="/finance/bourse"
         base-link="finance"
         but-link-path="finance/bourse/"

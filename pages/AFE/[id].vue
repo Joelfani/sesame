@@ -50,7 +50,7 @@
                 :actions="[
                     { label: 'Valider', color: 'success' },
                     { label: 'Rejeter', color: 'danger' },
-                    { label: 'Retour vers Achat', color: 'primary'},
+                    { label: 'Retour vers Achat', color: 'outline-primary'},
                 ]"
                 title_modal_neutre="Liste des documents associés"
                 @validation_action="handleValidationAction"
@@ -487,6 +487,16 @@
                 <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
             </div>
         </Modal>
+        <RetourAchat
+            ref="retourModalRef"
+            modal-id="modalRetourAchatAfe"
+            title="Retour vers Achat"
+            label="Motif du retour"
+            confirm-label="Confirmer le retour"
+            confirm-color="primary"
+            :loading="loadingReturn"
+            @confirm="onConfirmRetour"
+        />
     </div>
 </template>
 
@@ -552,7 +562,8 @@ const pdfDetailTotal = computed(() => {
 const refBc = ref('')
 const paimentMode = ref('')
 const auNomDe = ref('') 
-
+const retourModalRef = ref(null)
+const loadingReturn = ref(false)
 
 //data for pdf
 const pdf = ref(true)
@@ -716,8 +727,13 @@ const handleValidationAction = async (validationPayload) => {
         }else{
             await handleRejection(item, editableData);
         }
-    }else if (action === 'Retour vers Achat') {
-        await handleReturnToPurchase(item, editableData);
+    } else if (action === 'Retour vers Achat') {
+        retourModalRef.value?.open({
+            item,
+            editableData,
+            targetLevel: niveau.achat,
+            labelLevel: 'responsable d\'achat'
+        })
     }
 };
 
@@ -814,26 +830,46 @@ const handleEditableFieldChange = (changeData) => {
 };
 
 // Gestion du retour vers achat
-const handleReturnToPurchase = async (item, editableData) => {
+const onConfirmRetour = async ({ ok, motif, context }) => {
+    if (!ok) {
+        showAlert('Veuillez indiquer un motif de retour.', 'Oops', 'danger')
+        return
+    }
+    if (!context?.item) return
+
+    await handleReturnToPurchase(
+        context.item,
+        context.editableData,
+        context.targetLevel,
+        motif,
+        context.labelLevel
+    )
+    retourModalRef.value?.close()
+}
+
+const handleReturnToPurchase = async (
+    item,
+    editableData,
+    targetLevel = niveau.achat,
+    motif = '',
+    labelLevel = ''
+) => {
+    loadingReturn.value = true
     try {
-        // Préparer les données à mettre à jour
+        const fields = { ...(editableData?.fields || {}) }
+        delete fields.motif
+
         const updateData = {
-            niv_val: niveau.achat, // Statut rejeté (rejet général)
-            ...editableData.fields // Inclure les données éditables (commentaires par exemple)
-        };
-        
-        // Mettre à jour dans la base de données
+            niv_val: targetLevel,
+            ...fields
+        }
+
         const { error } = await supabase
             .from('ses_demItems')
             .update(updateData)
-            .eq('id', item.id);
-        
-        if (error) throw error;
-        
-        // Actualiser les données
-        await getDemandeDetails();
-        
-        // Enregistrement dans historique
+            .eq('id', item.id)
+
+        if (error) throw error
 
         const { error: insertHistError } = await supabase
             .from('ses_histo')
@@ -841,18 +877,21 @@ const handleReturnToPurchase = async (item, editableData) => {
                 id_user: userStore.id,
                 id_obj: route.params.id,
                 id_item: item.id,
-                action: 'Retour de l\'article '+ item.num + ' dans la demande d\'achat numero ' + route.params.id,
+                action: `Retour de l'article ${item.num} de la demande n°${route.params.id}${labelLevel ? ' au niveau ' + labelLevel : ''}${motif ? ' - Motif: ' + motif : ''}`,
                 type: 'retour',
-                niv_val:niveau.achat,
-            });
+                niv_val: targetLevel,
+                motif_ret: motif || null
+            })
 
-        if (insertHistError) throw insertHistError;
-        
-        
-        showAlert('Renvoi vers responsable d\'achat réussi !', 'Succès', 'success');
+        if (insertHistError) throw insertHistError
+
+        await getDemandeDetails()
+        showAlert('Renvoi vers responsable d\'achat réussi !', 'Succès', 'success')
     } catch (error) {
-        console.error('Erreur lors du retour financier:', error);
-        showAlert('Erreur lors du renvoi financier !', 'Oups!', 'danger');
+        console.error('Erreur lors du retour:', error)
+        showAlert('Erreur lors du renvoi !', 'Oups!', 'danger')
+    } finally {
+        loadingReturn.value = false
     }
 }
 // Méthode pour récupérer toutes les données éditables modifiées (utile pour validation en lot)

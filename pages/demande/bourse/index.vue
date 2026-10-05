@@ -1,7 +1,7 @@
 <template>
     <div class="purchase_page">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>MES DEMANDES DE BOURSE</h1>
+            <h1>MES DEMANDES DE DEPENSES ETUDIANTS</h1>
 
             <MiniNav LinkSelected="/demande/bourse" baseLink="demande"/>
 

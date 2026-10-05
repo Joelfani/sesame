@@ -15,10 +15,10 @@ import { niveauNDF } from '~/assets/js/CommonVariable.js'
 import ValidationNdfDetail from '~/components/ValidationNdfDetail.vue'
 
 const columns = [
-    { key: 'num', label: 'N°' },
+    { key: 'num', label: 'N°' }, 
+    { key: 'date', label: 'Date' },
     { key: 'description', label: 'Libellé de facture / Commentaires'},
     { key: 'nature', label: 'Nature de la dépense'},
-    { key: 'ok', label: 'OK/NOK'},
     { key: 'montant', label: 'Montant (Ar)'},
     {
         key: 'imputation',
@@ -43,28 +43,17 @@ const columns = [
 ]
 
 const actions = [
-    { label: 'Valider', color: 'outline-success', type: 'validate' },
-    { label: 'Rejeter', color: 'outline-danger', type: 'reject', requireMotif: true },
+    { label: 'Valider', color: 'success', type: 'validate' },
+    { label: 'Rejeter', color: 'danger', type: 'reject', requireMotif: true },
     {
-        label: 'Editer',
-        color: 'outline-secondary',
-        type: 'edit',
-        // champs du formulaire modal (spécifiques à ce niveau)
-        fields: [
-            { key: 'description', label: 'Libellé', type: 'textarea', required: true },
-            { key: 'nature', label: 'Nature', type: 'text' },
-            { key: 'montant', label: 'Montant', type: 'number', required: true }
-        ],
-    },
-    {
-        label: 'Retourner au collaborateur',
+        label: 'Retourner',
         color: 'outline-primary',
         type: 'return',
-        targetLevel: niveauNDF.erg
+        targetLevel: niveauNDF.erg,
+        labelLevel: 'collaborateur',
+        requireMotif: true   // ← ouvre le modal
     }
-    
 ]
-
 const massValidation = {
     enabled: true,
     title: 'Validation en masse',

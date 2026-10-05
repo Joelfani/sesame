@@ -607,6 +607,7 @@ const saveEditItem = async () => {
                 action: `Modification par le RH de l'item id: ${editForm.value.id} de la DRFMS n°${route.params.id}`,
                 niv_val: niveauDRFMS.rh,
                 cat_proc: 'drfms',
+                type: 'edit',
                 ancien_valeur: ancienTexte
             })
         closeModal('modalEdition')
@@ -774,6 +775,7 @@ const confirmSuppressionItem = async () => {
                 id_obj: route.params.id,
                 action: `Suppression par le RH de l'item "${item.type_nom}" (id: ${item.id}) de la DRFMS n°${route.params.id}`,
                 niv_val: niveauDRFMS.rh,
+                type: 'delete',
                 cat_proc: 'drfms'
             })
 

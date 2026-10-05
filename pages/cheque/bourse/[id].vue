@@ -1,6 +1,6 @@
 <template>
     <BourseDetail
-        titre="VALIDATION BOURSE - CHEQUE"
+        titre="CHEQUE"
         :niveau="niveauBourse.cheque"
         retour-path="/cheque/bourse"
         :columns="columns"
@@ -8,6 +8,7 @@
         :mass-validation="massValidation"
         :export-columns="exportColumns"
         imputation-key="imputation"
+
     />
 </template>
 

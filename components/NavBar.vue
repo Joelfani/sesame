@@ -45,8 +45,8 @@
                 <li class="nav-item">
                     <NuxtLink class="nav-link btn btn-light" to="/suivi">Suivi</NuxtLink>
                 </li>
-                <li v-if="userStore.type_compte === 1 || userStore.finance || userStore.achat || userStore.rh" class="nav-item">
-                    <NuxtLink class="nav-link btn btn-light" :to="userStore.rh && userStore.type_compte != 1 && !userStore.finance && !userStore.achat ? '/signature/drfms' : '/signature'">Signature</NuxtLink>
+                <li v-if="userStore.type_compte === 1 || userStore.finance || userStore.achat || userStore.rh || userStore.cheque" class="nav-item">
+                    <NuxtLink class="nav-link btn btn-light" :to="userStore.rh && userStore.type_compte != 1 && !userStore.finance && !userStore.achat && !userStore.cheque ? '/signature/drfms' : '/signature'">Signature</NuxtLink>
                 </li>
 
                 <li v-if="userStore.type_compte === 1" class="nav-item">
@@ -173,6 +173,9 @@
                                         <div class="notification-description">
                                             {{ solo.action }}
                                         </div>
+                                        <div v-if="solo.type === 'fin'" class="notification-description">
+                                            <strong>Le chèque de votre demande n°{{ solo.id_obj?.id }} est disponible</strong>
+                                        </div>
                                         <div class="notification-footer">
                                             <span class="notification-time">
                                                 <i class="bi bi-clock me-1"></i>{{ formatDate(solo.created_at) }}
@@ -195,8 +198,12 @@
                                             <span class="badge flow-badge" :style="{ backgroundColor: flows[sup._flow].badgeColor }">{{ flows[sup._flow].label }}</span>
                                             <span class="notification-number">#{{ sup.id_obj?.id }}</span>
                                         </div>
-                                        <div class="notification-title">Nouvelle demande à valider</div>
-                                        <div class="notification-description">
+                                        <div v-if="sup.type === 'retour'" class="notification-title">Nouvelle demande à valider après retour</div>
+                                        <div v-else class="notification-title">Nouvelle demande à valider</div>
+                                        <div v-if="sup.type === 'retour'" class="notification-description">
+                                            {{ sup.action }}
+                                        </div>
+                                        <div v-else class="notification-description">
                                             Une nouvelle demande n° {{ sup.id_obj?.id }} nécessite votre attention
                                         </div>
                                         <div class="notification-footer">
@@ -221,8 +228,13 @@
                                             <span class="badge flow-badge" :style="{ backgroundColor: flows[other._flow].badgeColor }">{{ flows[other._flow].label }}</span>
                                             <span class="notification-number">#{{ other.id_obj?.id }}</span>
                                         </div>
-                                        <div class="notification-title">Validation en attente</div>
-                                        <div class="notification-description">
+                                        <div v-if="other.type === 'retour'" class="notification-title">Validation en attente après retour</div>
+                                        <div v-else class="notification-title">Validation en attente</div>
+                                        <div v-if="other.type === 'retour'" class="notification-description">
+                                            {{ getNotificationLabel(other) }} <br>
+                                            <strong>Motif de retour :</strong> {{ other.motif_ret || 'Aucun motif fourni' }}
+                                        </div>
+                                        <div v-else class="notification-description">
                                             {{ getNotificationLabel(other) }}
                                         </div>
                                         <div class="notification-footer">
@@ -258,6 +270,9 @@
                                         <div class="notification-description">
                                             {{ solo.action }}
                                         </div>
+                                        <div v-if="solo.type === 'fin'" class="notification-description">
+                                            <strong>Le chèque de votre demande n°{{ solo.id_obj?.id }} est disponible</strong>
+                                        </div>
                                         <div class="notification-footer">
                                             <span class="notification-time">
                                                 <i class="bi bi-clock me-1"></i>{{ formatDate(solo.created_at) }}
@@ -287,8 +302,12 @@
                                             <span class="badge flow-badge" :style="{ backgroundColor: flows[sup._flow].badgeColor }">{{ flows[sup._flow].label }}</span>
                                             <span class="notification-number">#{{ sup.id_obj?.id }}</span>
                                         </div>
-                                        <div class="notification-title">Nouvelle demande à valider</div>
-                                        <div class="notification-description">
+                                        <div v-if="sup.type === 'retour'" class="notification-title">Nouvelle demande à valider après retour</div>
+                                        <div v-else class="notification-title">Nouvelle demande à valider</div>
+                                        <div v-if="sup.type === 'retour'" class="notification-description">
+                                            {{ sup.action }}
+                                        </div>
+                                        <div v-else class="notification-description">
                                             Une nouvelle demande n° {{ sup.id_obj?.id }} nécessite votre attention
                                         </div>
                                         <div class="notification-footer">
@@ -320,8 +339,13 @@
                                             <span class="badge flow-badge" :style="{ backgroundColor: flows[other._flow].badgeColor }">{{ flows[other._flow].label }}</span>
                                             <span class="notification-number">#{{ other.id_obj?.id }}</span>
                                         </div>
-                                        <div class="notification-title">Validation en attente</div>
-                                        <div class="notification-description">
+                                        <div v-if="other.type === 'retour'" class="notification-title">Validation en attente après retour</div>
+                                        <div v-else class="notification-title">Validation en attente</div>
+                                        <div v-if="other.type === 'retour'" class="notification-description">
+                                            {{ getNotificationLabel(other) }} <br>
+                                            <strong>Motif de retour :</strong> {{ other.motif_ret || 'Aucun motif fourni' }}
+                                        </div>
+                                        <div v-else class="notification-description">
                                             {{ getNotificationLabel(other) }}
                                         </div>
                                         <div class="notification-footer">

@@ -366,23 +366,39 @@ const enregistrerModification = async (item) => {
 const sendingId = ref(null);
 
 const envoyerDemande = async (item) => {
-    sendingId.value = item.id;
+    sendingId.value = item.id
     try {
+        const nextLevel = Number(niveau.erg) + 1
+
         const { error } = await supabase
             .from('ses_demItems')
-            .update({ niv_val: niveau.erg + 1 })
-            .eq('id', item.id);
-        if (error) throw error;
+            .update({ niv_val: nextLevel })
+            .eq('id', item.id)
 
-        await getDemandeDetails();
-        showAlert('Ligne envoyée avec succès', 'Succès', 'success');
+        if (error) throw error
+
+        const { error: insertHistError } = await supabase
+            .from('ses_histo')
+            .insert({
+                id_user: userStore.id,
+                id_obj: item.id_obj ?? route.params.id,
+                id_item: item.id,
+                action: `Envoi de l'article ${item.num} de la demande d'achat n°${item.id_obj ?? route.params.id}`,
+                niv_val: nextLevel,
+                type: 'valider'
+            })
+
+        if (insertHistError) throw insertHistError
+
+        await getDemandeDetails()
+        showAlert('Ligne envoyée avec succès', 'Succès', 'success')
     } catch (error) {
-        console.error(error);
-        showAlert('Erreur lors de l\'envoi', 'Oops', 'danger');
+        console.error(error)
+        showAlert('Erreur lors de l\'envoi', 'Oops', 'danger')
     } finally {
-        sendingId.value = null;
+        sendingId.value = null
     }
-};
+}
 
 // LIFECYCLE HOOKS
 onMounted(() => {

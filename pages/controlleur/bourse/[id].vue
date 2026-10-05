@@ -1,6 +1,6 @@
 <template>
     <BourseDetail
-        titre="VALIDATION BOURSE - CONTRÔLEUR DE GESTION"
+        titre="CG"
         :niveau="niveauBourse.cg"
         :check-sup="false"
         retour-path="/controlleur/bourse"

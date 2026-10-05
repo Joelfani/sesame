@@ -36,7 +36,7 @@
                 :actions="[
                     { label: 'Valider', color: 'success' },
                     { label: 'Rejeter', color: 'secondary' },
-                    { label: 'Retour au collaborateur', color: 'primary' }
+                    { label: 'Retour au collaborateur', color: 'outline-primary' }
                 ]"
                 @validation_action="handleValidationAction"
                 @editable_field_change="handleEditableFieldChange"
@@ -60,6 +60,16 @@
                 <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
             </div>
         </Modal>
+        <RetourAchat
+            ref="retourModalRef"
+            modal-id="modalRetourAchatSup"
+            title="Retour au collaborateur"
+            label="Motif du retour"
+            confirm-label="Confirmer le retour"
+            confirm-color="primary"
+            :loading="loadingReturn"
+            @confirm="onConfirmRetour"
+        />
     </div>
 </template>
 
@@ -112,10 +122,7 @@ const tableRef = ref(null);
 const columns = computed(() =>[
     { key: 'num', label: 'N°'},
     { key: 'designation', label: 'Désignation' },
-    { key: 'qte', label: 'Nombre',editable: true, type: 'number', min: 1},
-    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif' && col.key !== 'com_sup' && col.key !== 'num_tiger' && col.key !== 'qte' && col.key !== 'designation' && col.key !== 'total' && col.key !== 'prix'), // Exclure la colonne 'id'
-    { key: 'prix', label: 'PU budgeté',editable: true, min: 1, type: 'number',disabled: true },
-    { key: 'total', label: 'Montant total du budget alloué', style: {minWidth: '300px'} ,editable: true, min: 1, type: 'number',disabled: true},
+    ...tableTete.filter(col => col.key !== 'id' && col.key !== 'com' && col.key !== 'motif' && col.key !== 'com_sup' && col.key !== 'num_tiger'  && col.key !== 'designation'), // Exclure la colonne 'id'
     { key: 'com', label: 'Commentaire', style: {minWidth: '350px'}},
     { key: 'motif', label: 'Motif de rejet',editable: true, type: 'textarea', style: {minWidth: '350px'}},
     { key: 'com_sup', label: 'Commentaire du supérieur',editable: true, type: 'textarea' , style: {minWidth: '350px'}},
@@ -136,6 +143,8 @@ const imputationAllData = ref([]);
 const imputation = ref([]);
 const ImputationAll = ref('');
 const commentaireAll = ref('');
+const retourModalRef = ref(null)
+const loadingReturn = ref(false)
 // METHODES
 //recuperation des données
 const getDemandeDetails = async () => {
@@ -240,7 +249,13 @@ const handleValidationAction = async (validationPayload) => {
             await handleRejection(item, editableData);
         }
     } else if (action === 'Retour au collaborateur') {
-        await handleReturnToCollab(item, editableData);
+    // Ouvre le modal
+        retourModalRef.value?.open({
+            item,
+            editableData,
+            targetLevel: niveau.erg,       
+            labelLevel: 'collaborateur'
+        })
     }
 };
 
@@ -336,43 +351,70 @@ const handleRejection = async (item, editableData) => {
 };
 
 // Gestion du retour au collaborateur (renvoi de l'article au niveau du demandeur, niveau.erg)
-const handleReturnToCollab = async (item, editableData) => {
+const onConfirmRetour = async ({ ok, motif, context }) => {
+    if (!ok) {
+        showAlert('Veuillez indiquer un motif de retour.', 'Oops', 'danger')
+        return
+    }
+    if (!context?.item) return
+
+    await handleReturnToCollab(
+        context.item,
+        context.editableData,
+        context.targetLevel,
+        motif,
+        context.labelLevel
+    )
+    retourModalRef.value?.close()
+}
+const handleReturnToCollab = async (
+    item,
+    editableData,
+    targetLevel = niveau.erg,
+    motif = '',
+    labelLevel = ''
+) => {
+    loadingReturn.value = true
     try {
+        
+        const fields = { ...(editableData?.fields || {}) }
+        delete fields.motif // Ne pas écrire motif sur ses_demItems (réservé au rejet)
+
         const updateData = {
-            niv_val: niveau.erg,
-            ...editableData.fields // Inclure les données éditables (commentaires par exemple)
-        };
+            niv_val: targetLevel,
+            ...fields
+        }
 
         const { error } = await supabase
             .from('ses_demItems')
             .update(updateData)
-            .eq('id', item.id);
+            .eq('id', item.id)
 
-        if (error) throw error;
+        if (error) throw error
 
-        // Actualiser les données
-        await getDemandeDetails();
-
-        // Enregistrement dans historique
         const { error: insertHistError } = await supabase
             .from('ses_histo')
             .insert({
                 id_user: userStore.id,
                 id_obj: route.params.id,
                 id_item: item.id,
-                action: 'Retour de l\'article ' + item.num + ' dans la demande d\'achat numero ' + route.params.id + ' au collaborateur',
+                action: `Retour de l'article ${item.num} de la demande n°${route.params.id}${labelLevel ? ' au niveau ' + labelLevel : ''}${motif ? ' - Motif: ' + motif : ''}`,
                 type: 'retour',
-                niv_val: niveau.erg,
-            });
+                niv_val: targetLevel,
+                motif_ret: motif || null  
+            })
 
-        if (insertHistError) throw insertHistError;
+        if (insertHistError) throw insertHistError
 
-        showAlert('Retour vers le collaborateur réussi !', 'Succès', 'success');
+        await getDemandeDetails()
+        showAlert('Retour réussi !', 'Succès', 'success')
     } catch (error) {
-        console.error('Erreur lors du retour au collaborateur:', error);
-        showAlert('Erreur lors du retour au collaborateur !', 'Oops', 'danger');
+        console.error('Erreur retour:', error)
+        showAlert('Erreur lors du retour !', 'Oops', 'danger')
+    } finally {
+        loadingReturn.value = false
     }
-};
+}
 
 // Gestionnaire pour les changements de champs éditables (optionnel)
 const handleEditableFieldChange = (changeData) => {

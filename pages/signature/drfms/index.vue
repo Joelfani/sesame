@@ -49,7 +49,7 @@ const load = async () => {
                 ses_items_drfms!inner ( id)
             `)
             .eq('cat_proc', 'drfms')
-            .eq('niv_val', niveauDRFMS.valide)
+            .in('niv_val', [niveauDRFMS.valide, niveauDRFMS.cheque])
             .order('id', { ascending: false })
 
         if (error) throw error

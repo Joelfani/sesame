@@ -85,6 +85,14 @@
         <!-- Modal modification -->
         <Modal id="modalEditNdf" title="Modifier la ligne">
             <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Date <span class="text-danger">*</span></label>
+                    <input
+                        type="date"
+                        class="form-control"
+                        v-model="editForm.date"
+                    >
+                </div>
                 <div class="col-12">
                     <label class="form-label fw-bold">
                         Libellé de facture / Commentaires <span class="text-danger">*</span>
@@ -102,17 +110,6 @@
                         class="form-control"
                         v-model="editForm.nature"
                     >
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">OK/NOK <span class="text-danger">*</span></label>
-                    <select
-                        class="form-select"
-                        v-model="editForm.ok"
-                    >
-                        <option value="" disabled>Choisir...</option>
-                        <option value="OK">OK</option>
-                        <option value="NOK">NOK</option>
-                    </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">
@@ -248,15 +245,15 @@ const editForm = ref({
     description: '',
     nature: '',
     montant: null,
-    ok: ''
+    date: ''
 })
 const itemToDelete = ref(null)
 
 const columns = [
     { key: 'num', label: 'N°' },
+    { key: 'date', label: 'Date' },
     { key: 'description', label: 'Libellé de facture / Commentaires' },
     { key: 'nature', label: 'Nature de la dépense' },
-    { key: 'ok', label: 'OK/NOK' },
     { key: 'montant', label: 'Montant (Ar)' },
     { key: 'statut_ligne', label: 'Statut' },
 ]
@@ -334,7 +331,9 @@ const getDemandeDetails = async () => {
 
         demande_details.value = (data || []).map(item => ({
             ...item,
-            statut_ligne: getStatutLigne(item.niv_val)
+            date_original: item.date,
+            statut_ligne: getStatutLigne(item.niv_val),
+            date: formatDate(item.date)
         }))
     } catch (error) {
         console.error(error)
@@ -362,11 +361,14 @@ const getStatutLigne = (niv) => {
 const openEditModal = (item) => {
     editForm.value = {
         id: item.id,
+        date: item.date_original
+        ? new Date(item.date_original).toISOString().split('T')[0]
+        : '',
         description: item.description || '',
         nature: item.nature || '',
-        ok: item.ok || '',
         montant: item.montant != null ? Number(item.montant) : null
     }
+    console.log('Edit Form Data:', editForm.value)
 }
 
 const saveEditItem = async () => {
@@ -374,12 +376,12 @@ const saveEditItem = async () => {
         showAlert('Le libellé / commentaire est obligatoire', 'Oops', 'danger')
         return
     }
-    if (editForm.value.ok === '') {
-        showAlert('Le statut OK/NOK est obligatoire', 'Oops', 'danger')
-        return
-    }
     if (editForm.value.montant === null || editForm.value.montant === '' || Number(editForm.value.montant) < 0) {
         showAlert('Le montant est obligatoire et doit être ≥ 0', 'Oops', 'danger')
+        return
+    }
+    if (!editForm.value.date) {
+        showAlert('La date est obligatoire', 'Oops', 'danger')
         return
     }
 
@@ -390,8 +392,8 @@ const saveEditItem = async () => {
             .update({
                 description: editForm.value.description.trim(),
                 nature: editForm.value.nature?.toString().trim() || null,
-                ok: editForm.value.ok || null,
-                montant: Number(editForm.value.montant)
+                montant: Number(editForm.value.montant),
+                date: editForm.value.date || ""
             })
             .eq('id', editForm.value.id)
             .eq('niv_val', niveauNDF.erg) // sécurité

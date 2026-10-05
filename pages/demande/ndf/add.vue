@@ -72,6 +72,11 @@ const columns = computed(() => [
         style: { height: '62px', width: '80px' }
     },
     {
+        key: 'date',
+        label: 'Date',
+        type: 'date'
+    },
+    {
         key: 'description',
         label: 'Libellé de facture / Commentaires',
         type: 'textarea',
@@ -81,15 +86,6 @@ const columns = computed(() => [
         key: 'nature',
         label: 'Nature de la dépense',
         type: 'text'
-    },
-    {
-        key: 'ok',
-        label: 'OK/NOK',
-        type: 'select',
-        options: [
-            { value: 'OK', label: 'OK' },
-            { value: 'NOK', label: 'NOK' }
-        ],
     },
     {
         key: 'montant',
@@ -109,21 +105,19 @@ const sendTableData = async () => {
         showAlert('Veuillez ajouter au moins une ligne à la note de frais', 'Oups!', 'danger')
         return
     }
-
     // Tous les champs obligatoires sauf "nature"
     const hasEmptyRequired = tableData.some(item =>
         !item.description?.toString().trim() ||
         item.montant === null ||
         item.montant === undefined ||
-        item.montant === '' ||
-        item.ok === null ||
-        item.ok === undefined ||
-        item.ok === ''
+        item.montant === ''||
+        item.date === null ||
+        item.date === undefined||
+        item.date === ''
     )
-
     if (hasEmptyRequired) {
         showAlert(
-            'Veuillez remplir tous les champs obligatoires (Libellé de facture / Commentaires , Montant, OK/NOK)',
+            'Veuillez remplir tous les champs obligatoires (Date,Libellé de facture / Commentaires , Montant)',
             'Oups!',
             'danger'
         )
@@ -160,6 +154,7 @@ const sendTableData = async () => {
         const insertData = tableData.map((item, index) => ({
             id_obj: insertedId,
             num: item.num || (index + 1),
+            date: item.date || null,
             description: item.description?.trim() || null,
             nature: item.nature?.trim() || null,
             montant: Number(item.montant),

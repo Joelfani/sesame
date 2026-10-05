@@ -214,19 +214,19 @@ const navOptions = computed(() => {
         switch (opt.signe) {
             case 'DA':
                 // visible pour achat / finance / admin
-                view = !!(userStore.achat || userStore.finance || userStore.type_compte === 1)
+                view = !!(userStore.achat || userStore.finance || userStore.cheque || userStore.type_compte === 1)
                 break
             case 'DRFMS':
-                view = !!(userStore.finance || userStore.rh || userStore.type_compte === 1)
+                view = !!(userStore.finance || userStore.rh || userStore.cheque || userStore.type_compte === 1)
                 break
             case 'NDF':
-                view = !!(userStore.finance || userStore.type_compte === 1)
+                view = !!(userStore.finance || userStore.cheque || userStore.type_compte === 1)
                 break
             case 'ODM':
-                view = !!(userStore.finance || userStore.rh || userStore.type_compte === 1)
+                view = !!(userStore.finance || userStore.rh || userStore.cheque || userStore.type_compte === 1)
                 break
             case 'BOURSE':
-                view = !!(userStore.finance || userStore.dpr || userStore.type_compte === 1)
+                view = !!(userStore.finance || userStore.dpr || userStore.cheque || userStore.type_compte === 1)
                 break
             default:
                 view = false

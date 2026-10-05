@@ -1,6 +1,6 @@
 <template>
     <BourseDetail
-        titre="VALIDATION BOURSE - FINANCE"
+        titre="FINANCE"
         :niveau="niveauBourse.finance"
         retour-path="/finance/bourse"
         :columns="columns"
