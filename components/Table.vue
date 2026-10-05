@@ -46,11 +46,7 @@
                         <Cleave
                             v-else
                             class="form-control" 
-                            :options="{ 
-                                numeral: true,
-                                numeralDecimalMark: '.',
-                                delimiter: ' ',
-                                numeralThousandsGroupStyle: 'thousand' }"
+                            :options="cleaveOptions"
                             :placeholder="col.placeholder ? col.placeholder : col.label"
                             :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : col.key == 'total' ? col.disabled : col.key == 'prix' ? col.disabled : false"
                             v-model="rowsInput2[rowIndex][col.key]"
@@ -272,6 +268,13 @@ const alert = ref({
     type: ''
 })
 
+// En dehors du template, une seule fois — jamais recréé à chaque re-render
+const cleaveOptions = {
+    numeral: true,
+    numeralDecimalMark: '.',
+    delimiter: ' ',
+    numeralThousandsGroupStyle: 'thousand'
+}
 const rowsInput = ref([]);
 const rowsInput2 = ref([]);
 const editableData = ref({});
