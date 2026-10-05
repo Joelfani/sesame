@@ -43,14 +43,12 @@
                             v-model="rowsInput2[rowIndex][col.key]"
                             @input="changement(rowIndex, col.key, rowsInput2[rowIndex][col.key])"
                         />
-                        <Cleave
+                        <FormattedNumberInput
                             v-else
-                            class="form-control" 
-                            :options="cleaveOptions"
+                            :model-value="rowsInput2[rowIndex][col.key]"
                             :placeholder="col.placeholder ? col.placeholder : col.label"
                             :disabled="item.etat == 2 || item.etat == 4 || item.etat == 1 ? true : col.key == 'totalR'? col.disabled : col.key == 'total' ? col.disabled : col.key == 'prix' ? col.disabled : false"
-                            v-model="rowsInput2[rowIndex][col.key]"
-                            @input.native="handleCleaveInput($event, rowIndex, col.key)"
+                            @update:model-value="(val) => { rowsInput2[rowIndex][col.key] = val; changement(rowIndex, col.key, val) }"
                         />
                     </template>
                     <!-- Si la colonne est normale -->
@@ -148,18 +146,12 @@
                         v-model="rowsInput[rowIndex][col.key]"
                         @input="updateData"
                     />
-                    <Cleave
+                    <FormattedNumberInput
                         v-else
-                        class="form-control" 
-                        :options="{
-                            numeral: true,
-                            numeralDecimalMark: '.',
-                            delimiter: ' ',
-                            numeralThousandsGroupStyle: 'thousand' }"
+                        :model-value="rowsInput[rowIndex][col.key]"
                         :placeholder="col.placeholder ? col.placeholder : col.label"
                         :disabled="col.disabled ? col.disabled : false"
-                        v-model="rowsInput[rowIndex][col.key]"
-                        @input="handleCleaveInputAdd($event, rowIndex, col.key)"
+                        @update:model-value="(val) => { rowsInput[rowIndex][col.key] = val; updateData() }"
                     />
                     <p v-if="col.key === 'delai'" style="font-size: 12px; color: gray;">
                     (Idealement 10 jours après la demande)</p>
@@ -268,13 +260,6 @@ const alert = ref({
     type: ''
 })
 
-// En dehors du template, une seule fois — jamais recréé à chaque re-render
-const cleaveOptions = {
-    numeral: true,
-    numeralDecimalMark: '.',
-    delimiter: ' ',
-    numeralThousandsGroupStyle: 'thousand'
-}
 const rowsInput = ref([]);
 const rowsInput2 = ref([]);
 const editableData = ref({});
