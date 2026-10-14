@@ -407,7 +407,9 @@ const addRowFunction = () => {
         if (col.key === 'num') {
             newRow['num'] = rowsInput.value.length + 1;
         } else {
-            newRow[col.key] = '';
+            // Valeur par défaut optionnelle définie dans la colonne
+            // (ex: default: 0 pour la part étudiant), sinon chaîne vide
+            newRow[col.key] = col.default !== undefined ? col.default : '';
         }
     })
     rowsInput.value.push(newRow);

@@ -228,6 +228,9 @@ const navOptions = computed(() => {
             case 'BOURSE':
                 view = !!(userStore.finance || userStore.dpr || userStore.cheque || userStore.type_compte === 1)
                 break
+            case 'DRFME':
+                view = !!(userStore.finance || userStore.dpr || userStore.cheque || userStore.type_compte === 1)
+                break
             default:
                 view = false
         }

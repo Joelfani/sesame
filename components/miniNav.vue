@@ -6,6 +6,7 @@
             <option v-if="viewNDF" :value="'/'+baseLink+'/ndf'">NDF</option>
             <option v-if="viewODM" :value="'/'+baseLink+'/odm'">ODM</option>
             <option v-if="viewODM" :value="'/'+baseLink+'/bourse'">Dépense étudiant</option>
+            <option v-if="viewODM" :value="'/'+baseLink+'/drfme'">DRFME</option>
         </select>
         <select v-if="RHSelect" class="form-select" v-model="selectedType" @change="naviguer">
             <option v-if="viewDRFMS" value='/rh'>DRFMS</option>

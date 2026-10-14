@@ -9,7 +9,14 @@
                 <button class="btn btn-outline-success" @click="exportToExcel">
                     Exporter vers Excel
                 </button>
-
+                <button
+                    v-if="enableAfe"
+                    class="btn btn-outline-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#afeNdf"
+                >
+                    A.F.E
+                </button>
                 <button
                     v-if="massValidation?.enabled"
                     class="btn btn-outline-secondary"
@@ -265,6 +272,182 @@
                 </button>
             </div>
         </Modal>
+
+        <!-- Modal AFE NDF -->
+        <Modal v-if="enableAfe" id="afeNdf" title="Autorisation formelle d'engagement">
+            <div class="pdf-content">
+                <p class="mb-2">
+                    Génération d'une AFE pour la note de frais n°{{ route.params.id }}.
+                </p>
+                <hr>
+                <span v-if="pdfButtonLoading">Traitement ...</span>
+                <button
+                    class="btn btn-outline-dark"
+                    :disabled="pdfButtonLoading"
+                    @click="generateAfeNdf"
+                >
+                    Générer un AFE
+                </button>
+                <button class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </Modal>
+
+        <!-- Contenu PDF caché AFE NDF -->
+        <div v-if="enableAfe && pdfAfeReady" style="position: absolute; left: -9999px; top: 0;">
+            <div id="pdfafeNdf" style="width: 794px; padding: 30px; background: white; font-size: 10pt;">
+                <div class="d-flex justify-content-between align-items-start" style="margin-bottom: 15px;">
+                    <img src="/logo.png" style="width: 80px; height: 75px;">
+                    <div style="text-align: right; flex: 1; margin-left: 20px;">
+                        <p style="font-size: 11pt; margin: 0;">
+                            Association PROMotion Economique et Sociale (PROMES)
+                        </p>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 15px 0;">
+                    <h4 style="font-weight: bold; font-size: 14pt; margin: 0;">
+                        AUTORISATION FORMELLE D'ENGAGEMENT (AFE)
+                    </h4>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin: 12px 0; padding: 0 10px;">
+                    <div>
+                        <span>Date :</span>
+                        <span style="border-bottom: 1px solid #000; display: inline-block; min-width: 150px; padding: 2px 5px;">
+                            {{ afeDate }}
+                        </span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span>Demandeur :</span>
+                        <span style="border-bottom: 1px solid #000; display: inline-block; min-width: 180px; padding: 2px 5px;">
+                            {{ dataObj.demandeur }}
+                        </span>
+                    </div>
+                </div>
+
+                <div style="margin: 15px 0; padding: 0 10px;">
+                    <span>Objet :</span>
+                    <span style="border-bottom: 1px solid #000; display: inline-block; width: calc(100% - 60px); padding: 2px 5px;">
+                        Note de frais n°{{ route.params.id }}
+                    </span>
+                </div>
+
+                <div style="margin: 15px 0; padding: 0 10px; text-align: right;">
+                    <span style="font-weight: bold; margin-right: 20px;">Total :</span>
+                    <span style="border: 1px solid #000; padding: 5px 15px; min-width: 150px; font-weight: bold;">
+                        {{ afeTotalFormatted }} Ar
+                    </span>
+                </div>
+
+                <!-- Affectations (imputations) -->
+                <div style="margin: 15px 0; padding: 0 10px;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">Affectation</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <div
+                            v-for="(imp, idx) in afeImputations"
+                            :key="idx"
+                            class="d-flex align-items-center"
+                        >
+                            <input type="checkbox" style="margin-right: 5px; width: 12px; height: 12px;" checked disabled>
+                            <span style="font-size: 9pt;">{{ imp }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin: 10px 0;">
+                    <p style=" font-size: 9pt; margin-bottom: 5px; padding: 0 10px;">
+                        0 Ar à 1 000 000 Ar (Facture, BC, BL, DA, 1Devis ou proforma) <br>
+                        1 000 001 Ar à 5 000 000 Ar (Facture, BC, BL, DA, 3Devis ou proforma, Tableau comparatif) <br>
+                        5 000 001 Ar à 16 000 000 Ar (Facture, BC, BL, DA, 4Devis ou proforma, Tableau comparatif) <br>
+                        > 16 000 000 Ar (Appel d'offre national ou international, 3 Devis, Facture, BC, BL, DA, Tableau comparatif)
+                    </p>
+                    <div class="table-responsive" style="margin-top: 10px;">
+                        <table class="table table-bordered" style="width: 100%; font-size: 9pt; border: 1px solid #000;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center;"></th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center;">Fournisseur</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center;">Analyse de l'offre</th>
+                                    <th style="border: 1px solid #000; padding: 5px; text-align: center;">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px;">Devis 1</td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px;">Devis 2</td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 5px;">Devis 3</td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                    <td style="border: 1px solid #000; padding: 5px;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin: 10px 0 15px 10px;">
+                    <p style="font-weight: bold; margin-bottom: 30px;">Le Responsable du Programme</p>
+                    <p style="margin-top: 40px;">Nom et Date</p>
+                </div>
+
+                <div style="border-top: 2px solid #000; margin: 15px 0;"></div>
+
+                <div style="text-align: right; margin: 10px 10px 15px 0; font-size: 8pt;">
+                    <p style="margin: 0;">Association PROMES / Programme SESAME</p>
+                </div>
+
+                <!-- Pièce d'écritures (même structure que l'achat) -->
+                <div style="margin-top: 15px;">
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <h5 style="font-weight: bold; font-size: 12pt; margin: 0;">PIECE D'ECRITURES</h5>
+                    </div>
+                    <table class="table table-bordered" style="width: 100%; font-size: 9pt; border: 1px solid #000;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #000; padding: 5px; width: 50%;">Journal:</th>
+                                <th style="border: 1px solid #000; padding: 5px; width: 50%;">N° de Pièce:</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 5px;">Date:</td>
+                                <td style="border: 1px solid #000; padding: 5px;">Emetteur:</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin: 10px 0; padding: 0 10px; font-size: 9pt;">
+                        <p style="margin: 3px 0;"><strong>COMPTE GENERAL DEBIT:</strong> <span style="border: 1px solid #000; display: inline-block; width: 70%; height: 28px;"></span></p>
+                        <p style="margin: 3px 0;"><strong>SECTION ANALYTIQUE:</strong> <span style="border: 1px solid #000; display: inline-block; width: 70%; height: 28px;"></span></p>
+                        <p style="margin: 3px 0;"><strong>COMPTE GENERAL CREDIT:</strong> <span style="border: 1px solid #000; display: inline-block; width: 70%; height: 28px;"></span></p>
+                        <p style="margin: 3px 0;"><strong>MONTANT (Ar):</strong> <span style="border: 1px solid #000; display: inline-block; width: 70%; height: 28px;"></span></p>
+                        <p style="margin: 3px 0;"><strong>LIBELLE:</strong> <span style="border: 1px solid #000; display: inline-block; width: 70%; height: 28px;"></span></p>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 15px; padding: 0 10px;">
+                        <div style="flex: 1;">
+                            <p style="font-weight: bold; margin-bottom: 30px; font-size: 9pt;">Le Comptable</p>
+                            <p style="margin-top: 40px; font-size: 9pt;">Nom et Date</p>
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            <p style="font-weight: bold; margin-bottom: 30px; font-size: 9pt;">Le Responsable Administratif et Financier</p>
+                            <p style="margin-top: 40px; font-size: 9pt;">Nom et Date</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between" style="margin-top: 10px; font-size: 7pt; color: #666;">
+                    <span>Formulaire PROMES-SESAME</span>
+                    <span>Autorisation Formelle d'Engagement Pièce Comptable</span>
+                    <span>NDF n°{{ route.params.id }}</span>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -369,7 +552,9 @@ const props = defineProps({
     checkSup: {
         type: Boolean,
         default: false
-    }
+    },
+    // Si true, affiche le bouton AFE (pour le niveau Cheque)
+    enableAfe: { type: Boolean, default: false }
 })
 
 // ====================== SERVICES ======================
@@ -425,7 +610,6 @@ const computedColumns = computed(() => {
         return col
     })    
 })
-console.log(computedColumns);
 // Total = somme des montants (hors lignes refusées)
 const totalAmount = computed(() => {
     const total = demande_details.value
@@ -529,6 +713,7 @@ const getDemandeDetails = async () => {
                 Number(item.niv_val) === Number(props.niveau) ? 0 :
                 Number(item.niv_val) === Number(niveauNDF.refuse) ? 2 : 
                 Number(item.niv_val) < Number(props.niveau) ? 4 : 1
+            
         }))
     } catch (error) {
         console.error(error)
@@ -1008,6 +1193,107 @@ const downloadFile = async (name_doc, nameStorage) => {
         showAlert('Erreur lors du téléchargement du fichier', 'Oups!', 'danger')
     }
 }
+const pdfButtonLoading = ref(false)
+const pdfAfeReady = ref(true) // toujours monté si enableAfe (pour html2canvas)
+
+const afeDate = computed(() => {
+    const d = new Date()
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+})
+
+/** Lignes non refusées pour l'AFE */
+const afeLines = computed(() =>
+    demande_details.value.filter(
+        item => Number(item.niv_val) !== Number(niveauNDF.refuse)
+    )
+)
+
+const afeTotal = computed(() =>
+    afeLines.value.reduce((s, i) => s + (Number(i.montant) || 0), 0)
+)
+
+const afeTotalFormatted = computed(() =>
+    new Intl.NumberFormat('fr-FR').format(afeTotal.value)
+)
+
+/** Imputations uniques (noms si déjà résolus, sinon id) */
+const afeImputations = computed(() => {
+    const set = new Set()
+    afeLines.value.forEach(item => {
+        const imputationFindLab = imputationOptions.value.find(imp => imp.value === item.imputation)
+        const label =
+            imputationFindLab?.label ||
+            item.imputation
+        if (label) set.add(String(label))
+    })
+    return [...set]
+})
+
+const formatMontantAfe = (val) => {
+    const n = Number(val) || 0
+    return new Intl.NumberFormat('fr-FR').format(n)
+}
+
+const generateAfeNdf = async () => {
+    if (!afeLines.value.length) {
+        showAlert('Aucune ligne à inclure dans l\'AFE.', 'Oups', 'danger')
+        return
+    }
+
+    pdfButtonLoading.value = true
+    try {
+        await nextTick()
+        const html2canvas = (await import('html2canvas')).default
+        const { jsPDF } = await import('jspdf')
+
+        const element = document.getElementById('pdfafeNdf')
+        if (!element) {
+            showAlert('Contenu AFE introuvable', 'Oups', 'danger')
+            return
+        }
+
+        const canvas = await html2canvas(element, {
+            scale: 1.5,
+            useCORS: true,
+            logging: false,
+            windowWidth: 794,
+            letterRendering: true
+        })
+
+        const pdf = new jsPDF('p', 'mm', 'a4')
+        const pdfWidth = pdf.internal.pageSize.getWidth()
+        const pdfHeight = pdf.internal.pageSize.getHeight()
+        const imgData = canvas.toDataURL('image/png')
+        const imgProps = pdf.getImageProperties(imgData)
+
+        let imgWidth = pdfWidth
+        let imgHeight = (imgProps.height * pdfWidth) / imgProps.width
+
+        if (imgHeight > pdfHeight) {
+            // plusieurs pages si besoin
+            let heightLeft = imgHeight
+            let position = 0
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+            heightLeft -= pdfHeight
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight
+                pdf.addPage()
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+                heightLeft -= pdfHeight
+            }
+        } else {
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
+        }
+
+        pdf.save(`AFE_NDF_${route.params.id}.pdf`)
+        showAlert('AFE généré avec succès !', 'Succès', 'success')
+    } catch (error) {
+        console.error(error)
+        showAlert('Erreur lors de la génération de l\'AFE', 'Oups', 'danger')
+    } finally {
+        pdfButtonLoading.value = false
+    }
+}
 // ====================== LIFECYCLE ======================
 onMounted(async () => {
     await listImputation()
@@ -1020,5 +1306,7 @@ onMounted(async () => {
         })
     }
     await getDemandeDetails()
+    console.log(afeLines.value);
+    
 })
 </script>

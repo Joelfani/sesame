@@ -66,20 +66,13 @@ const getStatutLabel = (niv) => {
         case niveauNDF.superieur: return 'Chez le supérieur'
         case niveauNDF.finance: return 'Chez la finance'
         case niveauNDF.cg: return 'Chez le CG'
+        case niveauNDF.dpr: return 'Chez le DPR'
         case niveauNDF.cheque: return 'Émission de chèque'
         case niveauNDF.valide: return 'Validée'
         case niveauNDF.refuse: return 'Refusée'
         default: return 'Statut inconnu'
     }
 }
-
-const totals = computed(() => {
-    const total = demande_details.value.reduce((sum, item) => {
-        return sum + (Number(item.montant) || 0)
-    }, 0)
-    return [{ label: 'Total', value: formatMontant(total) }]
-})
-
 const getDemandeDetails = async () => {
     loading.value = true
     try {
@@ -124,7 +117,9 @@ const getDemandeDetails = async () => {
             num: item.num || index + 1,
             etat: getStatutLabel(item.niv_val),
             imputation: item.imputation?.nom || '-',
-            emission: item.emission ? formatDate(item.emission) : '-'
+            emission: item.emission ? formatDate(item.emission) : '-',
+            montant: item.montant != null ? formatMontant(item.montant) : '-',
+            montant_original: item.montant != null ? (item.niv_val != niveauNDF.refuse ? Number(item.montant) : 0) : 0
         }))
     } catch (error) {
         console.error(error)
@@ -132,6 +127,12 @@ const getDemandeDetails = async () => {
         loading.value = false
     }
 }
+const totals = computed(() => {
+    const total = demande_details.value.reduce((sum, item) => {
+        return sum + (Number(item.montant_original) || 0)
+    }, 0)
+    return [{ label: 'Total', value: formatMontant(total) }]
+})
 
 onMounted(() => getDemandeDetails())
 </script>

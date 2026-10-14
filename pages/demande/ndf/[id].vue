@@ -11,7 +11,7 @@
                     data-bs-target="#modDoc"
                     @click="doc_recovery"
                 >
-                    Ajouter document
+                    {{ peutSoumettre ? 'Ajouter document' : 'Liste des documents' }}
                 </button>
             </client-only>
 
@@ -166,27 +166,30 @@
         <!-- Modal documents -->
         <Modal id="modDoc" title="Ajouter un document">
             <div class="text-center">
-                <p>Sélectionner un fichier (pdf, png, jpeg, jpg) :</p>
+                <div v-if="peutSoumettre">
+                    <p>Sélectionner un fichier (pdf, png, jpeg, jpg) :</p>
 
-                <input
-                    class="form-control"
-                    ref="fileInput"
-                    type="file"
-                    accept=".pdf,.png,.jpeg,.jpg"
-                    @change="fonctionFiles"
-                >
+                    <input
+                        class="form-control"
+                        ref="fileInput"
+                        type="file"
+                        accept=".pdf,.png,.jpeg,.jpg"
+                        @change="fonctionFiles"
+                    >
 
-                <p v-if="uploading">Enregistrement du fichier en cours ...</p>
+                    <p v-if="uploading">Enregistrement du fichier en cours ...</p>
 
-                <button
-                    class="btn btn-outline-success mt-2"
-                    @click="upload_file"
-                    :disabled="uploading"
-                >
-                    Enregistrer ce fichier
-                </button>
+                    <button
+                        class="btn btn-outline-success mt-2"
+                        @click="upload_file"
+                        :disabled="uploading"
+                    >
+                        Enregistrer ce fichier
+                    </button>
+                </div>
+                
 
-                <hr>
+                <hr v-if="peutSoumettre">
 
                 <h5 style="font-weight: bold;">Liste des documents associés</h5>
 
@@ -208,6 +211,7 @@
                         <img src="/public/icon/download.png" style="width: 20px; height: 20px;" alt="Télécharger">
                     </button>
                     <button
+                        v-if="peutSoumettre"
                         class="btn btn-outline-light btn-sm"
                         @click="deleteFile(doc.id, doc.nameStorage)"
                     >
@@ -495,8 +499,13 @@ const upload_file = async () => {
     }
 
     uploading.value = true
+
     try {
-        const filesNameStorage = Date.now() + '_' + file.value.name
+        // Nettoyer le nom original
+        const nomNettoye = nettoyerNomFichier(file.value.name)//se fonction est dans un utils/nettoyageNomFichier.js
+
+        // Ajouter un identifiant unique
+        const filesNameStorage = `${Date.now()}_${nomNettoye}`
         const filePath = `ndf/${filesNameStorage}`
 
         const { error } = await supabase.storage
@@ -526,13 +535,15 @@ const upload_file = async () => {
 
         showAlert('Fichier enregistré avec succès', 'Succès', 'success')
         doc_recovery()
+
     } catch (error) {
-        console.error('Erreur upload:', error.message)
-        showAlert('Erreur lors de l\'upload', 'Oups!', 'danger')
+        console.error('Erreur upload:', error)
+        showAlert("Erreur lors de l'upload", 'Oups!', 'danger')
     } finally {
         uploading.value = false
     }
 }
+
 
 const deleteFile = async (id_doc, nameStorage) => {
     const path = `ndf/${nameStorage}`

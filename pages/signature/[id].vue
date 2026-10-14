@@ -234,7 +234,9 @@ const getDemandeValidee = async () => {
 
             if (itemsHistoError) throw itemsHistoError
 
-            const validateursMap = {}
+            
+            const validateursMap = {};
+
             (itemsHisto || []).forEach(item => {
                 if (!validateursMap[item.niv_val]) {
                     validateursMap[item.niv_val] = {
@@ -242,9 +244,10 @@ const getDemandeValidee = async () => {
                         dateVal: formatDate(item.created_at),
                         userValide: item.userValide?.full_name || 'Non spécifié',
                         signatureValide: item.signatureValide?.signature_url || null
-                    }
+                    };
                 }
-            })
+            });
+
             console.log('validateursMap:', validateursMap)
             validateurs.value = {
                 superieur: validateursMap[2] || null,

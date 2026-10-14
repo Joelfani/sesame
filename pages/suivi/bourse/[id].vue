@@ -77,7 +77,7 @@ const getStatutLabel = (niv) => {
 
 const totals = computed(() => {
     const total = demande_details.value.reduce((sum, item) => {
-        return sum + (Number(item.montant) || 0)
+        return sum + (Number(item.montant_original) || 0)
     }, 0)
     return [{ label: 'Total', value: formatMontant(total) }]
 })
@@ -128,7 +128,9 @@ const getDemandeDetails = async () => {
             num: item.num || index + 1,
             etat: getStatutLabel(item.niv_val),
             imputation: item.imputation?.nom || '-',
-            emission: item.emission ? formatDate(item.emission) : '-'
+            emission: item.emission ? formatDate(item.emission) : '-',
+            montant: item.montant != null ? formatMontant(item.montant) : '-',
+            montant_original: item.montant != null ? (item.niv_val != niveauBourse.refuse ? Number(item.montant) : 0) : 0
         }))
     } catch (error) {
         console.error(error)

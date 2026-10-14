@@ -5,7 +5,7 @@
             <h1>DÉTAILS DE LA DRFMS</h1>
             <client-only>
                 <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modDoc" @click="doc_recovery">
-                    Ajouter document
+                    {{ dataObj.niv_val === niveauDRFMS.erg ? 'Ajouter document' : 'Liste des documents' }}
                 </button>
             </client-only>
             <div class="link_demande">
@@ -51,21 +51,24 @@
         <!-- Modal document -->
         <Modal id="modDoc" title="Ajouter un document">
             <div class="text-center">
-                <p>Séléctionner un fichier (pdf,png,jpeg,jpg):</p>
+                <div v-if="dataObj.niv_val === niveauDRFMS.erg">
+                    <p>Séléctionner un fichier (pdf,png,jpeg,jpg):</p>
 
-                <input class="form-control" ref="fileInput" type="file" @change="fonctionFiles"></input>
+                    <input class="form-control" ref="fileInput" type="file" @change="fonctionFiles"></input>
 
-                <p v-if="uploading">Enregistrement du fichier en cours ...</p>
+                    <p v-if="uploading">Enregistrement du fichier en cours ...</p>
 
-                <button class="btn btn-outline-success" @click="upload_file" :disabled="uploading">Enregistrer ce fichier</button>
-                <hr>
+                    <button class="btn btn-outline-success" @click="upload_file" :disabled="uploading">Enregistrer ce fichier</button>
+                    <hr v-if="dataObj.niv_val === niveauDRFMS.erg">
+                </div>
+                
 
                 <h5 style="font-weight: bold;">Liste des documents associés</h5>
-
+                <p v-if="doc_drfms.length === 0">Aucun document associé.</p>
                 <p v-for="doc in doc_drfms" :key="doc.id" style="font-weight: bold;">
                     {{ doc.name_doc }}
                     <button class="btn btn-outline-secondary" @click="downloadFile(doc.name_doc, doc.nameStorage)"><img src="/public/icon/download.png" style="width: 20px; height: 20px;"></button>
-                    <button class="btn btn-outline-light" @click="deleteFile(doc.id, doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
+                    <button v-if="dataObj.niv_val === niveauDRFMS.erg" class="btn btn-outline-light" @click="deleteFile(doc.id, doc.nameStorage)"><img src="/public/icon/delete.png" style="width: 20px; height: 20px;"></button>
                 </p>
             </div>
         </Modal>
@@ -177,7 +180,7 @@ const getDemandeDetails = async () => {
 
         demande_details.value = allDataView;
         loading.value = false;
-
+        doc_recovery();
     } catch (error) {
         console.log(error);
         loading.value = false;
@@ -197,7 +200,9 @@ const formatDate = (dateString) => {
 
 // Récupération de la liste des documents rattachés à cette DRFMS
 const doc_recovery = async () => {
-    fileInput.value.value = null
+    if (fileInput.value) {
+        fileInput.value.value = ''
+    }
     fileName.value = ''
     file.value = null
 
@@ -210,6 +215,8 @@ const doc_recovery = async () => {
 
         if (error) throw error
         doc_drfms.value = data
+        console.log('test vue');
+        
     } catch (error) {
         console.log('Erreur lors de la récupération de la liste des documents', error)
     }
@@ -227,11 +234,15 @@ const fonctionFiles = (event) => {
 }
 
 const upload_file = async () => {
-    if (!file.value) return showAlert("Veuillez sélectionner un fichier", 'Oups!', 'danger')
+    if (!file.value) {
+        showAlert('Veuillez sélectionner un fichier', 'Oups!', 'danger')
+        return
+    }
 
     uploading.value = true
     try {
-        const filesNameStorage = Date.now() + '_' + file.value.name
+        const nomNettoye = nettoyerNomFichier(file.value.name)
+        const filesNameStorage = `${Date.now()}_${nomNettoye}`
         const filePath = `drfms/${filesNameStorage}`
 
         const { error } = await supabase.storage
@@ -248,23 +259,21 @@ const upload_file = async () => {
 
         const { error: errorInsertInfo } = await supabase
             .from('ses_doc')
-            .insert([
-                {
-                    id_user: userStore.id,
-                    name_doc: fileName.value,
-                    url_doc: fileUrl.value,
-                    nameStorage: filesNameStorage,
-                    id_obj: route.params.id,
-                    cat_proc: 'drfms',
-                }
-            ])
+            .insert([{
+                id_user: userStore.id,
+                name_doc: fileName.value,
+                url_doc: fileUrl.value,
+                nameStorage: filesNameStorage,
+                id_obj: route.params.id,
+                cat_proc: 'drfms'
+            }])
 
         if (errorInsertInfo) throw errorInsertInfo
 
         showAlert('Fichier enregistré avec succès', 'Succès', 'success')
         doc_recovery()
     } catch (error) {
-        console.error('Erreur upload :', error.message)
+        console.error('Erreur upload:', error)
         showAlert("Erreur lors de l'upload", 'Oups!', 'danger')
     } finally {
         uploading.value = false
@@ -359,6 +368,5 @@ const envoyerDRFMS = async () => {
 // LIFECYCLE HOOKS //
 onMounted(() => {
     getDemandeDetails();
-    doc_recovery();
 });
 </script>

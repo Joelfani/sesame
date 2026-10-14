@@ -115,5 +115,32 @@ export const navOptionsCommun = [
     { signe:'DRFMS', label: 'DRFMS', value: '/signature/drfms',view:true },
     { signe:'NDF', label: 'NDF', value: '/signature/ndf',view:true },
     { signe:'ODM', label: 'ODM', value: '/signature/odm',view:true },
-    { signe:'BOURSE', label: 'Bourse étudiant', value: '/signature/bourse',view:true }
+    { signe:'BOURSE', label: 'Bourse étudiant', value: '/signature/bourse',view:true },
+    { signe:'DRFME', label: 'DRFME', value: '/signature/drfme',view:true }
+]
+
+//DRFME
+export const niveauDRFME ={
+    erg:0,
+    superieur:1,
+    finance:2,
+    cg:3,
+    dpr:4,
+    cheque:5,
+    valide:6,
+    refuse:10
+}
+
+export const exportColumnsExcelDRFME = [
+    { key: 'num', label: 'N°' },
+    { key: 'designation', label: 'Désignation' },
+    { key: 'montant_total', label: 'Montant total' },
+    { key: 'montant_etudiant', label: 'Part étudiant' },
+    { key: 'montant_sesame', label: 'Part SESAME' },
+    { key: 'detail', label: 'Motif / destination' },
+    { key: 'observation', label: 'Observation' },
+    { key: 'imputation', label: 'Imputation' },
+    { key: 'com_sup', label: 'Commentaire supérieur' },
+    { key: 'motif', label: 'Motif de rejet' },
+    { key: 'niv_val', label: 'Statut' }
 ]

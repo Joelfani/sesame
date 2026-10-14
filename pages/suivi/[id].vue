@@ -286,7 +286,7 @@ const formatNumber = (n) => {
 const totalAmount = computed(() => {
   return formatMontant(
     demande_details.value
-      .filter((item) => item.etat !== 2)
+      .filter((item) => item.niv_val !== niveau.refuse)
       .reduce((total, item) => {
         return total + toNumber(item.qte) * toNumber(item.prix);
       }, 0)
@@ -297,7 +297,7 @@ const totalAmount = computed(() => {
 const totalAmountR = computed(() => {
   return formatMontant(
     demande_details.value
-      .filter((item) => item.etat !== 2)
+      .filter((item) => item.niv_val !== niveau.refuse)
       .reduce((total, item) => {
         return total + toNumber(item.qte) * toNumber(item.prixR);
       }, 0)

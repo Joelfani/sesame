@@ -176,6 +176,7 @@ const sendTableData = async () => {
                 id_obj: insertedId,
                 action: `Sauvegarde de la note de frais n°${insertedId}`,
                 niv_val: niveauNDF.erg,
+                type:'sauvegarde',
                 cat_proc: 'ndf'
             })
 

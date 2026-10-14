@@ -142,6 +142,10 @@
                             <option value="Service BOE">Service BOE</option>
                             <option value="Service MEAL">Service MEAL</option>
                             <option value="Service PARTENARIAT">Service PARTENARIAT</option>
+                            <option value="Service INT">Service INT</option>
+                            <option value="Service SUP">Service SUP</option>
+                            <option value="Service PROF">Service PROF</option>
+                            <option value="Service RH">Service RH</option>
                         </select>
                     </div>
                 </div>

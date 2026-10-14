@@ -441,7 +441,8 @@ const upload_file = async () => {
 
     uploading.value = true
     try {
-        const filesNameStorage = Date.now() + '_' + file.value.name
+        const nomNettoye = nettoyerNomFichier(file.value.name)
+        const filesNameStorage = `${Date.now()}_${nomNettoye}`
         const filePath = `bourse/${filesNameStorage}`
 
         const { error } = await supabase.storage
@@ -472,8 +473,8 @@ const upload_file = async () => {
         showAlert('Fichier enregistré avec succès', 'Succès', 'success')
         doc_recovery()
     } catch (error) {
-        console.error('Erreur upload:', error.message)
-        showAlert('Erreur lors de l\'upload', 'Oups!', 'danger')
+        console.error('Erreur upload:', error)
+        showAlert("Erreur lors de l'upload", 'Oups!', 'danger')
     } finally {
         uploading.value = false
     }

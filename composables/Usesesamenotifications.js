@@ -6,6 +6,9 @@
 //   - ndf     -> ses_histo2, cat_proc = 'ndf'    (niveau sur ses_items_ndf)
 //   - odm     -> ses_histo2, cat_proc = 'odm'    (niveau sur ses_obj)
 //   - bourse  -> ses_histo2, cat_proc = 'bourse' (niveau sur ses_items_bourse)
+//   - drfme   -> ses_histo2, cat_proc = 'drfme'  (niveau sur ses_items_drfme)
+//     (attention : DRFMS = frais médicaux des SALARIÉS, validée en bloc ;
+//      DRFME = frais médicaux des JEUNES, validée ligne par ligne)
 //
 // Solo (demandeur) : type IN (retour, rejeter, edit, fin)
 //   - retour : gardé uniquement si niv_val histo === erg ET l'item/l'objet
@@ -16,10 +19,10 @@
 // ⚠️ POINT IMPORTANT (celui qui nous a posé problème) :
 // ses_histo2.id_item n'a PAS de relation FK exploitable vers une table
 // unique, car selon cat_proc il désigne une ligne de ses_items_ndf, de
-// ses_items_bourse ou (pour l'achat) de ses_demItems. Impossible donc de
-// filtrer le "niveau actuel de l'item" directement dans la requête SQL via
-// un embed Supabase (id_item!inner(...)) : Postgres/PostgREST ne sait pas
-// vers quelle table résoudre la relation.
+// ses_items_bourse, de ses_items_drfme ou (pour l'achat) de ses_demItems.
+// Impossible donc de filtrer le "niveau actuel de l'item" directement dans
+// la requête SQL via un embed Supabase (id_item!inner(...)) : Postgres/
+// PostgREST ne sait pas vers quelle table résoudre la relation.
 // -> Solution : on récupère TOUTES les notifs du niveau demandé depuis
 //    ses_histo/ses_histo2 (comme avant), PUIS on va chercher, dans la
 //    table d'items propre au flow (flow.itemsRelation), le niveau ACTUEL
@@ -34,6 +37,7 @@ import {
   niveauNDF,
   niveauODM,
   niveauBourse,
+  niveauDRFME,
 } from '~/assets/js/CommonVariable'
 
 const SOLO_TYPES = ['retour', 'rejeter', 'edit', 'fin','delete']
@@ -177,6 +181,43 @@ const FLOWS = {
     routeForSup: (id) => `/validation/bourse/${id}`,
     routeForSolo: (id) => `/demande/bourse/${id}`,
   },
+
+  // DRFME : demande de remboursement des frais médicaux des JEUNES.
+  // Comme la NDF et la bourse, le niveau est porté ligne par ligne
+  // (ses_items_drfme.niv_val) : levelSource 'items', donc le niveau ACTUEL
+  // de chaque notification est vérifié dans ses_items_drfme (voir
+  // filterByCurrentLevel).
+  // ⚠️ Les clés de niveauDRFME (superieur, dpr, rh, finance, cg, cheque...)
+  // doivent correspondre aux flags de userStore pour que les notifications
+  // "système" arrivent aux bonnes personnes (getQueueRoles dérive les rôles
+  // des clés de l'enum). Si niveauDRFME n'a pas de clé `superieur`, supLevel
+  // est undefined et la catégorie "équipe" est simplement désactivée.
+  drfme: {
+    key: 'drfme',
+    label: 'DRFME',
+    badgeColor: '#795548',
+    table: 'ses_histo2',
+    catProc: 'drfme',
+    niveau: niveauDRFME,
+    levelSource: 'items',
+    itemsRelation: 'ses_items_drfme',
+    supLevel: niveauDRFME.superieur,
+    soloColumn: 'stat_not_sol',
+    queueColumn: 'stat_not',
+    routeFor(role, id) {
+      const map = {
+        dpr: `/dpr/drfme/${id}`,
+        rh: `/rh/drfme/${id}`,
+        finance: `/finance/drfme/${id}`,
+        cg: `/controlleur/drfme/${id}`,
+        cheque: `/cheque/drfme/${id}`,
+      }
+      // Repli sur le même schéma /{role}/drfme/{id} pour un rôle non listé
+      return map[role] ?? `/${role}/drfme/${id}`
+    },
+    routeForSup: (id) => `/validation/drfme/${id}`,
+    routeForSolo: (id) => `/demande/drfme/${id}`,
+  },
 }
 
 const ROLE_LABELS = {
@@ -219,7 +260,7 @@ async function fetchItemLevels(supabase, flow, itemIds) {
   if (!uniqueIds.length) return new Map()
 
   const { data, error } = await supabase
-    .from(flow.itemsRelation) // ex: ses_items_ndf, ses_items_bourse, ses_demItems
+    .from(flow.itemsRelation) // ex: ses_items_ndf, ses_items_bourse, ses_items_drfme, ses_demItems
     .select('id, niv_val')
     .in('id', uniqueIds)
   if (error) throw error
@@ -488,7 +529,7 @@ export function useSesameNotifications() {
   }
 
   // Regroupe les updates par (table, colonne) pour limiter le nombre de
-  // requêtes, même si les notifs affichées viennent de 5 flows répartis
+  // requêtes, même si les notifs affichées viennent de 6 flows répartis
   // sur seulement 2 tables physiques (ses_histo / ses_histo2).
   async function markAllAsRead() {
     const groups = new Map()
@@ -574,6 +615,7 @@ export function useSesameNotifications() {
     { table: 'ses_demItems' },
     { table: 'ses_items_ndf' },
     { table: 'ses_items_bourse' },
+    { table: 'ses_items_drfme' },
     { table: 'ses_obj' },
     { table: 'ses_histo' },
     { table: 'ses_histo2' },
