@@ -11,7 +11,7 @@
                     data-bs-target="#modDoc"
                     @click="doc_recovery"
                 >
-                    Ajouter document
+                    {{peutSoumettre ? "Ajouter document" : "Liste des documents"}}
                 </button>
             </client-only>
 
@@ -190,27 +190,30 @@
         <!-- Modal documents -->
         <Modal id="modDoc" title="Ajouter un document">
             <div class="text-center">
-                <p>Sélectionner un fichier (pdf, png, jpeg, jpg) :</p>
+                <div v-if="peutSoumettre">
+                    <p>Sélectionner un fichier (pdf, png, jpeg, jpg) :</p>
 
-                <input
-                    class="form-control"
-                    ref="fileInput"
-                    type="file"
-                    accept=".pdf,.png,.jpeg,.jpg"
-                    @change="fonctionFiles"
-                >
+                    <input
+                        class="form-control"
+                        ref="fileInput"
+                        type="file"
+                        accept=".pdf,.png,.jpeg,.jpg"
+                        @change="fonctionFiles"
+                    >
 
-                <p v-if="uploading">Enregistrement du fichier en cours ...</p>
+                    <p v-if="uploading">Enregistrement du fichier en cours ...</p>
 
-                <button
-                    class="btn btn-outline-success mt-2"
-                    @click="upload_file"
-                    :disabled="uploading"
-                >
-                    Enregistrer ce fichier
-                </button>
+                    <button
+                        class="btn btn-outline-success mt-2"
+                        @click="upload_file"
+                        :disabled="uploading"
+                    >
+                        Enregistrer ce fichier
+                    </button>
 
-                <hr>
+                    <hr>
+                </div>
+                
 
                 <h5 style="font-weight: bold;">Liste des documents associés</h5>
 
@@ -232,6 +235,7 @@
                         <img src="/public/icon/download.png" style="width: 20px; height: 20px;" alt="Télécharger">
                     </button>
                     <button
+                        v-if="peutSoumettre"
                         class="btn btn-outline-light btn-sm"
                         @click="deleteFile(doc.id, doc.nameStorage)"
                     >
