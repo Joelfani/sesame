@@ -127,6 +127,7 @@ const getDemande = async () => {
         liste_demande.value = dataObj.map(item => ({
             ...item,
             niv_val:
+                item.niv_val_min === niveau.erg ? 'Demande non soumise' :
                 item.niv_val_min === niveau.superieur ? 'En attente de validation chez le superieur' :
                 item.niv_val_min === niveau.achat ? 'En attente de validation chez le responsable d\'achat' :
                 item.niv_val_min === niveau.afe ? 'En attente d\' AFE-BC' :
