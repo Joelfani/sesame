@@ -171,7 +171,7 @@
                         type="text"
                         :value="editForm.montant ? formatNumber(editForm.montant) : ''"
                         class="form-control"
-                        disabled
+                        
                     >
                 </div>
             </div>
