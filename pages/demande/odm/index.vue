@@ -158,6 +158,7 @@ const getDemande = async () => {
                     item.niv_val === niveauODM.rh ? 'En attente de validation chez la RH' :
                     item.niv_val === niveauODM.finance ? 'En attente de validation chez le responsable financier' :
                     item.niv_val === niveauODM.cg ? 'En attente de validation chez le controlleur de gestion' :
+                    item.niv_val === niveauODM.dpr ? 'En attente de validation chez le DPR' :
                     item.niv_val === niveauODM.cheque ? 'En attente d\'émission de chèque' :
                     item.niv_val === niveauODM.valide ? 'Validée' :
                     item.niv_val === niveauODM.refuse ? 'Votre demande a été refusée' :

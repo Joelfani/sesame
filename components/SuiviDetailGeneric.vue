@@ -23,7 +23,7 @@
                 <table class="table table-borderless table-sm mb-0" style="width: auto;">
                     <tbody>
                         <tr>
-                            <th class="pe-3" style="white-space: nowrap; font-weight: 600; max-width: 50px;">
+                            <th class="pe-3" style="font-weight: 600; max-width: 100px;">
                                 N° d'enregistrement :
                             </th>
                             <td>
@@ -31,9 +31,7 @@
                             </td>
                         </tr>
                         <tr v-for="field in infoFields" :key="field.key">
-
-
-                            <th class="pe-3" style="white-space: nowrap; font-weight: 600; max-width: 50px;">
+                            <th class="pe-3" style="font-weight: 600; max-width: 100px;">
                                 {{ field.label }}
                             </th>
                             <td>

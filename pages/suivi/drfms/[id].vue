@@ -26,15 +26,16 @@ const demande_details = ref([])
 
 const infoFields = [
     { key: 'date', label: 'Date' },
-    { key: 'demandeur', label: 'Demandeur', strong: true },
-    { key: 'service', label: 'Service' },
-    { key: 'cat_pers', label: 'Personne soignée' },
-    { key: 'pers_soin', label: 'Nom de la personne' },
-    { key: 'imputation', label: 'Imputation analytique ' },
-    { key: 'tiger', label: 'Code Tiger' },
-    { key: 'cheque', label: 'Chèque' },
-    { key: 'emission', label: 'Date d\'émission' },
-    { key: 'statut', label: 'Statut', strong: true }
+    { key: 'demandeur', label: 'Demandeur:', strong: true },
+    { key: 'service', label: 'Service:' },
+    { key: 'cat_pers', label: 'Personne soignée:' },
+    { key: 'pers_soin', label: 'Nom de la personne:' },
+    { key: 'imputation', label: 'Imputation analytique: ' },
+    { key: 'tiger', label: 'Code Tiger:' },
+    { key: 'cheque', label: 'Chèque:' },
+    { key: 'emission', label: 'Date d\'émission:' },
+    { key: 'statut', label: 'Statut:', strong: true },
+    { key: 'motif_rejet', label: 'Motif de rejet:', strong: true }
 ]
 
 const columns = [
@@ -113,7 +114,8 @@ const getDemandeDetails = async () => {
             tiger: obj.tiger || '-',
             cheque: obj.cheque || '-',
             emission: obj.emission ? formatDate(obj.emission) : '-',
-            statut: getStatutLabel(obj.niv_val)
+            statut: getStatutLabel(obj.niv_val),
+            motif_rejet: obj.motif_rejet || '-'
         }
 
         // Lignes

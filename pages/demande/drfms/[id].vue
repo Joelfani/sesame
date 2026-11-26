@@ -23,6 +23,7 @@
                     <h6>Personne soignée : {{ dataObj.cat_pers }}</h6>
                 </div>
                 <h6>Statut: <strong>{{ statutLabel }}</strong></h6>
+                <h6 v-if="dataObj.niv_val === niveauDRFMS.refuse">Motif de rejet: <strong>{{ dataObj.motif_rejet }}</strong></h6>
             </div>
 
             <!-- Bouton d'envoi, visible seulement si la DRFMS est encore au niveau 0 (non envoyée) -->

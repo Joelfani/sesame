@@ -7,6 +7,7 @@
                 <button class="btn btn-outline-secondary" @click="devTab">{{ dev ? 'Réduire le tableau': 'Développer le tableau' }}</button>
                 <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
                 <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#cheque" @click="initialiseFournisseur()">Émettre chèque par fournisseur</button>
+                <DocumentList modal-id="modDoc" :id-obj="route.params.id" table="ses_doc_achat" folder="achats" button-label="Liste document"/>
             </div>
             <div class="link_demande">
             </div>

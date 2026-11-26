@@ -9,7 +9,7 @@
                 <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#valMasseCg" @click="initMassData">Validation en masse</button>
                 <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modMasseImputation" @click="initMassImputation">Modifier Imputation en masse</button>
                 <client-only>
-                    <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modDoc" @click="doc_recovery({id:route.params.id})">Liste document</button>
+                    <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modDoc" @click="doc_recovery({id:route.params.id})">Liste des documents</button>
                 </client-only>
                 
             </div>

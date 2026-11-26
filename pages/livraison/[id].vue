@@ -7,6 +7,7 @@
             <button class="btn btn-outline-success" @click="exportToExcel">Exporter vers Excel</button>
             <div class="link_demande">
             </div>
+            <DocumentList modal-id="modDoc" :id-obj="route.params.id" table="ses_doc_achat" folder="achats" button-label="Liste document"/>
         </div>
         
         <!-- Informations générales de la demande -->
