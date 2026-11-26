@@ -64,6 +64,7 @@ const getStatutLabel = (niv) => {
     switch (Number(niv)) {
         case niveauODM.erg: return 'En attente de modification par le demandeur'
         case niveauODM.superieur: return 'En attente chez le supérieur'
+        case niveauODM.rh: return 'En attente chez la RH'
         case niveauODM.finance: return 'En attente chez la finance'
         case niveauODM.cg: return 'En attente chez le CG'
         case niveauODM.cheque: return 'En attente d\'émission de chèque'
