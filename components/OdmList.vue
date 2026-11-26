@@ -8,6 +8,8 @@
                 :LinkSelected="linkSelected"
                 :baseLink="baseLink"
                 :viewDRFMS="viewDRFMS"
+                :normalSelect="false"
+                :RHSelect="true"
             />
         </div>
 
