@@ -800,12 +800,8 @@ const doValidate = async (item, fields) => {
 
         if (error) throw error
 
-        if (resolvedNextLevel.value === niveauNDF.cheque){
-            type.value = 'fin'
-        }
-        else{
-            type.value = 'valider'
-        }
+        type.value = Number(props.niveau) === Number(niveauNDF.cheque) || Number(resolvedNextLevel.value) === Number(niveauNDF.valide) ? 'fin' : 'valider'
+
         await supabase.from('ses_histo2').insert({
             id_user: userStore.id,
             id_obj: route.params.id,
@@ -852,7 +848,7 @@ const doReject = async (item, fields, config) => {
             action: `Rejet de l'article ${item.num} de la NDF n°${route.params.id} - Motif: ${motif}`,
             niv_val: niveauNDF.refuse,
             cat_proc: 'ndf',
-            type: 'rejet'
+            type: 'rejeter'
         })
 
         await getDemandeDetails()
@@ -1061,6 +1057,7 @@ const validerEnMasse = async () => {
 
     loadingAction.value = true
     try {
+        const histType = Number(props.niveau) === Number(niveauNDF.cheque) ? 'fin' : 'valider'
         for (const item of itemsToValidate) {
 
             if (props.niveau === niveauNDF.cg && KeySaveOldValue.value) {
@@ -1089,7 +1086,7 @@ const validerEnMasse = async () => {
                 action: `Validation de l'article ${item.num} de la NDF n°${route.params.id}`,
                 niv_val: resolvedNextLevel.value,
                 cat_proc: 'ndf',
-                type: 'valider'
+                type: histType
             })
         }
 

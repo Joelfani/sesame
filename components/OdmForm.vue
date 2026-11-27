@@ -702,7 +702,7 @@ const doValidate = async () => {
                 : resolvedNextLevel.value
         }
 
-        const histType = Number(payload.niv_val) === Number(niveauODM.cheque) ? 'fin' : 'valider'
+        const histType = Number(props.niveau) === Number(niveauODM.cheque) || Number(payload.niv_val) === Number(niveauODM.valide) ? 'fin' : 'valider'
 
         const { error } = await supabase
             .from('ses_obj')
