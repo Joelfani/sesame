@@ -4,13 +4,8 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>{{ titre }}</h1>
-            <MiniNav
-                :LinkSelected="linkSelected"
-                :baseLink="baseLink"
-                :viewDRFMS="viewDRFMS"
-                :normalSelect="false"
-                :RHSelect="true"
-            />
+            <MiniNav v-if="choiceNavigation" :LinkSelected="linkSelected" :baseLink="baseLink" :viewDRFMS="viewDRFMS"/>
+            <MiniNav v-if="RHNavigation" :RHSelect="true" :normalSelect="false" :viewDRFMS="viewDRFMS" LinkSelected="/rh"/>
         </div>
 
         <!-- Filtres -->
@@ -103,7 +98,9 @@ const props = defineProps({
     viewDRFMS: {
         type: Boolean,
         default: true
-    }
+    },
+    choiceNavigation: { type : Boolean, default:true},
+    RHNavigation: { type : Boolean, default:false},
 })
 
 // Services

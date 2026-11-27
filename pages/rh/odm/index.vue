@@ -5,6 +5,8 @@
         base-link="rh"
         but-link-path="rh/odm/"
         :niveau="niveauODM.rh"
+        :choice-navigation="false"
+        :RHNavigation="true"
     />
 </template>
 
